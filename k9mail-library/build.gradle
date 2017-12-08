@@ -12,6 +12,7 @@ if (rootProject.testCoverage) {
 
 repositories {
     jcenter()
+    mavenCentral()
 }
 
 dependencies {
@@ -22,6 +23,7 @@ dependencies {
     compile 'com.beetstra.jutf7:jutf7:1.0.0'
     compile "com.android.support:support-annotations:${androidSupportLibraryVersion}"
     compile "com.jakewharton.timber:timber:${timberVersion}"
+    compile group: 'com.google.guava', name: 'guava', version: '23.5-android'
 
     androidTestCompile 'com.android.support.test:runner:0.4.1'
     androidTestCompile 'com.madgag.spongycastle:pg:1.51.0.0'

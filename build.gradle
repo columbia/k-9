@@ -1,6 +1,7 @@
 buildscript {
     repositories {
         jcenter()
+        google()
     }
 
     dependencies {
@@ -21,4 +22,8 @@ subprojects {
             project.android.dexOptions.preDexLibraries = !rootProject.hasProperty('disablePreDex')
         }
     }
+}
+
+repositories {
+    google()
 }
