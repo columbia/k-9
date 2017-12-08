@@ -13,6 +13,7 @@ import android.app.Activity;
 import android.app.PendingIntent;
 import android.content.Context;
 import android.content.Intent;
+import android.os.Parcelable;
 import android.support.annotation.NonNull;
 import android.support.annotation.Nullable;
 import android.support.annotation.WorkerThread;
@@ -39,6 +40,8 @@ import com.fsck.k9.mailstore.MessageHelper;
 import com.fsck.k9.mailstore.MimePartStreamParser;
 import com.fsck.k9.mailstore.util.FileFactory;
 import com.fsck.k9.provider.DecryptedFileProvider;
+import com.google.common.base.Preconditions;
+
 import org.apache.commons.io.IOUtils;
 import org.openintents.openpgp.IOpenPgpService2;
 import org.openintents.openpgp.OpenPgpDecryptionResult;
@@ -55,7 +58,7 @@ import org.openintents.openpgp.util.OpenPgpServiceConnection.OnBound;
 import timber.log.Timber;
 
 
-public class MessageCryptoHelper {
+public class MessageCryptoHelper implements MessageCryptoHelperInterface {
     private static final int INVALID_OPENPGP_RESULT_CODE = -1;
     private static final MimeBodyPart NO_REPLACEMENT_PART = null;
     private static final int REQUEST_CODE_USER_INTERACTION = 124;
@@ -103,12 +106,16 @@ public class MessageCryptoHelper {
         openPgpProviderPackage = K9.getOpenPgpProvider();
     }
 
+    @Override
     public boolean isConfiguredForOutdatedCryptoProvider() {
         return !openPgpProviderPackage.equals(K9.getOpenPgpProvider());
     }
 
+    @Override
     public void asyncStartOrResumeProcessingMessage(Message message, MessageCryptoCallback callback,
-            OpenPgpDecryptionResult cachedDecryptionResult, boolean processSignedOnly) {
+                                                    Parcelable cachedDecryptionResult, boolean processSignedOnly) {
+        Preconditions.checkArgument(cachedDecryptionResult instanceof OpenPgpDecryptionResult || cachedDecryptionResult == null, "This MessageCryptoHelper implementation only supports OpenPgpDecryptionResult parcelables");
+
         if (this.currentMessage != null) {
             reattachCallback(message, callback);
             return;
@@ -117,9 +124,12 @@ public class MessageCryptoHelper {
         this.messageAnnotations = new MessageCryptoAnnotations();
         this.state = State.START;
         this.currentMessage = message;
-        this.cachedDecryptionResult = cachedDecryptionResult;
         this.callback = callback;
         this.processSignedOnly = processSignedOnly;
+
+        if (cachedDecryptionResult != null) {
+            this.cachedDecryptionResult = (OpenPgpDecryptionResult) cachedDecryptionResult;
+        }
 
         nextStep();
     }
