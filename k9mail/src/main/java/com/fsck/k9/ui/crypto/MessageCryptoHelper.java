@@ -58,7 +58,7 @@ import org.openintents.openpgp.util.OpenPgpServiceConnection.OnBound;
 import timber.log.Timber;
 
 
-public class MessageCryptoHelper implements MessageCryptoHelperInterface {
+public class MessageCryptoHelper implements MessageCryptoHelperInterface<Parcelable> {
     private static final int INVALID_OPENPGP_RESULT_CODE = -1;
     private static final MimeBodyPart NO_REPLACEMENT_PART = null;
     private static final int REQUEST_CODE_USER_INTERACTION = 124;
