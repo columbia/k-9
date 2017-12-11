@@ -11,6 +11,7 @@ import com.fsck.k9.mail.MessagingException;
 import com.fsck.k9.mail.Part;
 import com.fsck.k9.mail.e3.E3Utils;
 import com.fsck.k9.mail.e3.smime.SMIMEDecryptFunction;
+import com.fsck.k9.mail.e3.smime.SMIMEDecryptFunctionFactory;
 import com.fsck.k9.mail.internet.MimeBodyPart;
 import com.fsck.k9.mailstore.MessageHelper;
 import com.fsck.k9.mailstore.MimePartStreamParser;
@@ -88,7 +89,7 @@ public class MessageCryptoSMIMEHelper implements MessageCryptoHelperInterface<SM
         this.cachedDecryptionResult = cachedDecryptionResult;
 
         // TODO: Set an actual key entry
-        this.smimeDecrypt = new SMIMEDecryptFunction(null, new E3Utils(this.context));
+        this.smimeDecrypt = SMIMEDecryptFunctionFactory.get(new E3Utils(this.context), "", "");
 
         nextStep();
     }
@@ -157,7 +158,6 @@ public class MessageCryptoSMIMEHelper implements MessageCryptoHelperInterface<SM
         try {
             switch (currentSMIMEPart.type) {
                 case SMIME_ENCRYPTED: {
-                    // Decrypt here
                     decryptSMIME();
                     return;
                 }
