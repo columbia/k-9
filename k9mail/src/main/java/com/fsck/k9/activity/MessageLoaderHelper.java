@@ -301,7 +301,7 @@ public class MessageLoaderHelper {
             retainCryptoHelperFragment.setData(messageCryptoSMIMEHelper);
         }
         messageCryptoSMIMEHelper.asyncStartOrResumeProcessingMessage(
-                localMessage, messageCryptoCallback, cachedDecryptionResult, processSignedOnly);
+                localMessage, smimeMessageCryptoCallback, cachedDecryptionResult, processSignedOnly);
     }
 
     private void cancelAndClearCryptoOperation() {
@@ -332,7 +332,7 @@ public class MessageLoaderHelper {
         }
     }
 
-    private MessageCryptoCallback messageCryptoCallback = new MessageCryptoCallback() {
+    private MessageCryptoCallback<MessageCryptoAnnotations> messageCryptoCallback = new MessageCryptoCallback<MessageCryptoAnnotations>() {
         @Override
         public void onCryptoHelperProgress(int current, int max) {
             if (callback == null) {
@@ -355,6 +355,38 @@ public class MessageLoaderHelper {
         @Override
         public void startPendingIntentForCryptoHelper(IntentSender si, int requestCode, Intent fillIntent,
                 int flagsMask, int flagValues, int extraFlags) {
+            if (callback == null) {
+                throw new IllegalStateException("unexpected call when callback is already detached");
+            }
+
+            callback.startIntentSenderForMessageLoaderHelper(si, requestCode, fillIntent,
+                    flagsMask, flagValues, extraFlags);
+        }
+    };
+
+    private MessageCryptoCallback<SMIMEMessageCryptoAnnotations> smimeMessageCryptoCallback = new MessageCryptoCallback<SMIMEMessageCryptoAnnotations>() {
+        @Override
+        public void onCryptoHelperProgress(int current, int max) {
+            if (callback == null) {
+                throw new IllegalStateException("unexpected call when callback is already detached");
+            }
+
+            callback.setLoadingProgress(current, max);
+        }
+
+        @Override
+        public void onCryptoOperationsFinished(SMIMEMessageCryptoAnnotations annotations) {
+            if (callback == null) {
+                throw new IllegalStateException("unexpected call when callback is already detached");
+            }
+
+            smimeMessageCryptoAnnotations = annotations;
+            startOrResumeDecodeMessage();
+        }
+
+        @Override
+        public void startPendingIntentForCryptoHelper(IntentSender si, int requestCode, Intent fillIntent,
+                                                      int flagsMask, int flagValues, int extraFlags) {
             if (callback == null) {
                 throw new IllegalStateException("unexpected call when callback is already detached");
             }

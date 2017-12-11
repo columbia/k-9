@@ -58,7 +58,7 @@ import org.openintents.openpgp.util.OpenPgpServiceConnection.OnBound;
 import timber.log.Timber;
 
 
-public class MessageCryptoHelper implements MessageCryptoHelperInterface<Parcelable> {
+public class MessageCryptoHelper implements MessageCryptoHelperInterface<MessageCryptoAnnotations, Parcelable> {
     private static final int INVALID_OPENPGP_RESULT_CODE = -1;
     private static final MimeBodyPart NO_REPLACEMENT_PART = null;
     private static final int REQUEST_CODE_USER_INTERACTION = 124;
@@ -112,7 +112,7 @@ public class MessageCryptoHelper implements MessageCryptoHelperInterface<Parcela
     }
 
     @Override
-    public void asyncStartOrResumeProcessingMessage(Message message, MessageCryptoCallback callback,
+    public void asyncStartOrResumeProcessingMessage(Message message, MessageCryptoCallback<MessageCryptoAnnotations> callback,
                                                     Parcelable cachedDecryptionResult, boolean processSignedOnly) {
         Preconditions.checkArgument(cachedDecryptionResult instanceof OpenPgpDecryptionResult || cachedDecryptionResult == null, "This MessageCryptoHelper implementation only supports OpenPgpDecryptionResult parcelables");
 

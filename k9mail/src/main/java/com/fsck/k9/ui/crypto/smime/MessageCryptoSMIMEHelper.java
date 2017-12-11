@@ -36,18 +36,17 @@ import timber.log.Timber;
  * Created by mauzel on 12/8/2017.
  */
 
-public class MessageCryptoSMIMEHelper implements MessageCryptoHelperInterface<Parcelable> {
+public class MessageCryptoSMIMEHelper implements MessageCryptoHelperInterface<SMIMEMessageCryptoAnnotations, Parcelable> {
 
     private final Context context;
     private final Object callbackLock = new Object();
     private final Deque<SMIMEPart> partsToProcess = new ArrayDeque<>();
 
     @Nullable
-    private MessageCryptoCallback callback;
+    private MessageCryptoCallback<SMIMEMessageCryptoAnnotations> callback;
 
     private Message currentMessage;
     private SMIMEMessageCryptoAnnotations queuedResult;
-    private PendingIntent queuedPendingIntent;
 
 
     private SMIMEMessageCryptoAnnotations messageAnnotations;
@@ -75,7 +74,7 @@ public class MessageCryptoSMIMEHelper implements MessageCryptoHelperInterface<Pa
     }
 
     @Override
-    public void asyncStartOrResumeProcessingMessage(Message message, MessageCryptoCallback callback, Parcelable cachedDecryptionResult, boolean processSignedOnly) {
+    public void asyncStartOrResumeProcessingMessage(Message message, MessageCryptoCallback<SMIMEMessageCryptoAnnotations> callback, Parcelable cachedDecryptionResult, boolean processSignedOnly) {
         if (this.currentMessage != null) {
             // TODO: Reattach callback?
         }
@@ -104,7 +103,7 @@ public class MessageCryptoSMIMEHelper implements MessageCryptoHelperInterface<Pa
         }
 
         if (state == State.FINISHED) {
-            //callbackReturnResult();
+            callbackReturnResult();
             return;
         }
 
@@ -181,8 +180,57 @@ public class MessageCryptoSMIMEHelper implements MessageCryptoHelperInterface<Pa
             decryptedIn = decryptedBytes.openStream();
             MimeBodyPart decryptedResult = MimePartStreamParser.parse(null, decryptedIn);
             SMIMECryptoResultAnnotation resultAnnotation = SMIMECryptoResultAnnotation.createSMIMEResultAnnotation(decryptedResult);
+
+            // Now add result to things
+            Part part = currentSMIMEPart.part;
+            messageAnnotations.put(part, resultAnnotation);
+
+            boolean currentPartIsFirstInQueue = partsToProcess.peekFirst() == currentSMIMEPart;
+
+            if (!currentPartIsFirstInQueue) {
+                throw new IllegalStateException(
+                        "Trying to remove part from queue that is not the currently processed one!");
+            }
+
+            if (currentSMIMEPart != null) {
+                partsToProcess.removeFirst();
+                currentSMIMEPart = null;
+            } else {
+                Timber.e(new Throwable(), "Got to end of decryptSMIME() with no part in processing!");
+            }
+
+            nextStep();
         } finally {
             Closeables.closeQuietly(decryptedIn);
+        }
+    }
+
+    private void callbackReturnResult() {
+        synchronized (callbackLock) {
+            partsToProcess.clear();
+
+            queuedResult = messageAnnotations;
+            messageAnnotations = null;
+
+            deliverResult();
+        }
+    }
+
+    // This method must only be called inside a synchronized(callbackLock) block!
+    private void deliverResult() {
+        if (isCancelled) {
+            return;
+        }
+
+        if (callback == null) {
+            Timber.d("Keeping crypto helper result in queue for later delivery");
+            return;
+        }
+
+        if (queuedResult != null) {
+            callback.onCryptoOperationsFinished(queuedResult);
+        } else {
+            throw new IllegalStateException("deliverResult() called with no result!");
         }
     }
 

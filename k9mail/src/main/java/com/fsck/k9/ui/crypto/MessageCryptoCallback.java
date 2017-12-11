@@ -5,9 +5,9 @@ import android.content.Intent;
 import android.content.IntentSender;
 
 
-public interface MessageCryptoCallback {
+public interface MessageCryptoCallback<T> {
     void onCryptoHelperProgress(int current, int max);
-    void onCryptoOperationsFinished(MessageCryptoAnnotations annotations);
+    void onCryptoOperationsFinished(T annotations);
     void startPendingIntentForCryptoHelper(IntentSender si, int requestCode, Intent fillIntent,
             int flagsMask, int flagValues, int extraFlags);
 }
