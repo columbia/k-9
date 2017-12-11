@@ -23,6 +23,8 @@ import com.fsck.k9.mail.internet.MimeUtility;
 import com.fsck.k9.mailstore.CryptoResultAnnotation;
 import com.fsck.k9.ui.crypto.MessageCryptoAnnotations;
 
+import timber.log.Timber;
+
 import static com.fsck.k9.mail.internet.MimeUtility.isSameMimeType;
 
 
@@ -35,6 +37,8 @@ public class MessageCryptoStructureDetector {
     private static final String TEXT_PLAIN = "text/plain";
     // APPLICATION/PGP is a special case which occurs from mutt. see http://www.mutt.org/doc/PGP-Notes.txt
     private static final String APPLICATION_PGP = "application/pgp";
+    private static final String SMIME_CONTENT_TYPE = "application/pkcs7-mime";
+    private static final String SMIME_X_CONTENT_TYPE = "application/x-pkcs7-mime";
 
     private static final String PGP_INLINE_START_MARKER = "-----BEGIN PGP MESSAGE-----";
     private static final String PGP_INLINE_SIGNED_START_MARKER = "-----BEGIN PGP SIGNED MESSAGE-----";
@@ -195,6 +199,35 @@ public class MessageCryptoStructureDetector {
         return inlineParts;
     }
 
+    public static List<Part> findSMIMEParts(Part startPart) {
+        List<Part> smimeParts = new ArrayList<>();
+        Stack<Part> partsToCheck = new Stack<>();
+
+        partsToCheck.push(startPart);
+
+        while(!partsToCheck.isEmpty()) {
+            Part part = partsToCheck.pop();
+            Body body = part.getBody();
+
+            if (isEnvelopedEncryptedSMIME(part)) {
+                Timber.d("Got multipart encrypted SMIME, adding to return stack");
+                smimeParts.add(part);
+                continue;
+            }
+
+            if (body instanceof Multipart) {
+                Timber.d("Got multipart body that wasn't recognized SMIME part, adding each subpart to stack to check");
+                Multipart multipart = (Multipart) body;
+                for (int i = multipart.getCount() - 1; i >= 0; i--) {
+                    BodyPart bodyPart = multipart.getBodyPart(i);
+                    partsToCheck.push(bodyPart);
+                }
+            }
+        }
+
+        return smimeParts;
+    }
+
     public static byte[] getSignatureData(Part part) throws IOException, MessagingException {
         if (isPartMultipartSigned(part)) {
             Body body = part.getBody();
@@ -300,4 +333,18 @@ public class MessageCryptoStructureDetector {
         return text.startsWith(PGP_INLINE_START_MARKER);
     }
 
+
+    public static boolean isEnvelopedEncryptedSMIME(Part part) {
+        if (part == null) {
+            Timber.d("Part was null");
+            return false;
+        }
+
+        if (!part.isMimeType(SMIME_CONTENT_TYPE) && !part.isMimeType(SMIME_X_CONTENT_TYPE)) {
+            Timber.d("Part (%s) was not of type %s or %s", part.getMimeType(), SMIME_CONTENT_TYPE, SMIME_X_CONTENT_TYPE);
+            return false;
+        }
+
+        return true;
+    }
 }

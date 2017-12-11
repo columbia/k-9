@@ -31,6 +31,7 @@ import com.fsck.k9.mailstore.MessageViewInfo;
 import com.fsck.k9.ui.crypto.MessageCryptoAnnotations;
 import com.fsck.k9.ui.crypto.MessageCryptoCallback;
 import com.fsck.k9.ui.crypto.MessageCryptoHelper;
+import com.fsck.k9.ui.crypto.smime.SMIMEMessageCryptoAnnotations;
 import com.fsck.k9.ui.message.LocalMessageExtractorLoader;
 import com.fsck.k9.ui.message.LocalMessageLoader;
 import org.openintents.openpgp.OpenPgpDecryptionResult;
@@ -91,6 +92,7 @@ public class MessageLoaderHelper {
     private LocalMessage localMessage;
     private MessageCryptoAnnotations messageCryptoAnnotations;
     private OpenPgpDecryptionResult cachedDecryptionResult;
+    private SMIMEMessageCryptoAnnotations smimeMessageCryptoAnnotations;
 
     private MessageCryptoHelper messageCryptoHelper;
 
@@ -381,7 +383,7 @@ public class MessageLoaderHelper {
             if (id != DECODE_MESSAGE_LOADER_ID) {
                 throw new IllegalStateException("loader id must be message decoder id");
             }
-            return new LocalMessageExtractorLoader(context, localMessage, messageCryptoAnnotations);
+            return new LocalMessageExtractorLoader(context, localMessage, messageCryptoAnnotations, smimeMessageCryptoAnnotations);
         }
 
         @Override

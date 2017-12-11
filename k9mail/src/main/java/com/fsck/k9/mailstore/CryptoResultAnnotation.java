@@ -185,7 +185,5 @@ public final class CryptoResultAnnotation {
         SIGNED_BUT_UNSUPPORTED,
         ENCRYPTED_BUT_UNSUPPORTED,
         OPENPGP_ENCRYPTED_NO_PROVIDER,
-        SMIME_ENCRYPTED,
-        SMIME_ENCRYPTED_BUT_INCOMPLETE,
     }
 }

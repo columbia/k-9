@@ -12,6 +12,7 @@ import com.fsck.k9.mailstore.LocalMessage;
 import com.fsck.k9.mailstore.MessageViewInfoExtractor;
 import com.fsck.k9.mailstore.MessageViewInfo;
 import com.fsck.k9.ui.crypto.MessageCryptoAnnotations;
+import com.fsck.k9.ui.crypto.smime.SMIMEMessageCryptoAnnotations;
 
 
 public class LocalMessageExtractorLoader extends AsyncTaskLoader<MessageViewInfo> {
@@ -22,12 +23,15 @@ public class LocalMessageExtractorLoader extends AsyncTaskLoader<MessageViewInfo
     private MessageViewInfo messageViewInfo;
     @Nullable
     private MessageCryptoAnnotations annotations;
+    @Nullable
+    private SMIMEMessageCryptoAnnotations smimeAnnotations;
 
     public LocalMessageExtractorLoader(
-            Context context, Message message, @Nullable MessageCryptoAnnotations annotations) {
+            Context context, Message message, @Nullable MessageCryptoAnnotations annotations, @Nullable SMIMEMessageCryptoAnnotations smimeAnnotations) {
         super(context);
         this.message = message;
         this.annotations = annotations;
+        this.smimeAnnotations = smimeAnnotations;
     }
 
     @Override
