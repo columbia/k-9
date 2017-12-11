@@ -15,6 +15,7 @@ import android.support.annotation.Nullable;
 import android.support.annotation.UiThread;
 
 import com.fsck.k9.autocrypt.AutocryptOperations;
+import com.fsck.k9.crypto.MessageCryptoStructureDetector;
 import com.fsck.k9.ui.crypto.OpenPgpApiFactory;
 import timber.log.Timber;
 
@@ -31,6 +32,7 @@ import com.fsck.k9.mailstore.MessageViewInfo;
 import com.fsck.k9.ui.crypto.MessageCryptoAnnotations;
 import com.fsck.k9.ui.crypto.MessageCryptoCallback;
 import com.fsck.k9.ui.crypto.MessageCryptoHelper;
+import com.fsck.k9.ui.crypto.smime.MessageCryptoSMIMEHelper;
 import com.fsck.k9.ui.crypto.smime.SMIMEMessageCryptoAnnotations;
 import com.fsck.k9.ui.message.LocalMessageExtractorLoader;
 import com.fsck.k9.ui.message.LocalMessageLoader;
@@ -95,6 +97,7 @@ public class MessageLoaderHelper {
     private SMIMEMessageCryptoAnnotations smimeMessageCryptoAnnotations;
 
     private MessageCryptoHelper messageCryptoHelper;
+    private MessageCryptoSMIMEHelper messageCryptoSMIMEHelper;
 
 
     public MessageLoaderHelper(Context context, LoaderManager loaderManager, FragmentManager fragmentManager,
@@ -135,7 +138,9 @@ public class MessageLoaderHelper {
     public void asyncRestartMessageCryptoProcessing() {
         cancelAndClearCryptoOperation();
         cancelAndClearDecodeLoader();
-        if (K9.isOpenPgpProviderConfigured()) {
+        if (localMessage.isMimeType(MessageCryptoStructureDetector.SMIME_CONTENT_TYPE) || localMessage.isMimeType(MessageCryptoStructureDetector.SMIME_X_CONTENT_TYPE)) {
+            startOrResumeCryptoSMIMEOperation();
+        } else if (K9.isOpenPgpProviderConfigured()) {
             startOrResumeCryptoOperation();
         } else {
             startOrResumeDecodeMessage();
@@ -215,7 +220,9 @@ public class MessageLoaderHelper {
             return;
         }
 
-        if (K9.isOpenPgpProviderConfigured()) {
+        if (localMessage.isMimeType(MessageCryptoStructureDetector.SMIME_CONTENT_TYPE) || localMessage.isMimeType(MessageCryptoStructureDetector.SMIME_X_CONTENT_TYPE)) {
+            startOrResumeCryptoSMIMEOperation();
+        } else if (K9.isOpenPgpProviderConfigured()) {
             startOrResumeCryptoOperation();
             return;
         }
@@ -284,6 +291,19 @@ public class MessageLoaderHelper {
                 localMessage, messageCryptoCallback, cachedDecryptionResult, processSignedOnly);
     }
 
+    private void startOrResumeCryptoSMIMEOperation() {
+        RetainFragment<MessageCryptoSMIMEHelper> retainCryptoHelperFragment = getMessageCryptoSMIMEHelperRetainFragment(true);
+        if (retainCryptoHelperFragment.hasData()) {
+            messageCryptoSMIMEHelper = retainCryptoHelperFragment.getData();
+        }
+        if (messageCryptoSMIMEHelper == null) {
+            messageCryptoSMIMEHelper = new MessageCryptoSMIMEHelper(context);
+            retainCryptoHelperFragment.setData(messageCryptoSMIMEHelper);
+        }
+        messageCryptoSMIMEHelper.asyncStartOrResumeProcessingMessage(
+                localMessage, messageCryptoCallback, cachedDecryptionResult, processSignedOnly);
+    }
+
     private void cancelAndClearCryptoOperation() {
         RetainFragment<MessageCryptoHelper> retainCryptoHelperFragment = getMessageCryptoHelperRetainFragment(false);
         if (retainCryptoHelperFragment != null) {
@@ -301,6 +321,14 @@ public class MessageLoaderHelper {
             return RetainFragment.findOrCreate(fragmentManager, "crypto_helper_" + messageReference.hashCode());
         } else {
             return RetainFragment.findOrNull(fragmentManager, "crypto_helper_" + messageReference.hashCode());
+        }
+    }
+
+    private RetainFragment<MessageCryptoSMIMEHelper> getMessageCryptoSMIMEHelperRetainFragment(boolean createIfNotExists) {
+        if (createIfNotExists) {
+            return RetainFragment.findOrCreate(fragmentManager, "crypto_smime_helper_" + messageReference.hashCode());
+        } else {
+            return RetainFragment.findOrNull(fragmentManager, "crypto_smime_helper_" + messageReference.hashCode());
         }
     }
 

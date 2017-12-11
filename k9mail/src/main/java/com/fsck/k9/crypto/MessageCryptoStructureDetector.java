@@ -37,8 +37,8 @@ public class MessageCryptoStructureDetector {
     private static final String TEXT_PLAIN = "text/plain";
     // APPLICATION/PGP is a special case which occurs from mutt. see http://www.mutt.org/doc/PGP-Notes.txt
     private static final String APPLICATION_PGP = "application/pgp";
-    private static final String SMIME_CONTENT_TYPE = "application/pkcs7-mime";
-    private static final String SMIME_X_CONTENT_TYPE = "application/x-pkcs7-mime";
+    public static final String SMIME_CONTENT_TYPE = "application/pkcs7-mime";
+    public static final String SMIME_X_CONTENT_TYPE = "application/x-pkcs7-mime";
 
     private static final String PGP_INLINE_START_MARKER = "-----BEGIN PGP MESSAGE-----";
     private static final String PGP_INLINE_SIGNED_START_MARKER = "-----BEGIN PGP SIGNED MESSAGE-----";
