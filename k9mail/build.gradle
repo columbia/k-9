@@ -60,12 +60,13 @@ android {
         versionCode 23540
         versionName '5.304'
 
-        minSdkVersion 15
-        targetSdkVersion 22
+        minSdkVersion 21
+        targetSdkVersion 26
 
         generatedDensities = ['mdpi', 'hdpi', 'xhdpi']
 
         testInstrumentationRunner "android.support.test.runner.AndroidJUnitRunner"
+        multiDexEnabled true
     }
 
     signingConfigs {
