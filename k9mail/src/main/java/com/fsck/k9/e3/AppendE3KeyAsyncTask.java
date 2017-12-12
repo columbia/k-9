@@ -12,7 +12,6 @@ import com.fsck.k9.R;
 import com.fsck.k9.activity.misc.Attachment;
 import com.fsck.k9.controller.MessagingController;
 import com.fsck.k9.controller.MessagingControllerCommands.PendingAppend;
-import com.fsck.k9.controller.MessagingControllerCommands.PendingCommand;
 import com.fsck.k9.mail.Address;
 import com.fsck.k9.mail.Flag;
 import com.fsck.k9.mail.Folder;
