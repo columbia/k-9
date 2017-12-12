@@ -325,8 +325,8 @@ public class AccountSetupBasics extends K9Activity
             ServerSettings incomingSettings = RemoteStore.decodeStoreUri(incomingUri.toString());
             mAccount.setDeletePolicy(AccountCreator.getDefaultDeletePolicy(incomingSettings.type));
 
-            // Check incoming here.  Then check outgoing in onActivityResult()
-            AccountSetupCheckSettings.actionCheckSettings(this, mAccount, CheckDirection.INCOMING);
+            AccountSetupE3.actionStartE3Setup(this, mAccount, password, false);
+            Timber.d("E3_SETUP", "Reached after actionStartE3Setup()");
         } catch (URISyntaxException use) {
             /*
              * If there is some problem with the URI we give up and go on to
