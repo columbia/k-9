@@ -376,6 +376,23 @@ Please submit bug reports, contribute new features and ask questions at
     <string name="account_setup_basics_show_password">Show password</string>
     <string name="account_setup_basics_manual_setup_action">Manual setup</string>
 
+    <string name="account_setup_e3_title">Set up E3 protection</string>
+    <string name="account_setup_e3_password_header">E3 Password</string>
+    <string name="account_setup_e3_password_hint">Choose E3 password</string>
+    <string name="account_setup_e3_password_confirm_hint">Confirm E3 password</string>
+    <string name="account_setup_e3_show_password">Show password</string>
+    <string name="account_setup_e3_backup_password_help">This password protects your E3 encryption key.</string>
+    <string name="account_setup_e3_advanced_options">Advanced options</string>
+    <string name="account_setup_e3_key_name_header">Key Name</string>
+    <string name="account_setup_e3_key_name_hint">A name for your E3 key</string>
+    <string name="account_setup_e3_key_name_help">Gives a name to your E3 key. If left blank, a name will be created for you.</string>
+    <string name="account_setup_e3_backup_folder_header">Backup Folder</string>
+    <string name="account_setup_e3_backup_folder_text">[E3]/Backup</string>
+    <string name="account_setup_e3_backup_folder_hint">A folder on your email account</string>
+    <string name="account_setup_e3_backup_folder_help">This is the folder in your email account used for E3 key backups.</string>
+    <string name="account_setup_e3_email_subject">E3 Key "%1$s" (DO NOT DELETE)</string>
+    <string name="account_setup_e3_email_text">Attached to this email is a backup of your E3 key-pair.\n\nName: %1$s\nDigest: %2$s</string>
+
     <string name="account_setup_check_settings_title"/>
     <string name="account_setup_check_settings_retr_info_msg">Retrieving account information\u2026</string>
     <string name="account_setup_check_settings_check_incoming_msg">Checking incoming server settings\u2026</string>
