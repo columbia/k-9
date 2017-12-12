@@ -1,16 +1,15 @@
 package com.fsck.k9.ui.crypto.smime;
 
-import android.app.PendingIntent;
 import android.content.Context;
 import android.os.Parcelable;
 import android.support.annotation.Nullable;
 
+import com.fsck.k9.Account;
 import com.fsck.k9.crypto.MessageCryptoStructureDetector;
 import com.fsck.k9.mail.Message;
 import com.fsck.k9.mail.MessagingException;
 import com.fsck.k9.mail.Part;
 import com.fsck.k9.mail.e3.E3Utils;
-import com.fsck.k9.mail.e3.smime.SMIMEDecryptFunction;
 import com.fsck.k9.mail.e3.smime.SMIMEDecryptFunctionFactory;
 import com.fsck.k9.mail.internet.MimeBodyPart;
 import com.fsck.k9.mailstore.MessageHelper;
@@ -40,6 +39,7 @@ import timber.log.Timber;
 public class MessageCryptoSMIMEHelper implements MessageCryptoHelperInterface<SMIMEMessageCryptoAnnotations, Parcelable> {
 
     private final Context context;
+    private final Account account;
     private final Object callbackLock = new Object();
     private final Deque<SMIMEPart> partsToProcess = new ArrayDeque<>();
 
@@ -60,8 +60,9 @@ public class MessageCryptoSMIMEHelper implements MessageCryptoHelperInterface<SM
 
     private Function<Part, ByteSource> smimeDecrypt;
 
-    public MessageCryptoSMIMEHelper(Context context) {
+    public MessageCryptoSMIMEHelper(Context context, Account account) {
         this.context = context.getApplicationContext();
+        this.account = account;
     }
 
     /**
@@ -89,7 +90,7 @@ public class MessageCryptoSMIMEHelper implements MessageCryptoHelperInterface<SM
         this.cachedDecryptionResult = cachedDecryptionResult;
 
         // TODO: Set an actual key entry
-        this.smimeDecrypt = SMIMEDecryptFunctionFactory.get(new E3Utils(this.context), "", "");
+        this.smimeDecrypt = SMIMEDecryptFunctionFactory.get(new E3Utils(context), account.getE3KeyName(), account.getE3Password());
 
         nextStep();
     }

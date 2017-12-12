@@ -34,6 +34,7 @@ import com.fsck.k9.mail.store.StoreConfig;
 import com.fsck.k9.mailstore.StorageManager;
 import com.fsck.k9.mailstore.StorageManager.StorageProvider;
 import com.fsck.k9.mailstore.LocalStore;
+import com.fsck.k9.preferences.StorageConstants;
 import com.fsck.k9.preferences.StorageEditor;
 import com.fsck.k9.preferences.Storage;
 import com.fsck.k9.provider.EmailProvider;
@@ -113,6 +114,9 @@ public class Account implements BaseAccount, StoreConfig {
 
     public static final String IDENTITY_NAME_KEY = "name";
     public static final String IDENTITY_EMAIL_KEY = "email";
+    public static final String IDENTITY_E3_BACKUP_FOLDER = "e3BackupFolder";
+    public static final String IDENTITY_E3_NAME_KEY = "e3Key";
+    public static final String IDENTITY_E3_PASSWORD_KEY = "e3Password";
     public static final String IDENTITY_DESCRIPTION_KEY = "description";
 
     /*
@@ -225,6 +229,7 @@ public class Account implements BaseAccount, StoreConfig {
     private boolean allowRemoteSearch;
     private boolean remoteSearchFullText;
     private int remoteSearchNumResults;
+    private boolean e3EncryptionEnabled;
 
     private ColorChip unreadColorChip;
     private ColorChip readColorChip;
@@ -321,6 +326,7 @@ public class Account implements BaseAccount, StoreConfig {
         isEnabled = true;
         markMessageAsReadOnView = true;
         alwaysShowCcBcc = false;
+        e3EncryptionEnabled = true;
 
         searchableFolders = Searchable.ALL;
 
@@ -471,6 +477,9 @@ public class Account implements BaseAccount, StoreConfig {
         isEnabled = storage.getBoolean(accountUuid + ".enabled", true);
         markMessageAsReadOnView = storage.getBoolean(accountUuid + ".markMessageAsReadOnView", true);
         alwaysShowCcBcc = storage.getBoolean(accountUuid + ".alwaysShowCcBcc", false);
+        e3EncryptionEnabled = storage.getBoolean(accountUuid + StorageConstants.E3_ENCRYPTION, true);
+        setE3BackupFolder(storage.getString(accountUuid + StorageConstants.E3_BACKUP_FOLDER, getE3BackupFolder()));
+        setE3Password(storage.getString(accountUuid + StorageConstants.E3_PASSWORD, getE3Password()));
 
         cacheChips();
 
@@ -571,6 +580,9 @@ public class Account implements BaseAccount, StoreConfig {
         editor.remove(accountUuid + ".messageFormat");
         editor.remove(accountUuid + ".messageReadReceipt");
         editor.remove(accountUuid + ".notifyMailCheck");
+        editor.remove(accountUuid + StorageConstants.E3_ENCRYPTION);
+        editor.remove(accountUuid + StorageConstants.E3_BACKUP_FOLDER);
+        editor.remove(accountUuid + StorageConstants.E3_PASSWORD);
         for (NetworkType type : NetworkType.values()) {
             editor.remove(accountUuid + ".useCompression." + type.name());
         }
@@ -736,6 +748,7 @@ public class Account implements BaseAccount, StoreConfig {
         editor.putBoolean(accountUuid + ".enabled", isEnabled);
         editor.putBoolean(accountUuid + ".markMessageAsReadOnView", markMessageAsReadOnView);
         editor.putBoolean(accountUuid + ".alwaysShowCcBcc", alwaysShowCcBcc);
+        editor.putBoolean(accountUuid + StorageConstants.E3_ENCRYPTION, e3EncryptionEnabled);
 
         editor.putBoolean(accountUuid + ".vibrate", notificationSetting.isVibrateEnabled());
         editor.putInt(accountUuid + ".vibratePattern", notificationSetting.getVibratePattern());
@@ -940,6 +953,30 @@ public class Account implements BaseAccount, StoreConfig {
 
     public synchronized void setName(String name) {
         identities.get(0).setName(name);
+    }
+
+    public synchronized String getE3Password() {
+        return identities.get(0).getE3Password();
+    }
+
+    public synchronized void setE3Password(final String e3Password) {
+        identities.get(0).setE3Password(e3Password);
+    }
+
+    public synchronized String getE3KeyName() {
+        return identities.get(0).getE3KeyName();
+    }
+
+    public synchronized void setE3KeyName(final String e3KeyName) {
+        identities.get(0).setE3KeyName(e3KeyName);
+    }
+
+    public synchronized String getE3BackupFolder() {
+        return identities.get(0).getE3BackupFolder();
+    }
+
+    public synchronized void setE3BackupFolder(final String e3BackupFolder) {
+        identities.get(0).setE3BackupFolder(e3BackupFolder);
     }
 
     public synchronized boolean getSignatureUse() {
@@ -1358,6 +1395,9 @@ public class Account implements BaseAccount, StoreConfig {
             gotOne = false;
             String name = storage.getString(accountUuid + "." + IDENTITY_NAME_KEY + "." + ident, null);
             String email = storage.getString(accountUuid + "." + IDENTITY_EMAIL_KEY + "." + ident, null);
+            String e3Password = storage.getString(accountUuid + "." + IDENTITY_E3_PASSWORD_KEY + "." + ident, null);
+            String e3KeyName = storage.getString(accountUuid + "." + IDENTITY_E3_NAME_KEY + "." + ident, null);
+            String e3BackupFolder = storage.getString(accountUuid + "." + IDENTITY_E3_BACKUP_FOLDER + "." + ident, null);
             boolean signatureUse = storage.getBoolean(accountUuid + ".signatureUse." + ident, true);
             String signature = storage.getString(accountUuid + ".signature." + ident, null);
             String description = storage.getString(accountUuid + "." + IDENTITY_DESCRIPTION_KEY + "." + ident, null);
@@ -1366,6 +1406,9 @@ public class Account implements BaseAccount, StoreConfig {
                 Identity identity = new Identity();
                 identity.setName(name);
                 identity.setEmail(email);
+                identity.setE3BackupFolder(e3BackupFolder);
+                identity.setE3KeyName(e3KeyName);
+                identity.setE3Password(e3Password);
                 identity.setSignatureUse(signatureUse);
                 identity.setSignature(signature);
                 identity.setDescription(description);
@@ -1402,6 +1445,9 @@ public class Account implements BaseAccount, StoreConfig {
             if (email != null) {
                 editor.remove(accountUuid + "." + IDENTITY_NAME_KEY + "." + ident);
                 editor.remove(accountUuid + "." + IDENTITY_EMAIL_KEY + "." + ident);
+                editor.remove(accountUuid + "." + IDENTITY_E3_BACKUP_FOLDER + "." + ident);
+                editor.remove(accountUuid + "." + IDENTITY_E3_NAME_KEY + "." + ident);
+                editor.remove(accountUuid + "." + IDENTITY_E3_PASSWORD_KEY + "." + ident);
                 editor.remove(accountUuid + ".signatureUse." + ident);
                 editor.remove(accountUuid + ".signature." + ident);
                 editor.remove(accountUuid + "." + IDENTITY_DESCRIPTION_KEY + "." + ident);
@@ -1419,6 +1465,9 @@ public class Account implements BaseAccount, StoreConfig {
         for (Identity identity : identities) {
             editor.putString(accountUuid + "." + IDENTITY_NAME_KEY + "." + ident, identity.getName());
             editor.putString(accountUuid + "." + IDENTITY_EMAIL_KEY + "." + ident, identity.getEmail());
+            editor.putString(accountUuid + "." + IDENTITY_E3_BACKUP_FOLDER + "." + ident, identity.getE3BackupFolder());
+            editor.putString(accountUuid + "." + IDENTITY_E3_NAME_KEY + "." + ident, identity.getE3KeyName());
+            editor.putString(accountUuid + "." + IDENTITY_E3_PASSWORD_KEY + "." + ident, identity.getE3Password());
             editor.putBoolean(accountUuid + ".signatureUse." + ident, identity.getSignatureUse());
             editor.putString(accountUuid + ".signature." + ident, identity.getSignature());
             editor.putString(accountUuid + "." + IDENTITY_DESCRIPTION_KEY + "." + ident, identity.getDescription());
@@ -1653,6 +1702,14 @@ public class Account implements BaseAccount, StoreConfig {
 
     public void setRemoteSearchNumResults(int val) {
         remoteSearchNumResults = (val >= 0 ? val : 0);
+    }
+
+    public boolean isE3EncryptionEnabled() {
+        return e3EncryptionEnabled;
+    }
+
+    public void setE3EncryptionEnabled(boolean e3EncryptionEnabled) {
+        this.e3EncryptionEnabled = e3EncryptionEnabled;
     }
 
     public String getInboxFolderName() {

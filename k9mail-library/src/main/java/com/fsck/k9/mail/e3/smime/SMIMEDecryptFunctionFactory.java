@@ -12,7 +12,9 @@ import java.security.NoSuchAlgorithmException;
 import java.security.UnrecoverableEntryException;
 
 /**
- * Created by mauzel on 12/11/2017.
+ * Factory for creating {@link SMIMEDecryptFunction} instances.
+ *
+ * Created by koh on 12/11/2017.
  */
 
 public final class SMIMEDecryptFunctionFactory {

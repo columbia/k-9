@@ -138,7 +138,7 @@ public class MessageLoaderHelper {
     public void asyncRestartMessageCryptoProcessing() {
         cancelAndClearCryptoOperation();
         cancelAndClearDecodeLoader();
-        if (localMessage.isMimeType(MessageCryptoStructureDetector.SMIME_CONTENT_TYPE) || localMessage.isMimeType(MessageCryptoStructureDetector.SMIME_X_CONTENT_TYPE)) {
+        if (shouldDecryptSMIME()) {
             startOrResumeCryptoSMIMEOperation();
         } else if (K9.isOpenPgpProviderConfigured()) {
             startOrResumeCryptoOperation();
@@ -220,7 +220,7 @@ public class MessageLoaderHelper {
             return;
         }
 
-        if (localMessage.isMimeType(MessageCryptoStructureDetector.SMIME_CONTENT_TYPE) || localMessage.isMimeType(MessageCryptoStructureDetector.SMIME_X_CONTENT_TYPE)) {
+        if (shouldDecryptSMIME()) {
             startOrResumeCryptoSMIMEOperation();
         } else if (K9.isOpenPgpProviderConfigured()) {
             startOrResumeCryptoOperation();
@@ -297,7 +297,7 @@ public class MessageLoaderHelper {
             messageCryptoSMIMEHelper = retainCryptoHelperFragment.getData();
         }
         if (messageCryptoSMIMEHelper == null) {
-            messageCryptoSMIMEHelper = new MessageCryptoSMIMEHelper(context);
+            messageCryptoSMIMEHelper = new MessageCryptoSMIMEHelper(context, account);
             retainCryptoHelperFragment.setData(messageCryptoSMIMEHelper);
         }
         messageCryptoSMIMEHelper.asyncStartOrResumeProcessingMessage(
@@ -515,6 +515,11 @@ public class MessageLoaderHelper {
         }
     };
 
+    private boolean shouldDecryptSMIME() {
+        boolean isSMIME = localMessage.isMimeType(MessageCryptoStructureDetector.SMIME_CONTENT_TYPE);
+        boolean isXSMIME = localMessage.isMimeType(MessageCryptoStructureDetector.SMIME_X_CONTENT_TYPE);
+        return isSMIME || isXSMIME;
+    }
 
     // callback interface
 
