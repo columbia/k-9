@@ -244,7 +244,7 @@ public class MessageCryptoStructureDetector {
     }
 
     private static boolean isPartEncryptedOrSigned(Part part) {
-        return isPartMultipartEncrypted(part) || isPartMultipartSigned(part) || isPartPgpInlineEncryptedOrSigned(part);
+        return isPartMultipartEncrypted(part) || isPartMultipartSigned(part) || isPartPgpInlineEncryptedOrSigned(part) || isEnvelopedEncryptedSMIME(part);
     }
 
     private static boolean isPartMultipartSigned(Part part) {

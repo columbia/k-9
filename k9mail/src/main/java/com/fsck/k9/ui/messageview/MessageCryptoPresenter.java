@@ -18,6 +18,7 @@ import com.fsck.k9.K9;
 import com.fsck.k9.R;
 import com.fsck.k9.mailstore.CryptoResultAnnotation;
 import com.fsck.k9.mailstore.MessageViewInfo;
+import com.fsck.k9.mailstore.SMIMECryptoResultAnnotation;
 import com.fsck.k9.view.MessageCryptoDisplayStatus;
 import timber.log.Timber;
 
@@ -37,6 +38,7 @@ public class MessageCryptoPresenter implements OnCryptoClickListener {
 
     // transient state
     private CryptoResultAnnotation cryptoResultAnnotation;
+    private SMIMECryptoResultAnnotation smimeCryptoResultAnnotation;
     private boolean reloadOnResumeWithoutRecreateFlag;
 
 

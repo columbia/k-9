@@ -15,6 +15,7 @@ public class MessageViewInfo {
     public final AttachmentResolver attachmentResolver;
     public final String text;
     public final CryptoResultAnnotation cryptoResultAnnotation;
+    public final SMIMECryptoResultAnnotation smimeCryptoResultAnnotation;
     public final List<AttachmentViewInfo> attachments;
     public final String extraText;
     public final List<AttachmentViewInfo> extraAttachments;
@@ -24,6 +25,7 @@ public class MessageViewInfo {
             Message message, boolean isMessageIncomplete, Part rootPart,
             String text, List<AttachmentViewInfo> attachments,
             CryptoResultAnnotation cryptoResultAnnotation,
+            SMIMECryptoResultAnnotation smimeCryptoResultAnnotation,
             AttachmentResolver attachmentResolver,
             String extraText, List<AttachmentViewInfo> extraAttachments) {
         this.message = message;
@@ -31,6 +33,7 @@ public class MessageViewInfo {
         this.rootPart = rootPart;
         this.text = text;
         this.cryptoResultAnnotation = cryptoResultAnnotation;
+        this.smimeCryptoResultAnnotation = smimeCryptoResultAnnotation;
         this.attachmentResolver = attachmentResolver;
         this.attachments = attachments;
         this.extraText = extraText;
@@ -40,18 +43,30 @@ public class MessageViewInfo {
     static MessageViewInfo createWithExtractedContent(Message message, boolean isMessageIncomplete,
             String text, List<AttachmentViewInfo> attachments, AttachmentResolver attachmentResolver) {
         return new MessageViewInfo(
-                message, isMessageIncomplete, message, text, attachments, null, attachmentResolver, null,
+                message, isMessageIncomplete, message, text, attachments, null, null, attachmentResolver, null,
                 Collections.<AttachmentViewInfo>emptyList());
     }
 
     public static MessageViewInfo createWithErrorState(Message message, boolean isMessageIncomplete) {
-        return new MessageViewInfo(message, isMessageIncomplete, null, null, null, null, null, null, null);
+        return new MessageViewInfo(message, isMessageIncomplete, null, null, null, null, null, null, null, null);
     }
 
     MessageViewInfo withCryptoData(CryptoResultAnnotation rootPartAnnotation, String extraViewableText,
             List<AttachmentViewInfo> extraAttachmentInfos) {
         return new MessageViewInfo(
                 message, isMessageIncomplete, rootPart, text, attachments,
+                rootPartAnnotation,
+                null,
+                attachmentResolver,
+                extraViewableText, extraAttachmentInfos
+        );
+    }
+
+    MessageViewInfo withCryptoData(SMIMECryptoResultAnnotation rootPartAnnotation, String extraViewableText,
+                                   List<AttachmentViewInfo> extraAttachmentInfos) {
+        return new MessageViewInfo(
+                message, isMessageIncomplete, rootPart, text, attachments,
+                null,
                 rootPartAnnotation,
                 attachmentResolver,
                 extraViewableText, extraAttachmentInfos

@@ -386,7 +386,7 @@ public class MessageViewInfoExtractorTest {
         setupAttachmentInfoForPart(attachmentPart, attachmentViewInfo);
 
 
-        MessageViewInfo messageViewInfo = messageViewInfoExtractor.extractMessageForView(message, null);
+        MessageViewInfo messageViewInfo = messageViewInfoExtractor.extractMessageForView(message, null, null);
 
 
         assertEquals("<pre class=\"k9mail\">text</pre>", messageViewInfo.text);
@@ -406,7 +406,7 @@ public class MessageViewInfoExtractorTest {
         MessageCryptoAnnotations messageCryptoAnnotations = createAnnotations(message, annotation);
 
 
-        MessageViewInfo messageViewInfo = messageViewInfoExtractor.extractMessageForView(message, messageCryptoAnnotations);
+        MessageViewInfo messageViewInfo = messageViewInfoExtractor.extractMessageForView(message, messageCryptoAnnotations, null);
 
 
         assertEquals("<pre class=\"k9mail\">text</pre>", messageViewInfo.text);
@@ -427,7 +427,7 @@ public class MessageViewInfoExtractorTest {
         MessageCryptoAnnotations messageCryptoAnnotations = createAnnotations(message, annotation);
 
 
-        MessageViewInfo messageViewInfo = messageViewInfoExtractor.extractMessageForView(message, messageCryptoAnnotations);
+        MessageViewInfo messageViewInfo = messageViewInfoExtractor.extractMessageForView(message, messageCryptoAnnotations, null);
 
 
         assertEquals("<pre class=\"k9mail\">replacement text</pre>", messageViewInfo.text);
@@ -452,7 +452,7 @@ public class MessageViewInfoExtractorTest {
         MessageCryptoAnnotations messageCryptoAnnotations = createAnnotations(signedPart, annotation);
 
 
-        MessageViewInfo messageViewInfo = messageViewInfoExtractor.extractMessageForView(message, messageCryptoAnnotations);
+        MessageViewInfo messageViewInfo = messageViewInfoExtractor.extractMessageForView(message, messageCryptoAnnotations, null);
 
 
         assertEquals("<pre class=\"k9mail\">text</pre>", messageViewInfo.text);
@@ -481,7 +481,7 @@ public class MessageViewInfoExtractorTest {
         setupAttachmentInfoForPart(extraAttachment, attachmentViewInfo);
 
 
-        MessageViewInfo messageViewInfo = messageViewInfoExtractor.extractMessageForView(message, messageCryptoAnnotations);
+        MessageViewInfo messageViewInfo = messageViewInfoExtractor.extractMessageForView(message, messageCryptoAnnotations, null);
 
 
         assertEquals("<pre class=\"k9mail\">text</pre>", messageViewInfo.text);
@@ -499,7 +499,7 @@ public class MessageViewInfoExtractorTest {
                 )
         );
 
-        MessageViewInfo messageViewInfo = messageViewInfoExtractor.extractMessageForView(message, null);
+        MessageViewInfo messageViewInfo = messageViewInfoExtractor.extractMessageForView(message, null, null);
 
         assertEquals(CryptoError.OPENPGP_ENCRYPTED_NO_PROVIDER, messageViewInfo.cryptoResultAnnotation.getErrorType());
         assertNull(messageViewInfo.text);
@@ -516,7 +516,7 @@ public class MessageViewInfoExtractorTest {
                 )
         );
 
-        MessageViewInfo messageViewInfo = messageViewInfoExtractor.extractMessageForView(message, null);
+        MessageViewInfo messageViewInfo = messageViewInfoExtractor.extractMessageForView(message, null, null);
 
         assertEquals("<pre class=\"k9mail\">text</pre>", messageViewInfo.text);
         assertNull(messageViewInfo.cryptoResultAnnotation);
@@ -539,7 +539,7 @@ public class MessageViewInfoExtractorTest {
         AttachmentViewInfo mock = mock(AttachmentViewInfo.class);
         setupAttachmentInfoForPart(extraAttachment, mock);
 
-        MessageViewInfo messageViewInfo = messageViewInfoExtractor.extractMessageForView(message, null);
+        MessageViewInfo messageViewInfo = messageViewInfoExtractor.extractMessageForView(message, null, null);
 
         assertEquals("<pre class=\"k9mail\">text</pre>", messageViewInfo.text);
         assertNull(messageViewInfo.cryptoResultAnnotation);

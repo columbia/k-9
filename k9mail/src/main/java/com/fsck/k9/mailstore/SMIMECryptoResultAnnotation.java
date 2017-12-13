@@ -38,6 +38,10 @@ public class SMIMECryptoResultAnnotation {
         return replacementData;
     }
 
+    public boolean hasReplacementData() {
+        return replacementData != null;
+    }
+
     public enum CryptoError {
         ENCRYPTED_BUT_UNSUPPORTED,
         SMIME_ENCRYPTED,

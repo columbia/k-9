@@ -29,6 +29,8 @@ import com.fsck.k9.message.extractors.AttachmentInfoExtractor;
 import com.fsck.k9.message.html.HtmlConverter;
 import com.fsck.k9.message.html.HtmlProcessor;
 import com.fsck.k9.ui.crypto.MessageCryptoAnnotations;
+import com.fsck.k9.ui.crypto.smime.SMIMEMessageCryptoAnnotations;
+
 import org.openintents.openpgp.util.OpenPgpUtils;
 import timber.log.Timber;
 
@@ -70,7 +72,8 @@ public class MessageViewInfoExtractor {
     }
 
     @WorkerThread
-    public MessageViewInfo extractMessageForView(Message message, @Nullable MessageCryptoAnnotations cryptoAnnotations)
+    public MessageViewInfo extractMessageForView(Message message, @Nullable MessageCryptoAnnotations cryptoAnnotations,
+                                                 @Nullable SMIMEMessageCryptoAnnotations smimeCryptoAnnotations)
             throws MessagingException {
         ArrayList<Part> extraParts = new ArrayList<>();
         Part cryptoContentPart = MessageCryptoStructureDetector.findPrimaryEncryptedOrSignedPart(message, extraParts);
@@ -85,17 +88,26 @@ public class MessageViewInfoExtractor {
         boolean isOpenPgpEncrypted = (MessageCryptoStructureDetector.isPartMultipartEncrypted(cryptoContentPart) &&
                         MessageCryptoStructureDetector.isMultipartEncryptedOpenPgpProtocol(cryptoContentPart)) ||
                         MessageCryptoStructureDetector.isPartPgpInlineEncrypted(cryptoContentPart);
-        if (!K9.isOpenPgpProviderConfigured() && isOpenPgpEncrypted) {
-            CryptoResultAnnotation noProviderAnnotation = CryptoResultAnnotation.createErrorAnnotation(
-                    CryptoError.OPENPGP_ENCRYPTED_NO_PROVIDER, null);
-            return MessageViewInfo.createWithErrorState(message, false)
-                    .withCryptoData(noProviderAnnotation, null, null);
-        }
+        boolean isSMIMEEncrypted = MessageCryptoStructureDetector.isEnvelopedEncryptedSMIME(cryptoContentPart);
 
-        CryptoResultAnnotation cryptoContentPartAnnotation =
-                cryptoAnnotations != null ? cryptoAnnotations.get(cryptoContentPart) : null;
-        if (cryptoContentPartAnnotation != null) {
-            return extractCryptoMessageForView(message, extraParts, cryptoContentPart, cryptoContentPartAnnotation);
+        if (isOpenPgpEncrypted) {
+            if (!K9.isOpenPgpProviderConfigured()) {
+                CryptoResultAnnotation noProviderAnnotation = CryptoResultAnnotation.createErrorAnnotation(
+                        CryptoError.OPENPGP_ENCRYPTED_NO_PROVIDER, null);
+                return MessageViewInfo.createWithErrorState(message, false)
+                        .withCryptoData(noProviderAnnotation, null, null);
+            }
+
+            CryptoResultAnnotation cryptoContentPartAnnotation =
+                    cryptoAnnotations != null ? cryptoAnnotations.get(cryptoContentPart) : null;
+            if (cryptoContentPartAnnotation != null) {
+                return extractCryptoMessageForView(message, extraParts, cryptoContentPart, cryptoContentPartAnnotation);
+            }
+        } else if (isSMIMEEncrypted) {
+            SMIMECryptoResultAnnotation smimeCryptoPartAnnotation = smimeCryptoAnnotations != null ? smimeCryptoAnnotations.get(cryptoContentPart) : null;
+            if (smimeCryptoPartAnnotation != null) {
+                return extractSMIMECryptoMessageForView(message, extraParts, cryptoContentPart, smimeCryptoPartAnnotation);
+            }
         }
 
         return extractSimpleMessageForView(message, message);
@@ -113,6 +125,23 @@ public class MessageViewInfoExtractor {
 
         MessageViewInfo messageViewInfo = extractSimpleMessageForView(message, cryptoContentPart);
         return messageViewInfo.withCryptoData(cryptoContentPartAnnotation, extraViewable.text, extraAttachmentInfos);
+    }
+
+    // I hate that I need to do this. But CryptoResultAnnotation is too closely coupled to PGP.
+    private MessageViewInfo extractSMIMECryptoMessageForView(Message message,
+                                                             ArrayList<Part> extraParts,
+                                                             Part cryptoContentPart,
+                                                             SMIMECryptoResultAnnotation smimeCryptoContentPartAnnotation)
+            throws MessagingException {
+        if (smimeCryptoContentPartAnnotation != null && smimeCryptoContentPartAnnotation.hasReplacementData()) {
+            cryptoContentPart = smimeCryptoContentPartAnnotation.getReplacementData();
+        }
+
+        List<AttachmentViewInfo> extraAttachmentInfos = new ArrayList<>();
+        ViewableExtractedText extraViewable = extractViewableAndAttachments(extraParts, extraAttachmentInfos);
+
+        MessageViewInfo messageViewInfo = extractSimpleMessageForView(message, cryptoContentPart);
+        return messageViewInfo.withCryptoData(smimeCryptoContentPartAnnotation, extraViewable.text, extraAttachmentInfos);
     }
 
     private MessageViewInfo extractSimpleMessageForView(Message message, Part contentPart) throws MessagingException {
