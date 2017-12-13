@@ -54,8 +54,7 @@ public class AccountSetupE3 extends K9Activity implements OnClickListener, TextW
     private static final String EXTRA_ACCOUNT = "account";
     private static final String EXTRA_MAKE_DEFAULT = "makeDefault";
     private static final String EXTRA_ACCOUNT_PASSWORD = "accountPassword";
-    private final static String STATE_KEY_CHECKED_INCOMING = "com.fsck.k9.AccountSetupE3" + "" +
-            ".checkedIncoming";
+    private final static String STATE_KEY_CHECKED_INCOMING = "com.fsck.k9.AccountSetupE3.checkedIncoming";
 
     private Account mAccount;
     private EditText mE3PasswordView;
@@ -97,12 +96,6 @@ public class AccountSetupE3 extends K9Activity implements OnClickListener, TextW
         accountPassword = getIntent().getStringExtra(EXTRA_ACCOUNT_PASSWORD);
         keyStoreService = new E3KeyStoreService(new E3Utils(getApplicationContext()));
         pkcs12Generator = new E3X509PKCS12Generator();
-
-        // TODO: remove this
-//        if (K9.DEBUG) {
-//            mE3PasswordView.setText(E3Constants.DEBUG_E3_PASS);
-//            mE3PasswordConfirmView.setText(E3Constants.DEBUG_E3_PASS);
-//        }
     }
 
     @Override
@@ -110,11 +103,6 @@ public class AccountSetupE3 extends K9Activity implements OnClickListener, TextW
         super.onPostCreate(savedInstanceState);
         initializeViewListeners();
         validateFields();
-
-        // TODO: remove this
-        //if (K9.DEBUG) {
-        //finishE3Setup();
-        //}
     }
 
     private void initializeViewListeners() {

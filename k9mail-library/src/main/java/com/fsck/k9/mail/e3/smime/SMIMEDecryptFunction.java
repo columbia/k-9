@@ -1,5 +1,7 @@
 package com.fsck.k9.mail.e3.smime;
 
+import android.util.Log;
+
 import com.fsck.k9.mail.Body;
 import com.fsck.k9.mail.Message;
 import com.fsck.k9.mail.MessagingException;
@@ -17,6 +19,7 @@ import com.google.common.base.Preconditions;
 import com.google.common.io.ByteSource;
 import com.google.common.io.ByteStreams;
 import com.google.common.io.Closeables;
+import com.google.common.io.Files;
 
 import org.apache.commons.io.FileUtils;
 
@@ -73,6 +76,8 @@ public class SMIMEDecryptFunction implements Function<Part, ByteSource> {
             envelopedFile = e3Utils.getTempFile("decrypted", "enveloped-data");
             decryptedFile = e3Utils.getTempFile("decrypted", "plain");
             writeToEnvelopeFile(envelopedFile, contentType, encryptedBodyInputStream);
+
+            Log.d(E3Constants.LOG_TAG, "encryptedBody=" + Files.asCharSource(envelopedFile, Charsets.UTF_8).read());
 
             if (envelopedFile.length() < 1) {
                 Timber.d(E3Constants.LOG_TAG, "Message did not have data available. If this happens, the quickest workaround is to increase Fetching messages size");

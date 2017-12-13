@@ -8,8 +8,8 @@ import com.fsck.k9.mail.Message;
 
 public interface MessageCryptoHelperInterface<T, S> {
 
-    public boolean isConfiguredForOutdatedCryptoProvider();
+    boolean isConfiguredForOutdatedCryptoProvider();
 
-    public void asyncStartOrResumeProcessingMessage(Message message, MessageCryptoCallback<T> callback,
-                                                    S cachedDecryptionResult, boolean processSignedOnly);
+    void asyncStartOrResumeProcessingMessage(Message message, MessageCryptoCallback<T> callback,
+                                             S cachedDecryptionResult, boolean processSignedOnly);
 }

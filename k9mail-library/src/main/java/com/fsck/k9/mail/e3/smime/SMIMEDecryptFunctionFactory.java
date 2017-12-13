@@ -20,7 +20,8 @@ import java.security.UnrecoverableEntryException;
 public final class SMIMEDecryptFunctionFactory {
     public static Function<Part, ByteSource> get(final E3Utils e3Utils, final String
             keyAlias, final String keyPassword) {
-        final E3KeyStoreService keyStoreService = new E3KeyStoreService(e3Utils);
+        // TODO: Make keyPassword separate from key store password
+        final E3KeyStoreService keyStoreService = new E3KeyStoreService(e3Utils, keyPassword);
         final char[] e3Password = keyPassword.toCharArray();
         final KeyStore.ProtectionParameter protParam = new KeyStore.PasswordProtection(e3Password);
 

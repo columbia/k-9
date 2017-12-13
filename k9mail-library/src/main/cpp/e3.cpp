@@ -383,6 +383,14 @@ Java_com_fsck_k9_mail_e3_smime_SMIMEDecryptFunction_cmsDecryptJNI(JNIEnv *env,
         __android_log_print(ANDROID_LOG_INFO, E3_CPP_DECRYPT,
                             "SMIME_read_CMS() for cms_decrypted failed! (env_data=%s), %s",
                             env_data_loc, ERR_error_string(ERR_peek_last_error(), NULL));
+        /*
+        BUF_MEM *bufferPtr = NULL;
+        BIO_get_mem_ptr(decrypted_cont, &bufferPtr);
+        char *temp_buff = (char *) malloc(bufferPtr->length);
+        memcpy(temp_buff, bufferPtr->data, bufferPtr->length - 1);
+        temp_buff[bufferPtr->length - 1] = 0;
+        __android_log_print(ANDROID_LOG_INFO, E3_CPP_DECRYPT, "SMIME_read_CMS() decrypted_cont BIO=%s", temp_buff);
+         */
         goto err;
     }
     logDuration(ANDROID_LOG_INFO, "BoringDecryptMeasure startReadCms", startReadCms);
