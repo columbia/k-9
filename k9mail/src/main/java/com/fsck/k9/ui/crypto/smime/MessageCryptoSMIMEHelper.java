@@ -15,6 +15,8 @@ import com.fsck.k9.mail.internet.MimeBodyPart;
 import com.fsck.k9.mailstore.MessageHelper;
 import com.fsck.k9.mailstore.MimePartStreamParser;
 import com.fsck.k9.mailstore.SMIMECryptoResultAnnotation;
+import com.fsck.k9.mailstore.util.FileFactory;
+import com.fsck.k9.provider.DecryptedFileProvider;
 import com.fsck.k9.ui.crypto.MessageCryptoCallback;
 import com.fsck.k9.ui.crypto.MessageCryptoHelperInterface;
 import com.google.common.base.Function;
@@ -179,7 +181,9 @@ public class MessageCryptoSMIMEHelper implements MessageCryptoHelperInterface<SM
         InputStream decryptedIn = null;
         try {
             decryptedIn = decryptedBytes.openStream();
-            MimeBodyPart decryptedResult = MimePartStreamParser.parse(null, decryptedIn);
+
+            FileFactory fileFactory = DecryptedFileProvider.getFileFactory(context);
+            MimeBodyPart decryptedResult = MimePartStreamParser.parse(fileFactory, decryptedIn);
             SMIMECryptoResultAnnotation resultAnnotation = SMIMECryptoResultAnnotation.createSMIMEResultAnnotation(decryptedResult);
 
             // Now add result to things
