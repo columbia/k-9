@@ -1,4 +1,4 @@
-package com.fsck.k9.mailstore;
+package com.fsck.k9.mail.body;
 
 
 import java.io.BufferedInputStream;
@@ -17,8 +17,8 @@ import timber.log.Timber;
 import com.fsck.k9.mail.MessagingException;
 import com.fsck.k9.mail.internet.RawDataBody;
 import com.fsck.k9.mail.internet.SizeAware;
-import com.fsck.k9.mailstore.util.DeferredFileOutputStream;
-import com.fsck.k9.mailstore.util.FileFactory;
+import com.fsck.k9.mail.util.DeferredFileOutputStream;
+import com.fsck.k9.mail.util.FileFactory;
 import org.apache.commons.io.IOUtils;
 
 

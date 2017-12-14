@@ -80,7 +80,9 @@ import com.fsck.k9.mail.Pusher;
 import com.fsck.k9.mail.Store;
 import com.fsck.k9.mail.Transport;
 import com.fsck.k9.mail.TransportProvider;
+import com.fsck.k9.mail.e3.smime.SMIMEEncryptFunctionFactory;
 import com.fsck.k9.mail.internet.MessageExtractor;
+import com.fsck.k9.mail.internet.MimeMessage;
 import com.fsck.k9.mail.internet.MimeUtility;
 import com.fsck.k9.mail.power.TracingPowerManager;
 import com.fsck.k9.mail.power.TracingPowerManager.TracingWakeLock;
@@ -99,6 +101,8 @@ import com.fsck.k9.search.LocalSearch;
 import com.fsck.k9.search.SearchAccount;
 import com.fsck.k9.search.SearchSpecification;
 import com.fsck.k9.search.SqlQueryBuilder;
+import com.google.common.base.Function;
+
 import timber.log.Timber;
 
 import static com.fsck.k9.K9.MAX_SEND_ATTEMPTS;
@@ -128,7 +132,6 @@ public class MessagingController {
 
 
     private final Context context;
-    private final Contacts contacts;
     private final NotificationController notificationController;
 
     private final Thread controllerThread;
@@ -140,7 +143,7 @@ public class MessagingController {
     private final ExecutorService threadPool = Executors.newCachedThreadPool();
     private final MemorizingMessagingListener memorizingMessagingListener = new MemorizingMessagingListener();
     private final TransportProvider transportProvider;
-
+    private final MessagingControllerSupport controllerSupport;
 
     private MessagingListener checkMailListener = null;
     private volatile boolean stopped = false;
@@ -163,7 +166,7 @@ public class MessagingController {
             Contacts contacts, TransportProvider transportProvider) {
         this.context = context;
         this.notificationController = notificationController;
-        this.contacts = contacts;
+        this.controllerSupport = new MessagingControllerSupport(contacts);
         this.transportProvider = transportProvider;
 
         controllerThread = new Thread(new Runnable() {
@@ -1316,16 +1319,6 @@ public class MessagingController {
                 });
     }
 
-    private boolean shouldImportMessage(final Account account, final Message message,
-            final Date earliestDate) {
-
-        if (account.isSearchByDateCapable() && message.olderThan(earliestDate)) {
-            Timber.d("Message %s is older than %s, hence not saving", message.getUid(), earliestDate);
-            return false;
-        }
-        return true;
-    }
-
     private <T extends Message> void downloadSmallMessages(final Account account, final Folder<T> remoteFolder,
             final LocalFolder localFolder,
             List<T> smallMessages,
@@ -1340,62 +1333,26 @@ public class MessagingController {
 
         Timber.d("SYNC: Fetching %d small messages for folder %s", smallMessages.size(), folder);
 
-        remoteFolder.fetch(smallMessages,
-                fp, new MessageRetrievalListener<T>() {
-                    @Override
-                    public void messageFinished(final T message, int number, int ofTotal) {
-                        try {
+        // Need to get at runtime because we don't know account when instantiating MessagingController
+        final Function<MimeMessage, MimeMessage> encryptFunction = SMIMEEncryptFunctionFactory.get(context, account.getE3KeyName(),
+                account.getE3Password());
 
-                            if (!shouldImportMessage(account, message, earliestDate)) {
-                                progress.incrementAndGet();
+        @SuppressWarnings("unchecked") // Due to the remote folder setter
+        final E3MessageRetrievalListener<T> retrievalListener = new
+                E3MessageRetrievalListener.Builder<>().setContext(context) //
+                .setAccount(account) //
+                .setController(this) //
+                .setRemoteFolder(remoteFolder.getName()) //
+                .setLocalFolder(localFolder) //
+                .setUnreadBeforeStart(unreadBeforeStart) //
+                .setNewMessages(newMessages) //
+                .setTodo(todo) //
+                .setProgress(progress) //
+                .setEncryptFunction(encryptFunction) //
+                .setControllerSupport(controllerSupport) //
+                .build();
 
-                                return;
-                            }
-
-                            // Store the updated message locally
-                            final LocalMessage localMessage = localFolder.storeSmallMessage(message, new Runnable() {
-                                @Override
-                                public void run() {
-                                    progress.incrementAndGet();
-                                }
-                            });
-
-                            // Increment the number of "new messages" if the newly downloaded message is
-                            // not marked as read.
-                            if (!localMessage.isSet(Flag.SEEN)) {
-                                newMessages.incrementAndGet();
-                            }
-
-                            Timber.v("About to notify listeners that we got a new small message %s:%s:%s",
-                                    account, folder, message.getUid());
-
-                            // Update the listener with what we've found
-                            for (MessagingListener l : getListeners()) {
-                                l.synchronizeMailboxProgress(account, folder, progress.get(), todo);
-                                if (!localMessage.isSet(Flag.SEEN)) {
-                                    l.synchronizeMailboxNewMessage(account, folder, localMessage);
-                                }
-                            }
-                            // Send a notification of this message
-
-                            if (shouldNotifyForMessage(account, localFolder, message)) {
-                                // Notify with the localMessage so that we don't have to recalculate the content preview.
-                                notificationController.addNewMailNotification(account, localMessage, unreadBeforeStart);
-                            }
-
-                        } catch (MessagingException me) {
-                            Timber.e(me, "SYNC: fetch small messages");
-                        }
-                    }
-
-                    @Override
-                    public void messageStarted(String uid, int number, int ofTotal) {
-                    }
-
-                    @Override
-                    public void messagesFinished(int total) {
-                    }
-                });
+        remoteFolder.fetch(smallMessages, fp, retrievalListener);
 
         Timber.d("SYNC: Done fetching small messages for folder %s", folder);
     }
@@ -1416,7 +1373,7 @@ public class MessagingController {
         remoteFolder.fetch(largeMessages, fp, null);
         for (T message : largeMessages) {
 
-            if (!shouldImportMessage(account, message, earliestDate)) {
+            if (!controllerSupport.shouldImportMessage(account, message, earliestDate)) {
                 progress.incrementAndGet();
                 continue;
             }
@@ -1446,7 +1403,7 @@ public class MessagingController {
                 }
             }
             // Send a notification of this message
-            if (shouldNotifyForMessage(account, localFolder, message)) {
+            if (controllerSupport.shouldNotifyForMessage(account, localFolder, message)) {
                 // Notify with the localMessage so that we don't have to recalculate the content preview.
                 notificationController.addNewMailNotification(account, localMessage, unreadBeforeStart);
             }
@@ -1562,7 +1519,7 @@ public class MessagingController {
                             l.synchronizeMailboxRemovedMessage(account, folder, localMessage);
                         }
                     } else {
-                        if (shouldNotifyForMessage(account, localFolder, localMessage)) {
+                        if (controllerSupport.shouldNotifyForMessage(account, localFolder, localMessage)) {
                             shouldBeNotifiedOf = true;
                         }
                     }
@@ -1622,7 +1579,7 @@ public class MessagingController {
         }
     }
 
-    private void queuePendingCommand(Account account, PendingCommand command) {
+    void queuePendingCommand(Account account, PendingCommand command) {
         try {
             LocalStore localStore = account.getLocalStore();
             localStore.addPendingCommand(command);
@@ -1631,7 +1588,7 @@ public class MessagingController {
         }
     }
 
-    private void processPendingCommands(final Account account) {
+    void processPendingCommands(final Account account) {
         putBackground("processPendingCommands", null, new Runnable() {
             @Override
             public void run() {
@@ -1653,7 +1610,7 @@ public class MessagingController {
         });
     }
 
-    private void processPendingCommandsSynchronous(Account account) throws MessagingException {
+    void processPendingCommandsSynchronous(Account account) throws MessagingException {
         LocalStore localStore = account.getLocalStore();
         List<PendingCommand> commands = localStore.getPendingCommands();
 
@@ -1946,7 +1903,7 @@ public class MessagingController {
         }
     }
 
-    private void queueSetFlag(final Account account, final String folderName,
+    void queueSetFlag(final Account account, final String folderName,
             final boolean newState, final Flag flag, final List<String> uids) {
         putBackground("queueSetFlag " + account.getDescription() + ":" + folderName, null, new Runnable() {
             @Override
@@ -3510,7 +3467,7 @@ public class MessagingController {
                 Folder.FolderClass fDisplayClass = folder.getDisplayClass();
                 Folder.FolderClass fSyncClass = folder.getSyncClass();
 
-                if (modeMismatch(aDisplayMode, fDisplayClass)) {
+                if (controllerSupport.modeMismatch(aDisplayMode, fDisplayClass)) {
                     // Never sync a folder that isn't displayed
                     /*
                     if (K9.DEBUG) {
@@ -3522,7 +3479,7 @@ public class MessagingController {
                     continue;
                 }
 
-                if (modeMismatch(aSyncMode, fSyncClass)) {
+                if (controllerSupport.modeMismatch(aSyncMode, fSyncClass)) {
                     // Do not sync folders in the wrong class
                     /*
                     if (K9.DEBUG) {
@@ -3704,82 +3661,6 @@ public class MessagingController {
         });
     }
 
-
-    private boolean shouldNotifyForMessage(Account account, LocalFolder localFolder, Message message) {
-        // If we don't even have an account name, don't show the notification.
-        // (This happens during initial account setup)
-        if (account.getName() == null) {
-            return false;
-        }
-
-        // Do not notify if the user does not have notifications enabled or if the message has
-        // been read.
-        if (!account.isNotifyNewMail() || message.isSet(Flag.SEEN)) {
-            return false;
-        }
-
-        Account.FolderMode aDisplayMode = account.getFolderDisplayMode();
-        Account.FolderMode aNotifyMode = account.getFolderNotifyNewMailMode();
-        Folder.FolderClass fDisplayClass = localFolder.getDisplayClass();
-        Folder.FolderClass fNotifyClass = localFolder.getNotifyClass();
-
-        if (modeMismatch(aDisplayMode, fDisplayClass)) {
-            // Never notify a folder that isn't displayed
-            return false;
-        }
-
-        if (modeMismatch(aNotifyMode, fNotifyClass)) {
-            // Do not notify folders in the wrong class
-            return false;
-        }
-
-        // If the account is a POP3 account and the message is older than the oldest message we've
-        // previously seen, then don't notify about it.
-        if (account.getStoreUri().startsWith("pop3") &&
-                message.olderThan(new Date(account.getLatestOldMessageSeenTime()))) {
-            return false;
-        }
-
-        // No notification for new messages in Trash, Drafts, Spam or Sent folder.
-        // But do notify if it's the INBOX (see issue 1817).
-        Folder folder = message.getFolder();
-        if (folder != null) {
-            String folderName = folder.getName();
-            if (!account.getInboxFolderName().equals(folderName) &&
-                    (account.getTrashFolderName().equals(folderName)
-                            || account.getDraftsFolderName().equals(folderName)
-                            || account.getSpamFolderName().equals(folderName)
-                            || account.getSentFolderName().equals(folderName))) {
-                return false;
-            }
-        }
-
-        if (message.getUid() != null && localFolder.getLastUid() != null) {
-            try {
-                Integer messageUid = Integer.parseInt(message.getUid());
-                if (messageUid <= localFolder.getLastUid()) {
-                    Timber.d("Message uid is %s, max message uid is %s. Skipping notification.",
-                            messageUid, localFolder.getLastUid());
-                    return false;
-                }
-            } catch (NumberFormatException e) {
-                // Nothing to be done here.
-            }
-        }
-
-        // Don't notify if the sender address matches one of our identities and the user chose not
-        // to be notified for such messages.
-        if (account.isAnIdentity(message.getFrom()) && !account.isNotifySelfNewMail()) {
-            return false;
-        }
-
-        if (account.isNotifyContactsMailOnly() && !contacts.isAnyInContacts(message.getFrom())) {
-            return false;
-        }
-
-        return true;
-    }
-
     public void deleteAccount(Account account) {
         notificationController.clearNewMailNotifications(account);
         memorizingMessagingListener.removeAccount(account);
@@ -3837,19 +3718,8 @@ public class MessagingController {
         return id;
     }
 
-    private boolean modeMismatch(Account.FolderMode aMode, Folder.FolderClass fMode) {
-        if (aMode == Account.FolderMode.NONE
-                || (aMode == Account.FolderMode.FIRST_CLASS &&
-                fMode != Folder.FolderClass.FIRST_CLASS)
-                || (aMode == Account.FolderMode.FIRST_AND_SECOND_CLASS &&
-                fMode != Folder.FolderClass.FIRST_CLASS &&
-                fMode != Folder.FolderClass.SECOND_CLASS)
-                || (aMode == Account.FolderMode.NOT_SECOND_CLASS &&
-                fMode == Folder.FolderClass.SECOND_CLASS)) {
-            return true;
-        } else {
-            return false;
-        }
+    public NotificationController getNotificationController() {
+        return notificationController;
     }
 
     private static AtomicInteger sequencing = new AtomicInteger(0);
@@ -3914,7 +3784,7 @@ public class MessagingController {
                 Folder.FolderClass fDisplayClass = folder.getDisplayClass();
                 Folder.FolderClass fPushClass = folder.getPushClass();
 
-                if (modeMismatch(aDisplayMode, fDisplayClass)) {
+                if (controllerSupport.modeMismatch(aDisplayMode, fDisplayClass)) {
                     // Never push a folder that isn't displayed
                     /*
                     if (K9.DEBUG) {
@@ -3926,7 +3796,7 @@ public class MessagingController {
                     continue;
                 }
 
-                if (modeMismatch(aPushMode, fPushClass)) {
+                if (controllerSupport.modeMismatch(aPushMode, fPushClass)) {
                     // Do not push folders in the wrong class
                     /*
                     if (K9.DEBUG) {

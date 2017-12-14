@@ -8,7 +8,8 @@ import java.io.InputStream;
 import java.io.OutputStream;
 
 import com.fsck.k9.K9RobolectricTestRunner;
-import com.fsck.k9.mailstore.util.FileFactory;
+import com.fsck.k9.mail.body.DeferredFileBody;
+import com.fsck.k9.mail.util.FileFactory;
 import org.apache.commons.io.IOUtils;
 import org.apache.commons.io.output.ByteArrayOutputStream;
 import org.junit.Before;

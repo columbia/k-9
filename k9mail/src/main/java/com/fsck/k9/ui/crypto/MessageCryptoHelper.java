@@ -38,7 +38,7 @@ import com.fsck.k9.mailstore.CryptoResultAnnotation;
 import com.fsck.k9.mailstore.CryptoResultAnnotation.CryptoError;
 import com.fsck.k9.mailstore.MessageHelper;
 import com.fsck.k9.mailstore.MimePartStreamParser;
-import com.fsck.k9.mailstore.util.FileFactory;
+import com.fsck.k9.mail.util.FileFactory;
 import com.fsck.k9.provider.DecryptedFileProvider;
 import com.google.common.base.Preconditions;
 

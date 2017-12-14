@@ -12,7 +12,7 @@ import com.fsck.k9.mail.internet.MimeHeader;
 import com.fsck.k9.mail.internet.TextBody;
 import com.fsck.k9.mailstore.AttachmentViewInfo;
 import com.fsck.k9.mailstore.LocalBodyPart;
-import com.fsck.k9.mailstore.DeferredFileBody;
+import com.fsck.k9.mail.body.DeferredFileBody;
 import com.fsck.k9.provider.AttachmentProvider;
 import org.junit.Before;
 import org.junit.Test;
