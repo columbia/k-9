@@ -80,6 +80,7 @@ import com.fsck.k9.mail.Pusher;
 import com.fsck.k9.mail.Store;
 import com.fsck.k9.mail.Transport;
 import com.fsck.k9.mail.TransportProvider;
+import com.fsck.k9.mail.e3.E3Constants;
 import com.fsck.k9.mail.e3.smime.SMIMEEncryptFunctionFactory;
 import com.fsck.k9.mail.internet.MessageExtractor;
 import com.fsck.k9.mail.internet.MimeMessage;
@@ -102,6 +103,8 @@ import com.fsck.k9.search.SearchAccount;
 import com.fsck.k9.search.SearchSpecification;
 import com.fsck.k9.search.SqlQueryBuilder;
 import com.google.common.base.Function;
+import com.google.common.base.Optional;
+import com.google.common.base.Preconditions;
 
 import timber.log.Timber;
 
@@ -1328,8 +1331,6 @@ public class MessagingController {
             final int todo,
             FetchProfile fp) throws MessagingException {
         final String folder = remoteFolder.getName();
-
-        final Date earliestDate = account.getEarliestPollDate();
 
         Timber.d("SYNC: Fetching %d small messages for folder %s", smallMessages.size(), folder);
 
@@ -2630,11 +2631,31 @@ public class MessagingController {
     }
 
     private void moveOrDeleteSentMessage(Account account, LocalStore localStore,
-            LocalFolder localFolder, LocalMessage message) throws MessagingException {
+            LocalFolder localFolder, LocalMessage original) throws MessagingException {
         if (!account.hasSentFolder()) {
             Timber.i("Account does not have a sent mail folder; deleting sent message");
-            message.setFlag(Flag.DELETED, true);
+            original.setFlag(Flag.DELETED, true);
         } else {
+            final boolean shouldEncrypt = account.isE3EncryptionEnabled();
+            final Message message;
+
+            if (shouldEncrypt) {
+                final Function<MimeMessage, MimeMessage> encryptFunction =
+                        SMIMEEncryptFunctionFactory.get(context, account.getE3KeyName(), account
+                                .getE3Password());
+                final Optional<Message> encryptedOptional = encryptMessageHelper(encryptFunction,
+                        original);
+
+                if (encryptedOptional.isPresent()) {
+                    message = encryptedOptional.get();
+                    message.setFlag(Flag.E3, true);
+                } else {
+                    message = original;
+                }
+            } else {
+                message = original;
+            }
+
             LocalFolder localSentFolder = localStore.getFolder(account.getSentFolderName());
             Timber.i("Moving sent message to folder '%s' (%d)", account.getSentFolderName(), localSentFolder.getDatabaseId());
 
@@ -2645,6 +2666,25 @@ public class MessagingController {
             PendingCommand command = PendingAppend.create(localSentFolder.getName(), message.getUid());
             queuePendingCommand(account, command);
             processPendingCommands(account);
+        }
+    }
+
+    private Optional<Message> encryptMessageHelper(final Function<MimeMessage, MimeMessage> encryptFunction, final Message original) {
+        Preconditions.checkArgument(original instanceof MimeMessage, "Can only encrypt " +
+                "MimeMessage, but got " + original.getClass().getSimpleName());
+        try {
+            final MimeMessage encrypted = Preconditions.checkNotNull(encryptFunction.apply(
+                    (MimeMessage) original));
+
+            Timber.d(E3Constants.LOG_TAG, "Encrypted message: " + encrypted.getMessageId());
+
+            encrypted.setUid("");
+
+            return Optional.of((Message) encrypted);
+        } catch (final IllegalArgumentException e) {
+            Timber.d(E3Constants.LOG_TAG, String.format("Original message (%s) already " +
+                    "encrypted or not MimeMessage", original.getUid()));
+            return Optional.absent();
         }
     }
 
