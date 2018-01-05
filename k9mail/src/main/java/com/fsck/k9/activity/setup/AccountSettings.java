@@ -110,6 +110,7 @@ public class AccountSettings extends K9PreferenceActivity {
     private static final String PREFERENCE_REPLY_AFTER_QUOTE = "reply_after_quote";
     private static final String PREFERENCE_STRIP_SIGNATURE = "strip_signature";
     private static final String PREFERENCE_SYNC_REMOTE_DELETIONS = "account_sync_remote_deletetions";
+    private static final String PREFERENCE_E3_ENABLED = "e3_enabled";
     private static final String PREFERENCE_CRYPTO = "crypto";
     private static final String PREFERENCE_CRYPTO_KEY = "crypto_key";
     private static final String PREFERENCE_CLOUD_SEARCH_ENABLED = "remote_search_enabled";
@@ -176,6 +177,7 @@ public class AccountSettings extends K9PreferenceActivity {
     private CheckBoxPreference pushPollOnConnect;
     private ListPreference idleRefreshPeriod;
     private ListPreference mMaxPushFolders;
+    private CheckBoxPreference e3Enabled;
     private boolean hasPgpCrypto = false;
     private OpenPgpKeyPreference pgpCryptoKey;
     private CheckBoxPreference pgpSupportSignOnly;
@@ -693,6 +695,9 @@ public class AccountSettings extends K9PreferenceActivity {
             }
         });
 
+        e3Enabled = (CheckBoxPreference) findPreference(PREFERENCE_E3_ENABLED);
+        e3Enabled.setChecked(account.isE3EncryptionEnabled());
+
         hasPgpCrypto = K9.isOpenPgpProviderConfigured();
         PreferenceScreen cryptoMenu = (PreferenceScreen) findPreference(PREFERENCE_CRYPTO);
         if (hasPgpCrypto) {
@@ -816,6 +821,9 @@ public class AccountSettings extends K9PreferenceActivity {
             account.setRemoteSearchNumResults(Integer.parseInt(remoteSearchNumResults.getValue()));
             //account.setRemoteSearchFullText(mRemoteSearchFullText.isChecked());
         }
+
+        // E3 stuff
+        account.setE3EncryptionEnabled(e3Enabled.isChecked());
 
         boolean needsRefresh = account.setAutomaticCheckIntervalMinutes(Integer.parseInt(checkFrequency.getValue()));
         needsRefresh |= account.setFolderSyncMode(FolderMode.valueOf(syncMode.getValue()));
