@@ -604,9 +604,12 @@ Please submit bug reports, contribute new features and ask questions at
     <string name="account_settings_folders">Folders</string>
     <string name="account_settings_quote_prefix_label">Quoted text prefix</string>
 
+    <string name="account_settings_e3_title">E3 settings</string>
     <string name="account_settings_e3">E3 settings</string>
     <string name="account_settings_e3_enabled">Enable E3</string>
     <string name="account_settings_e3_enabled_summary">Enable E3 encryption for all emails</string>
+    <string name="account_settings_e3_force_encrypt">Force encrypt emails</string>
+    <string name="account_settings_e3_force_encrypt_summary">Encrypts unencrypted emails</string>
     <string name="account_settings_e3_undo">Undo E3</string>
     <string name="account_settings_e3_undo_summary">Removes E3 encryption from emails</string>
 
