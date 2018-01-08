@@ -7,7 +7,6 @@ import android.os.Bundle;
 import android.view.View;
 import android.view.View.OnClickListener;
 import android.widget.ArrayAdapter;
-import android.widget.CheckBox;
 import android.widget.CompoundButton;
 import android.widget.CompoundButton.OnCheckedChangeListener;
 import android.widget.Filter;
@@ -20,11 +19,17 @@ import com.fsck.k9.R;
 import com.fsck.k9.activity.FolderListFilter;
 import com.fsck.k9.activity.K9ListActivity;
 import com.fsck.k9.mail.Folder;
+import com.fsck.k9.mail.MessagingException;
+import com.google.common.base.Preconditions;
 
 import java.util.LinkedList;
 import java.util.List;
 
+import timber.log.Timber;
+
 /**
+ * Provides the view and options for allowing a user to force encrypt their mailbox by IMAP folder.
+ *
  * Created on 1/5/2018.
  *
  * @author mauzel
@@ -73,9 +78,7 @@ public class AccountSetupE3ForceEncrypt extends K9ListActivity implements OnClic
         String accountUuid = getIntent().getStringExtra(EXTRA_ACCOUNT);
         account = Preferences.getPreferences(this).getAccount(accountUuid);
 
-        //MessagingController.getInstance(getApplication()).listFolders(account, false, mListener);
-
-        new PopulateFolderCheckBoxesTask().execute();
+        new PopulateFolderCheckBoxesTask(adapter).execute(account);
     }
 
     @Override
@@ -88,35 +91,27 @@ public class AccountSetupE3ForceEncrypt extends K9ListActivity implements OnClic
 
     }
 
-    private class PopulateFolderCheckBoxesTask extends AsyncTask<Void, Void, Void> {
-        List<? extends Folder > folders = new LinkedList<>();
-        String[] allFolderValues;
-        String[] allFolderLabels;
+    private static class PopulateFolderCheckBoxesTask extends AsyncTask<Account, Void, List<? extends Folder>> {
+        private ArrayAdapter<String> adapter;
+
+        PopulateFolderCheckBoxesTask(ArrayAdapter<String> adapter) {
+            this.adapter = adapter;
+        }
 
         @Override
-        protected Void doInBackground(Void... params) {
+        protected List<? extends Folder> doInBackground(Account... params) {
+            Preconditions.checkNotNull(params, "Must provide Account as execute parameter");
+
+            List<? extends Folder> folders = new LinkedList<>();
+
             try {
                 // TODO: Change to only return remote folders. See PopulateFolderPrefsTask.
-                folders = account.getLocalStore().getPersonalNamespaces(false);
-            } catch (Exception e) {
-                /// this can't be checked in
+                folders = params[0].getLocalStore().getPersonalNamespaces(false);
+            } catch (MessagingException e) {
+                Timber.e(e, "Failed to get list of folders");
             }
 
-            /*
-            allFolderValues = new String[folders.size() + 1];
-            allFolderLabels = new String[folders.size() + 1];
-
-            allFolderValues[0] = K9.FOLDER_NONE;
-            allFolderLabels[0] = K9.FOLDER_NONE;
-
-            int i = 1;
-            for (Folder folder : folders) {
-                allFolderLabels[i] = folder.getName();
-                allFolderValues[i] = folder.getName();
-                i++;
-            }
-            */
-            return null;
+            return folders;
         }
 
         @Override
@@ -124,35 +119,17 @@ public class AccountSetupE3ForceEncrypt extends K9ListActivity implements OnClic
         }
 
         @Override
-        protected void onPostExecute(Void res) {
-            runOnUiThread(new Runnable() {
-                @Override
-                public void run() {
-                    // Now we're in the UI-thread, we can safely change the contents of the adapter.
-                    adapter.clear();
-                    for (Folder folder: folders) {
-                        adapter.add(folder.getName());
-                    }
+        protected void onPostExecute(final List<? extends Folder> res) {
+            // Now we're in the UI-thread, we can safely change the contents of the adapter.
+            adapter.clear();
 
-                    adapter.notifyDataSetChanged();
+            adapter.add(K9.FOLDER_NONE);
 
-                    /*
-                     * Only enable the text filter after the list has been
-                     * populated to avoid possible race conditions because our
-                     * FolderListFilter isn't really thread-safe.
-                     */
-                    getListView().setTextFilterEnabled(true);
-                }
-            });
-
-            /*
-            for (String folder : allFolderLabels) {
-                CheckBox cb = new CheckBox(getApplicationContext());
-                cb.setText(folder);
-
-                layout.addView(cb);
+            for (Folder folder: res) {
+                adapter.add(folder.getName());
             }
-            */
+
+            adapter.notifyDataSetChanged();
         }
     }
 }
