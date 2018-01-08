@@ -58,7 +58,7 @@ public class AccountSetupE3ForceEncrypt extends K9ListActivity implements OnClic
     @Override
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        setContentView(R.layout.folder_list);
+        setContentView(R.layout.account_setup_e3_force_encrypt);
 
         adapter = new ArrayAdapter<String>(this, android.R.layout.simple_list_item_multiple_choice) {
             private Filter myFilter = null;
