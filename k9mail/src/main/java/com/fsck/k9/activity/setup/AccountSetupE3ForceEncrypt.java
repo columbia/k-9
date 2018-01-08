@@ -4,6 +4,7 @@ import android.content.Context;
 import android.content.Intent;
 import android.os.AsyncTask;
 import android.os.Bundle;
+import android.util.SparseBooleanArray;
 import android.view.View;
 import android.view.View.OnClickListener;
 import android.widget.ArrayAdapter;
@@ -22,6 +23,7 @@ import com.fsck.k9.mail.Folder;
 import com.fsck.k9.mail.MessagingException;
 import com.google.common.base.Preconditions;
 
+import java.util.ArrayList;
 import java.util.LinkedList;
 import java.util.List;
 
@@ -29,7 +31,7 @@ import timber.log.Timber;
 
 /**
  * Provides the view and options for allowing a user to force encrypt their mailbox by IMAP folder.
- *
+ * <p>
  * Created on 1/5/2018.
  *
  * @author mauzel
@@ -40,8 +42,6 @@ public class AccountSetupE3ForceEncrypt extends K9ListActivity implements OnClic
     private static final String EXTRA_ACCOUNT = "account";
 
     private Account account;
-
-    private ListView layout;
     private ArrayAdapter<String> adapter;
 
     public static void actionE3ForceEncrypt(Context context, Account account) {
@@ -60,7 +60,7 @@ public class AccountSetupE3ForceEncrypt extends K9ListActivity implements OnClic
         super.onCreate(savedInstanceState);
         setContentView(R.layout.folder_list);
 
-        adapter = new ArrayAdapter<String>(this, android.R.layout.simple_list_item_1) {
+        adapter = new ArrayAdapter<String>(this, android.R.layout.simple_list_item_multiple_choice) {
             private Filter myFilter = null;
 
             @Override
@@ -71,9 +71,8 @@ public class AccountSetupE3ForceEncrypt extends K9ListActivity implements OnClic
                 return myFilter;
             }
         };
-        setListAdapter(adapter);
-
-        layout = getListView();
+        getListView().setChoiceMode(ListView.CHOICE_MODE_MULTIPLE);
+        getListView().setAdapter(adapter);
 
         String accountUuid = getIntent().getStringExtra(EXTRA_ACCOUNT);
         account = Preferences.getPreferences(this).getAccount(accountUuid);
@@ -83,7 +82,14 @@ public class AccountSetupE3ForceEncrypt extends K9ListActivity implements OnClic
 
     @Override
     public void onClick(View view) {
-
+        SparseBooleanArray checked = getListView().getCheckedItemPositions();
+        List<String> selectedItems = new ArrayList<>();
+        for (int i = 0; i < checked.size(); i++) {
+            int position = checked.keyAt(i);
+            if (checked.valueAt(i)) {
+                selectedItems.add(adapter.getItem(position));
+            }
+        }
     }
 
     @Override
@@ -125,7 +131,7 @@ public class AccountSetupE3ForceEncrypt extends K9ListActivity implements OnClic
 
             adapter.add(K9.FOLDER_NONE);
 
-            for (Folder folder: res) {
+            for (Folder folder : res) {
                 adapter.add(folder.getName());
             }
 
