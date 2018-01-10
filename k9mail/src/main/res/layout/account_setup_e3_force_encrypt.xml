@@ -27,6 +27,7 @@
 
         <Button
             style="?android:attr/buttonBarButtonStyle"
+            android:id="@+id/next"
             android:layout_width="fill_parent"
             android:layout_height="wrap_content"
             android:background="@drawable/selectable_item_background"
