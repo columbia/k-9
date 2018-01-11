@@ -1,5 +1,7 @@
 package com.fsck.k9.controller;
 
+import android.content.Context;
+
 import com.fsck.k9.Account;
 import com.fsck.k9.Account.Expunge;
 import com.fsck.k9.K9;
@@ -45,6 +47,15 @@ import static com.fsck.k9.mail.Flag.X_REMOTE_COPY_STARTED;
  */
 
 public class PendingCommandController {
+    private final MessagingController messagingController;
+
+    PendingCommandController(final MessagingController messagingController) {
+        this.messagingController = messagingController;
+    }
+
+    public PendingCommandController(final Context context) {
+        messagingController = MessagingController.getInstance(context);
+    }
 
     public void queuePendingCommand(final Account account, final PendingCommand command) {
         try {
@@ -240,59 +251,12 @@ public class PendingCommandController {
 
                 // When we empty trash, we need to actually synchronize the folder
                 // or local deletes will never get cleaned up
-                synchronizeFolder(account, remoteFolder, true, 0);
-                compact(account, null);
+                messagingController.synchronizeFolder(account, remoteFolder, true, 0, null);
+                messagingController.compact(account, null);
             }
         } finally {
             MessagingControllerSupport.closeFolder(remoteFolder);
         }
-    }
-
-    private void synchronizeFolder(final Account account,
-                                   final Folder folder,
-                                   final boolean ignoreLastCheckedTime,
-                                   final long accountInterval) {
-        Timber.v("Folder %s was last synced @ %tc", folder.getName(), folder.getLastChecked());
-
-        if (!ignoreLastCheckedTime && folder.getLastChecked() > System.currentTimeMillis() - accountInterval) {
-            Timber.v("Not syncing folder %s, previously synced @ %tc which would be too recent for the account " +
-                    "period", folder.getName(), folder.getLastChecked());
-            return;
-        }
-
-        QueuedCommandsController.getInstance().putBackground("sync" + folder.getName(), null, new Runnable() {
-                    @Override
-                    public void run() {
-                        LocalFolder tLocalFolder = null;
-                        try {
-                            // In case multiple Commands get enqueued, don't run more than
-                            // once
-                            final LocalStore localStore = account.getLocalStore();
-                            tLocalFolder = localStore.getFolder(folder.getName());
-                            tLocalFolder.open(Folder.OPEN_MODE_RW);
-
-                            if (!ignoreLastCheckedTime && tLocalFolder.getLastChecked() >
-                                    (System.currentTimeMillis() - accountInterval)) {
-                                Timber.v("Not running Command for folder %s, previously synced @ %tc which would " +
-                                                "be too recent for the account period",
-                                        folder.getName(), folder.getLastChecked());
-                                return;
-                            }
-                            showFetchingMailNotificationIfNecessary(account, folder);
-                            try {
-                                synchronizeMailboxSynchronous(account, folder.getName(), listener, null);
-                            } finally {
-                                clearFetchingMailNotificationIfNecessary(account);
-                            }
-                        } catch (Exception e) {
-                            Timber.e(e, "Exception while processing folder %s:%s",
-                                    account.getDescription(), folder.getName());
-                        } finally {
-                            MessagingControllerSupport.closeFolder(tLocalFolder);
-                        }
-                    }
-                }
-        );
     }
 
     /**

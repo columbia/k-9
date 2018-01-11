@@ -79,7 +79,7 @@ public class E3MessageRetrievalListener<T extends Message> implements MessageRet
         this.encryptFunction = encryptFunction;
         this.shouldEncryptPredicate = shouldEncryptPredicate;
 
-        this.pendingCommandController = new PendingCommandController();
+        this.pendingCommandController = new PendingCommandController(context);
     }
 
     @Override

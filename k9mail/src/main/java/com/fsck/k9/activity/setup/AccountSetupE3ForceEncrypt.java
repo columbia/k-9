@@ -20,7 +20,6 @@ import com.fsck.k9.R;
 import com.fsck.k9.activity.FolderListFilter;
 import com.fsck.k9.activity.K9ListActivity;
 import com.fsck.k9.e3.E3ForceEncryptFoldersAsyncTask;
-import com.fsck.k9.mail.Folder;
 import com.fsck.k9.mail.MessagingException;
 import com.fsck.k9.mail.e3.smime.SMIMEEncryptFunctionFactory;
 import com.fsck.k9.mail.internet.MimeMessage;
@@ -103,7 +102,7 @@ public class AccountSetupE3ForceEncrypt extends K9ListActivity implements OnClic
 
         Function<MimeMessage, MimeMessage> encryptFunction = SMIMEEncryptFunctionFactory.get(this, account.getE3KeyName(),
                 account.getE3Password());
-        E3ForceEncryptFoldersAsyncTask forceEncryptTask = new E3ForceEncryptFoldersAsyncTask(account, encryptFunction);
+        E3ForceEncryptFoldersAsyncTask forceEncryptTask = new E3ForceEncryptFoldersAsyncTask(this, account, encryptFunction);
 
         forceEncryptTask.execute(selectedItems.toArray(new LocalFolder[0]));
     }

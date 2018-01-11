@@ -146,7 +146,7 @@ public class MessagingController {
     private final MemorizingMessagingListener memorizingMessagingListener = new MemorizingMessagingListener();
     private final TransportProvider transportProvider;
     private final MessagingControllerSupport controllerSupport;
-    private final PendingCommandController pendingCommandController = new PendingCommandController();
+    private final PendingCommandController pendingCommandController;
     private final QueuedCommandsController queuedCommandsController = QueuedCommandsController.getInstance();
 
     private MessagingListener checkMailListener = null;
@@ -172,6 +172,7 @@ public class MessagingController {
         this.notificationController = notificationController;
         this.controllerSupport = new MessagingControllerSupport(contacts);
         this.transportProvider = transportProvider;
+        this.pendingCommandController = new PendingCommandController(this);
 
         controllerThread = new Thread(new Runnable() {
             @Override
@@ -3081,7 +3082,7 @@ public class MessagingController {
 
     }
 
-    private void synchronizeFolder(
+    void synchronizeFolder(
             final Account account,
             final Folder folder,
             final boolean ignoreLastCheckedTime,

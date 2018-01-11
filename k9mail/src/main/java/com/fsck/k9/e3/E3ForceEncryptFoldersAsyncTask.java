@@ -2,20 +2,14 @@ package com.fsck.k9.e3;
 
 
 import android.app.ProgressDialog;
+import android.content.Context;
 import android.os.AsyncTask;
-import android.util.Log;
 
 import com.fsck.k9.Account;
-import com.fsck.k9.controller.MessagingControllerCommands.PendingAppend;
-import com.fsck.k9.controller.MessagingControllerCommands.PendingEmptyTrash;
-import com.fsck.k9.controller.MessagingControllerCommands.PendingMoveOrCopy;
 import com.fsck.k9.controller.MessagingListener;
 import com.fsck.k9.controller.PendingCommandController;
 import com.fsck.k9.mail.Flag;
-import com.fsck.k9.mail.Folder;
-import com.fsck.k9.mail.Message;
 import com.fsck.k9.mail.MessagingException;
-import com.fsck.k9.mail.e3.E3Constants;
 import com.fsck.k9.mail.internet.MimeMessage;
 import com.fsck.k9.mailstore.LocalFolder;
 import com.fsck.k9.mailstore.LocalMessage;
@@ -42,10 +36,10 @@ public class E3ForceEncryptFoldersAsyncTask extends AsyncTask<LocalFolder, Void,
     private final PendingCommandController pendingCommandController;
     ProgressDialog progress;
 
-    public E3ForceEncryptFoldersAsyncTask(final Account account, final Function<MimeMessage, MimeMessage> encryptFunction) {
+    public E3ForceEncryptFoldersAsyncTask(final Context context, final Account account, final Function<MimeMessage, MimeMessage> encryptFunction) {
         this.account = account;
         this.encryptFunction = encryptFunction;
-        this.pendingCommandController = new PendingCommandController();
+        this.pendingCommandController = new PendingCommandController(context);
     }
 
     @Override
