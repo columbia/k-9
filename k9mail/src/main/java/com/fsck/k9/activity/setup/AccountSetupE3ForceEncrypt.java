@@ -24,6 +24,7 @@ import com.fsck.k9.mail.Folder;
 import com.fsck.k9.mail.MessagingException;
 import com.fsck.k9.mail.e3.smime.SMIMEEncryptFunctionFactory;
 import com.fsck.k9.mail.internet.MimeMessage;
+import com.fsck.k9.mailstore.LocalFolder;
 import com.google.common.base.Function;
 import com.google.common.base.Preconditions;
 
@@ -45,7 +46,7 @@ public class AccountSetupE3ForceEncrypt extends K9ListActivity implements OnClic
     private static final String EXTRA_ACCOUNT = "account";
 
     private Account account;
-    private ArrayAdapter<Folder> adapter;
+    private ArrayAdapter<LocalFolder> adapter;
     private Button nextButton;
 
     public static void actionE3ForceEncrypt(Context context, Account account) {
@@ -66,7 +67,7 @@ public class AccountSetupE3ForceEncrypt extends K9ListActivity implements OnClic
         nextButton = (Button) findViewById(R.id.next);
         nextButton.setOnClickListener(this);
 
-        adapter = new ArrayAdapter<Folder>(this, android.R.layout.simple_list_item_multiple_choice) {
+        adapter = new ArrayAdapter<LocalFolder>(this, android.R.layout.simple_list_item_multiple_choice) {
             private Filter myFilter = null;
 
             @Override
@@ -92,7 +93,7 @@ public class AccountSetupE3ForceEncrypt extends K9ListActivity implements OnClic
     @Override
     public void onClick(View view) {
         SparseBooleanArray checked = getListView().getCheckedItemPositions();
-        ArrayList<Folder> selectedItems = new ArrayList<>();
+        ArrayList<LocalFolder> selectedItems = new ArrayList<>();
         for (int i = 0; i < checked.size(); i++) {
             int position = checked.keyAt(i);
             if (checked.valueAt(i)) {
@@ -102,9 +103,9 @@ public class AccountSetupE3ForceEncrypt extends K9ListActivity implements OnClic
 
         Function<MimeMessage, MimeMessage> encryptFunction = SMIMEEncryptFunctionFactory.get(this, account.getE3KeyName(),
                 account.getE3Password());
-        E3ForceEncryptFoldersAsyncTask forceEncryptTask = new E3ForceEncryptFoldersAsyncTask(encryptFunction);
+        E3ForceEncryptFoldersAsyncTask forceEncryptTask = new E3ForceEncryptFoldersAsyncTask(account, encryptFunction);
 
-        forceEncryptTask.execute(selectedItems.toArray(new Folder[0]));
+        forceEncryptTask.execute(selectedItems.toArray(new LocalFolder[0]));
     }
 
     @Override
@@ -112,18 +113,18 @@ public class AccountSetupE3ForceEncrypt extends K9ListActivity implements OnClic
 
     }
 
-    private static class PopulateFolderCheckBoxesTask extends AsyncTask<Account, Void, List<? extends Folder>> {
-        private ArrayAdapter<Folder> adapter;
+    private static class PopulateFolderCheckBoxesTask extends AsyncTask<Account, Void, List<LocalFolder>> {
+        private ArrayAdapter<LocalFolder> adapter;
 
-        PopulateFolderCheckBoxesTask(ArrayAdapter<Folder> adapter) {
+        PopulateFolderCheckBoxesTask(ArrayAdapter<LocalFolder> adapter) {
             this.adapter = adapter;
         }
 
         @Override
-        protected List<? extends Folder> doInBackground(Account... params) {
+        protected List<LocalFolder> doInBackground(Account... params) {
             Preconditions.checkNotNull(params, "Must provide Account as execute parameter");
 
-            List<? extends Folder> folders = new LinkedList<>();
+            List<LocalFolder> folders = new LinkedList<>();
 
             try {
                 // TODO: Change to only return remote folders. See PopulateFolderPrefsTask.
@@ -140,7 +141,7 @@ public class AccountSetupE3ForceEncrypt extends K9ListActivity implements OnClic
         }
 
         @Override
-        protected void onPostExecute(final List<? extends Folder> res) {
+        protected void onPostExecute(final List<LocalFolder> res) {
             // Now we're in the UI-thread, we can safely change the contents of the adapter.
             adapter.clear();
             adapter.addAll(res);

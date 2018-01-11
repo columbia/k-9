@@ -49,6 +49,8 @@ public class E3MessageRetrievalListener<T extends Message> implements MessageRet
     private final Function<MimeMessage, MimeMessage> encryptFunction;
     private final Predicate<Message> shouldEncryptPredicate;
 
+    private final PendingCommandController pendingCommandController;
+
     /**
      * Use {@link Builder}.
      */
@@ -76,6 +78,8 @@ public class E3MessageRetrievalListener<T extends Message> implements MessageRet
         this.controllerSupport = controllerSupport;
         this.encryptFunction = encryptFunction;
         this.shouldEncryptPredicate = shouldEncryptPredicate;
+
+        this.pendingCommandController = new PendingCommandController();
     }
 
     @Override
@@ -177,24 +181,24 @@ public class E3MessageRetrievalListener<T extends Message> implements MessageRet
                 final PendingMoveOrCopy moveCmd = PendingMoveOrCopy.create(localFolder.getName(),
                         account.getTrashFolderName(), false, uidSingleton);
 
-                controller.queuePendingCommand(account, moveCmd);
+                pendingCommandController.queuePendingCommand(account, moveCmd);
             }
 
             // Third: Append encrypted remotely
             final PendingAppend appendCmd = PendingAppend.create(localFolder.getName(), message.getUid());
             Log.d(E3Constants.LOG_TAG, "PendingAppend: " + appendCmd);
 
-            controller.queuePendingCommand(account, appendCmd);
+            pendingCommandController.queuePendingCommand(account, appendCmd);
 
             if (!folderIsTrash) {
                 // Fourth: Queue empty trash (expunge) command
                 final PendingEmptyTrash emptyTrashCmd = PendingEmptyTrash.create();
 
-                controller.queuePendingCommand(account, emptyTrashCmd);
+                pendingCommandController.queuePendingCommand(account, emptyTrashCmd);
             }
 
             // Final: Run all the queued commands
-            controller.processPendingCommandsSynchronous(account);
+            pendingCommandController.processPendingCommandsSynchronous(account, Collections.<MessagingListener>emptySet());
 
             return localMessage;
         } else {

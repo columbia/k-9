@@ -3,6 +3,7 @@ package com.fsck.k9.controller;
 
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 
 import com.fsck.k9.Account;
 import com.fsck.k9.mail.Flag;
@@ -25,7 +26,7 @@ public class MessagingControllerCommands {
         PendingCommand() { }
 
         public abstract String getCommandName();
-        public abstract void execute(MessagingController controller, Account account) throws MessagingException;
+        public abstract void execute(PendingCommandController controller, Account account, Set<MessagingListener> listeners) throws MessagingException;
     }
 
     public static class PendingMoveOrCopy extends PendingCommand {
@@ -60,8 +61,8 @@ public class MessagingControllerCommands {
         }
 
         @Override
-        public void execute(MessagingController controller, Account account) throws MessagingException {
-            controller.processPendingMoveOrCopy(this, account);
+        public void execute(PendingCommandController controller, Account account, Set<MessagingListener> listeners) throws MessagingException {
+            controller.processPendingMoveOrCopy(this, account, listeners);
         }
     }
 
@@ -76,7 +77,7 @@ public class MessagingControllerCommands {
         }
 
         @Override
-        public void execute(MessagingController controller, Account account) throws MessagingException {
+        public void execute(PendingCommandController controller, Account account, Set<MessagingListener> listeners) throws MessagingException {
             controller.processPendingEmptyTrash(account);
         }
     }
@@ -105,7 +106,7 @@ public class MessagingControllerCommands {
         }
 
         @Override
-        public void execute(MessagingController controller, Account account) throws MessagingException {
+        public void execute(PendingCommandController controller, Account account, Set<MessagingListener> listeners) throws MessagingException {
             controller.processPendingSetFlag(this, account);
         }
     }
@@ -130,8 +131,8 @@ public class MessagingControllerCommands {
         }
 
         @Override
-        public void execute(MessagingController controller, Account account) throws MessagingException {
-            controller.processPendingAppend(this, account);
+        public void execute(PendingCommandController controller, Account account, Set<MessagingListener> listeners) throws MessagingException {
+            controller.processPendingAppend(this, account, listeners);
         }
     }
 
@@ -153,8 +154,8 @@ public class MessagingControllerCommands {
         }
 
         @Override
-        public void execute(MessagingController controller, Account account) throws MessagingException {
-            controller.processPendingMarkAllAsRead(this, account);
+        public void execute(PendingCommandController controller, Account account, Set<MessagingListener> listeners) throws MessagingException {
+            controller.processPendingMarkAllAsRead(this, account, listeners);
         }
     }
 
@@ -176,7 +177,7 @@ public class MessagingControllerCommands {
         }
 
         @Override
-        public void execute(MessagingController controller, Account account) throws MessagingException {
+        public void execute(PendingCommandController controller, Account account, Set<MessagingListener> listeners) throws MessagingException {
             controller.processPendingExpunge(this, account);
         }
     }
