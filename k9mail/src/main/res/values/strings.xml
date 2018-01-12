@@ -608,8 +608,13 @@ Please submit bug reports, contribute new features and ask questions at
     <string name="account_settings_e3">E3 settings</string>
     <string name="account_settings_e3_enabled">Enable E3</string>
     <string name="account_settings_e3_enabled_summary">Enable E3 encryption for all emails</string>
+    <string name="account_settings_e3_force_encrypt_picker_title">Choose folders to encrypt</string>
+    <string name="account_settings_e3_force_encrypt_title">Encrypting emails</string>
     <string name="account_settings_e3_force_encrypt">Force encrypt emails</string>
     <string name="account_settings_e3_force_encrypt_summary">Encrypts unencrypted emails</string>
+    <string name="account_settings_e3_force_encrypt_started_text">The emails in these folders will be encrypted:</string>
+    <string name="e3_force_encrypt_confirm">Encrypt</string>
+
     <string name="account_settings_e3_undo">Undo E3</string>
     <string name="account_settings_e3_undo_summary">Removes E3 encryption from emails</string>
     <string name="e3_force_encrypt_activity_title">Force E3 encryption per folder</string>

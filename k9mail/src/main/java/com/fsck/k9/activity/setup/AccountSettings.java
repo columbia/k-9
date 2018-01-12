@@ -969,7 +969,7 @@ public class AccountSettings extends K9PreferenceActivity {
     }
 
     private void onE3ForceEncrypt() {
-        AccountSetupE3ForceEncrypt.actionE3ForceEncrypt(this, account);
+        AccountSetupE3ForceEncryptPicker.actionE3ForceEncryptPicker(this, account);
     }
 
     public void onChooseAutoExpandFolder() {

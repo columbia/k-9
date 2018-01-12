@@ -140,9 +140,17 @@
             android:label="@string/account_setup_outgoing_title"/>
 
         <activity
+            android:name=".activity.setup.AccountSetupE3ForceEncryptPicker"
+            android:configChanges="locale"
+            android:label="@string/account_settings_e3_force_encrypt_title"/>
+
+        <activity
             android:name=".activity.setup.AccountSetupE3ForceEncrypt"
             android:configChanges="locale"
-            android:label="@string/account_settings_e3_title"/>
+            android:excludeFromRecents="true"
+            android:noHistory="true"
+            android:theme="@style/Theme.K9Dialog"
+            android:label="@string/account_settings_e3_force_encrypt_title"/>
 
         <activity
             android:name=".activity.setup.AccountSetupOptions"
