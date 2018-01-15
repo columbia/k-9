@@ -1,11 +1,12 @@
 package com.fsck.k9.e3;
 
 
-import android.app.ProgressDialog;
+import android.app.AlertDialog;
 import android.content.Context;
 import android.os.AsyncTask;
 
 import com.fsck.k9.Account;
+import com.fsck.k9.R;
 import com.fsck.k9.controller.MessagingListener;
 import com.fsck.k9.controller.PendingCommandController;
 import com.fsck.k9.mail.Flag;
@@ -21,6 +22,7 @@ import com.google.common.base.Predicates;
 import com.google.common.collect.Collections2;
 import com.google.common.collect.Lists;
 
+import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 
@@ -32,42 +34,52 @@ import timber.log.Timber;
  * @author koh
  */
 
-public class E3ForceEncryptFoldersAsyncTask extends AsyncTask<LocalFolder, Void, Void> {
+public class E3ForceEncryptFoldersAsyncTask extends AsyncTask<LocalFolder, Void, List<String>> {
     private static final int BATCH_SZ = 20;
 
     private final Account account;
     private final Function<MimeMessage, MimeMessage> encryptFunction;
     private final PendingCommandController pendingCommandController;
     private final Predicate<MimeMessage> isSMIMEPredicate;
-    ProgressDialog progress;
+    private final AlertDialog completedDialog;
+    private final String alertStringFromCtx;
 
     public E3ForceEncryptFoldersAsyncTask(final Context context, final Account account, final Function<MimeMessage, MimeMessage> encryptFunction) {
         this.account = account;
         this.encryptFunction = encryptFunction;
         this.pendingCommandController = new PendingCommandController(context);
         this.isSMIMEPredicate = new SMIMEDetectorPredicate();
+        this.completedDialog = new AlertDialog.Builder(context).create();
+        this.alertStringFromCtx = context.getString(R.string.e3_force_encrypt_completed);
     }
 
     @Override
     protected void onPreExecute() {
-        // TODO: Add a progress indicator of some sort
-        //progress = ProgressDialog.show()
+        // TODO: Add a completedDialog indicator of some sort
+        //completedDialog = ProgressDialog.show()
     }
 
     @Override
-    protected Void doInBackground(LocalFolder... folders) {
+    protected List<String> doInBackground(LocalFolder... folders) {
         for (final LocalFolder folder : folders) {
             try {
-                encryptFolder(folder);
+                return encryptFolder(folder);
             } catch (final MessagingException e) {
                 Timber.e(e, "Failed to get list of message UIDs in given folder: " + folder);
             }
         }
 
-        return null;
+        return Collections.emptyList();
     }
 
-    private void encryptFolder(final LocalFolder folder) throws MessagingException {
+    @Override
+    protected void onPostExecute(final List<String> encryptedMessages) {
+        completedDialog.setMessage(String.format(alertStringFromCtx, encryptedMessages.size()));
+        completedDialog.show();
+    }
+
+    private List<String> encryptFolder(final LocalFolder folder) throws MessagingException {
+        final List<String> encryptedSubjects = new ArrayList<>();
         final List<String> uids = folder.getAllMessageUids();
 
         final List<List<String>> partitions = Lists.partition(uids, BATCH_SZ);
@@ -88,8 +100,8 @@ public class E3ForceEncryptFoldersAsyncTask extends AsyncTask<LocalFolder, Void,
                         () {
                     @Override
                     public void run() {
-                        // TODO: add progress?
-                        //progress.incrementAndGet();
+                        // TODO: add completedDialog?
+                        //completedDialog.incrementAndGet();
                     }
                 });
 
@@ -110,9 +122,13 @@ public class E3ForceEncryptFoldersAsyncTask extends AsyncTask<LocalFolder, Void,
                 // Fourth: Queue empty trash (expunge) command
                 pendingCommandController.queueEmptyTrash(account);
 
-                // Final: Run all the queued commands
-                pendingCommandController.processPendingCommandsSynchronous(account, Collections.<MessagingListener>emptySet());
+                encryptedSubjects.add(originalMsg.getSubject());
             }
+
+            // Final: Run all the queued commands
+            pendingCommandController.processPendingCommandsSynchronous(account, Collections.<MessagingListener>emptySet());
         }
+
+        return encryptedSubjects;
     }
 }

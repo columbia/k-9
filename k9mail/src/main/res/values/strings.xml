@@ -614,6 +614,7 @@ Please submit bug reports, contribute new features and ask questions at
     <string name="account_settings_e3_force_encrypt_summary">Encrypts unencrypted emails</string>
     <string name="account_settings_e3_force_encrypt_started_text">The emails in these folders will be encrypted:</string>
     <string name="e3_force_encrypt_confirm">Encrypt</string>
+    <string name="e3_force_encrypt_completed">E3 Forced Encryption completed. %s messages were encrypted.</string>
 
     <string name="account_settings_e3_undo">Undo E3</string>
     <string name="account_settings_e3_undo_summary">Removes E3 encryption from emails</string>
