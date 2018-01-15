@@ -37,7 +37,7 @@
         android:orientation="horizontal" >
 
         <Button
-            android:id="@+id/next"
+            android:id="@+id/confirm"
             style="?android:attr/buttonBarButtonStyle"
             android:layout_width="0dp"
             android:layout_height="match_parent"

@@ -10,11 +10,15 @@ import com.fsck.k9.controller.MessagingListener;
 import com.fsck.k9.controller.PendingCommandController;
 import com.fsck.k9.mail.Flag;
 import com.fsck.k9.mail.MessagingException;
+import com.fsck.k9.mail.e3.smime.SMIMEDetectorPredicate;
 import com.fsck.k9.mail.internet.MimeMessage;
 import com.fsck.k9.mailstore.LocalFolder;
 import com.fsck.k9.mailstore.LocalMessage;
 import com.google.common.base.Function;
 import com.google.common.base.Preconditions;
+import com.google.common.base.Predicate;
+import com.google.common.base.Predicates;
+import com.google.common.collect.Collections2;
 import com.google.common.collect.Lists;
 
 import java.util.Collections;
@@ -34,12 +38,14 @@ public class E3ForceEncryptFoldersAsyncTask extends AsyncTask<LocalFolder, Void,
     private final Account account;
     private final Function<MimeMessage, MimeMessage> encryptFunction;
     private final PendingCommandController pendingCommandController;
+    private final Predicate<MimeMessage> isSMIMEPredicate;
     ProgressDialog progress;
 
     public E3ForceEncryptFoldersAsyncTask(final Context context, final Account account, final Function<MimeMessage, MimeMessage> encryptFunction) {
         this.account = account;
         this.encryptFunction = encryptFunction;
         this.pendingCommandController = new PendingCommandController(context);
+        this.isSMIMEPredicate = new SMIMEDetectorPredicate();
     }
 
     @Override
@@ -68,8 +74,9 @@ public class E3ForceEncryptFoldersAsyncTask extends AsyncTask<LocalFolder, Void,
 
         for (final List<String> partition : partitions) {
             final List<LocalMessage> batch = folder.getMessagesByUids(partition);
+            final Iterable<LocalMessage> filtered = Collections2.filter(batch, Predicates.not(isSMIMEPredicate));
 
-            for (final LocalMessage originalMsg : batch) {
+            for (final LocalMessage originalMsg : filtered) {
                 final MimeMessage encryptedMsg = encryptFunction.apply(originalMsg);
 
                 Preconditions.checkNotNull(encryptedMsg, "Failed to encrypt originalMsg: " + originalMsg);

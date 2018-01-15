@@ -7,6 +7,7 @@ import android.os.Bundle;
 import android.view.View;
 import android.view.View.OnClickListener;
 import android.widget.ArrayAdapter;
+import android.widget.Button;
 import android.widget.Filter;
 import android.widget.ListView;
 import android.widget.TextView;
@@ -60,8 +61,10 @@ public class AccountSetupE3ForceEncrypt extends K9ListActivity implements OnClic
         super.onCreate(savedInstanceState);
         setContentView(R.layout.account_setup_e3_force_encrypt_started);
 
-        TextView mainText = (TextView) findViewById(R.id.e3_force_encrypt_started_text);
+        final TextView mainText = (TextView) findViewById(R.id.e3_force_encrypt_started_text);
         mainText.setText(getString(R.string.account_settings_e3_force_encrypt_started_text));
+        final Button confirmButton = (Button) findViewById(R.id.confirm);
+        confirmButton.setOnClickListener(this);
 
         adapter = new ArrayAdapter<LocalFolder>(this, android.R.layout.simple_list_item_1) {
             private Filter myFilter = null;
@@ -76,7 +79,7 @@ public class AccountSetupE3ForceEncrypt extends K9ListActivity implements OnClic
         };
         getListView().setAdapter(adapter);
 
-        String accountUuid = getIntent().getStringExtra(AccountSetupE3ForceEncryptPicker.EXTRA_ACCOUNT);
+        final String accountUuid = getIntent().getStringExtra(AccountSetupE3ForceEncryptPicker.EXTRA_ACCOUNT);
         account = Preferences.getPreferences(this).getAccount(accountUuid);
 
         final String[] strFolders = getIntent().getStringArrayExtra(EXTRA_FOLDERS);
@@ -97,7 +100,7 @@ public class AccountSetupE3ForceEncrypt extends K9ListActivity implements OnClic
     @Override
     public void onClick(View view) {
         switch (view.getId()) {
-            case R.id.next:
+            case R.id.confirm:
                 Function<MimeMessage, MimeMessage> encryptFunction = SMIMEEncryptFunctionFactory.get(this, account.getE3KeyName(),
                         account.getE3Password());
                 E3ForceEncryptFoldersAsyncTask forceEncryptTask = new E3ForceEncryptFoldersAsyncTask(this, account, encryptFunction);

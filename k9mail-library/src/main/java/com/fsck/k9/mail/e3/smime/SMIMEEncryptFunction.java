@@ -16,6 +16,7 @@ import com.fsck.k9.mail.internet.MimeUtility;
 import com.google.common.base.Charsets;
 import com.google.common.base.Function;
 import com.google.common.base.Preconditions;
+import com.google.common.base.Predicate;
 import com.google.common.base.Strings;
 import com.google.common.io.Closeables;
 
@@ -51,6 +52,7 @@ public class SMIMEEncryptFunction implements Function<MimeMessage, MimeMessage> 
 
     private final E3Utils e3Utils;
     private final PrivateKeyEntry keyEntry;
+    private final Predicate<MimeMessage> isSMIMEPredicate;
 
     static {
         System.loadLibrary("e3-jni");
@@ -59,16 +61,15 @@ public class SMIMEEncryptFunction implements Function<MimeMessage, MimeMessage> 
     public SMIMEEncryptFunction(final PrivateKeyEntry keyEntry, final E3Utils e3Utils) {
         this.e3Utils = e3Utils;
         this.keyEntry = keyEntry;
+        this.isSMIMEPredicate = new SMIMEDetectorPredicate();
     }
 
     @Override
     public MimeMessage apply(final MimeMessage original) {
+        Preconditions.checkNotNull(original, "Cannot decrypt a null message");
         final String[] contentType = original.getHeader(MimeHeader.HEADER_CONTENT_TYPE);
-
-        for (final String smimeHeuristic : E3Constants.SMIME_CONTENT_TYPE_HEURISTICS) {
-            Preconditions.checkArgument(!contentType[0].contains(smimeHeuristic), "MimeMessage is" +
-                    " already encrypted? " + contentType[0]);
-        }
+        Preconditions.checkArgument(!isSMIMEPredicate.apply(original), "MimeMessage is" +
+                " already encrypted? " + contentType[0]);
 
         // Makes a new copy of the original message (yes, should usually avoid using clone())
         final MimeMessage returnMessage = original.clone();
