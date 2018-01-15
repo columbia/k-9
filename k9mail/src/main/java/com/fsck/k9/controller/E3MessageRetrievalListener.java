@@ -120,7 +120,7 @@ public class E3MessageRetrievalListener<T extends Message> implements MessageRet
     }
 
     private Optional<Message> encryptMessage(final Message original) {
-        Preconditions.checkArgument(original instanceof MimeMessage, "Can only " + "encrypt " +
+        Preconditions.checkArgument(original instanceof MimeMessage, "Can only encrypt " +
                 "MimeMessage, but got " + original);
         try {
             final MimeMessage encrypted = Preconditions.checkNotNull(encryptFunction.apply(
@@ -152,7 +152,7 @@ public class E3MessageRetrievalListener<T extends Message> implements MessageRet
 
             message.setFlag(Flag.E3, true);
 
-            // Store the updated (now downloaded) message locally
+            // Store the encrypted message locally
             final LocalMessage localMessage = localFolder.storeSmallMessage(message, new Runnable
                     () {
                 @Override

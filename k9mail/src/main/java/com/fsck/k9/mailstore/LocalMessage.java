@@ -288,10 +288,20 @@ public class LocalMessage extends MimeMessage {
         this.localStore.notifyChange();
     }
 
-    /*
-     * If a message is being marked as deleted we want to clear out its content. Delete will not actually remove the
-     * row since we need to retain the UID for synchronization purposes.
+    /**
+     * Only use this if you need to change {@link #mimeType} after loading the message
+     * from the local store (which populates this automatically).
+     *
+     * @param mimeType
      */
+    public void setMimeType(String mimeType) {
+        this.mimeType = mimeType;
+    }
+
+    /*
+         * If a message is being marked as deleted we want to clear out its content. Delete will not actually remove the
+         * row since we need to retain the UID for synchronization purposes.
+         */
     private void delete() throws MessagingException {
         try {
             localStore.getDatabase().execute(true, new DbCallback<Void>() {

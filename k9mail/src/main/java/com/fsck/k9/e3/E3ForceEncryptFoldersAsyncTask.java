@@ -9,8 +9,12 @@ import com.fsck.k9.Account;
 import com.fsck.k9.R;
 import com.fsck.k9.controller.MessagingListener;
 import com.fsck.k9.controller.PendingCommandController;
+import com.fsck.k9.crypto.MessageCryptoStructureDetector;
+import com.fsck.k9.mail.FetchProfile;
+import com.fsck.k9.mail.FetchProfile.Item;
 import com.fsck.k9.mail.Flag;
 import com.fsck.k9.mail.MessagingException;
+import com.fsck.k9.mail.e3.E3Constants;
 import com.fsck.k9.mail.e3.smime.SMIMEDetectorPredicate;
 import com.fsck.k9.mail.internet.MimeMessage;
 import com.fsck.k9.mailstore.LocalFolder;
@@ -20,6 +24,7 @@ import com.google.common.base.Preconditions;
 import com.google.common.base.Predicate;
 import com.google.common.base.Predicates;
 import com.google.common.collect.Collections2;
+import com.google.common.collect.ImmutableList;
 import com.google.common.collect.Lists;
 
 import java.util.ArrayList;
@@ -86,17 +91,27 @@ public class E3ForceEncryptFoldersAsyncTask extends AsyncTask<LocalFolder, Void,
 
         for (final List<String> partition : partitions) {
             final List<LocalMessage> batch = folder.getMessagesByUids(partition);
-            final Iterable<LocalMessage> filtered = Collections2.filter(batch, Predicates.not(isSMIMEPredicate));
+            final List<LocalMessage> filtered = ImmutableList.copyOf(Collections2.filter(batch, Predicates.not(isSMIMEPredicate)));
 
             for (final LocalMessage originalMsg : filtered) {
+                // Fetch the message contents before we try to encrypt it
+                final FetchProfile fetchProfile = new FetchProfile();
+                fetchProfile.add(Item.ENVELOPE);
+                fetchProfile.add(Item.BODY);
+                folder.fetch(Collections.singletonList(originalMsg), fetchProfile, null);
+
+                // Need to set here because the encryptFunction is unaware of LocalMessage
+                originalMsg.setMimeType(MessageCryptoStructureDetector.SMIME_CONTENT_TYPE);
+
                 final MimeMessage encryptedMsg = encryptFunction.apply(originalMsg);
 
                 Preconditions.checkNotNull(encryptedMsg, "Failed to encrypt originalMsg: " + originalMsg);
 
                 encryptedMsg.setFlag(Flag.E3, true);
+                encryptedMsg.setUid("");
 
                 // Store the encrypted message locally
-                final LocalMessage localMessage = folder.storeSmallMessage(encryptedMsg, new Runnable
+                final LocalMessage localMessageEncrypted = folder.storeSmallMessage(encryptedMsg, new Runnable
                         () {
                     @Override
                     public void run() {
@@ -104,6 +119,8 @@ public class E3ForceEncryptFoldersAsyncTask extends AsyncTask<LocalFolder, Void,
                         //completedDialog.incrementAndGet();
                     }
                 });
+
+                folder.fetch(Collections.singletonList(localMessageEncrypted), fetchProfile, null);
 
                 final List<String> uidSingleton = Collections.singletonList(originalMsg.getUid());
 
@@ -117,7 +134,7 @@ public class E3ForceEncryptFoldersAsyncTask extends AsyncTask<LocalFolder, Void,
                 pendingCommandController.queueMoveOrCopy(account, folder.getName(), false, uidSingleton);
 
                 // Third: Append encrypted remotely
-                pendingCommandController.queueAppend(account, folder.getName(), encryptedMsg.getUid());
+                pendingCommandController.queueAppend(account, folder.getName(), localMessageEncrypted.getUid());
 
                 // Fourth: Queue empty trash (expunge) command
                 pendingCommandController.queueEmptyTrash(account);

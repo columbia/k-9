@@ -39,6 +39,8 @@ import java.util.List;
  * <p>
  * Relies on JNI code because we want to take advantage of openssl.
  * <p>
+ * If you use this to encrypt a {@code LocalMessage} (which is inaccessible from this library), you
+ * must remember to manually set the MIME-Type of it to "application/pkcs7-mime".
  * Created on 12/14/2017.
  *
  * @author koh
