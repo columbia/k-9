@@ -14,7 +14,6 @@ import com.fsck.k9.mail.FetchProfile;
 import com.fsck.k9.mail.FetchProfile.Item;
 import com.fsck.k9.mail.Flag;
 import com.fsck.k9.mail.MessagingException;
-import com.fsck.k9.mail.e3.E3Constants;
 import com.fsck.k9.mail.e3.smime.SMIMEDetectorPredicate;
 import com.fsck.k9.mail.internet.MimeMessage;
 import com.fsck.k9.mailstore.LocalFolder;
@@ -34,6 +33,10 @@ import java.util.List;
 import timber.log.Timber;
 
 /**
+ * {@link AsyncTask} for E3 encrypting emails in folders.
+ * <p>
+ * TODO: Change this to a {@link android.app.IntentService} which is better suited for long running tasks?
+ * <p>
  * Created on 1/9/2018.
  *
  * @author koh
