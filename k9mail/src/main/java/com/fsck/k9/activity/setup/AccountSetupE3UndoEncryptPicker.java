@@ -18,14 +18,14 @@ import java.util.List;
  * @author koh
  */
 
-public class AccountSetupE3ForceEncryptPicker extends AccountSetupE3FolderListPicker {
+public class AccountSetupE3UndoEncryptPicker extends AccountSetupE3FolderListPicker {
 
-    public static void actionE3ForceEncryptPicker(Context context, Account account) {
-        context.startActivity(intentActionE3ForceEncryptPicker(context, account));
+    public static void actionE3UndoEncryptPicker(Context context, Account account) {
+        context.startActivity(intentActionE3UndoEncryptPicker(context, account));
     }
 
-    public static Intent intentActionE3ForceEncryptPicker(Context context, Account account) {
-        Intent i = new Intent(context, AccountSetupE3ForceEncryptPicker.class);
+    public static Intent intentActionE3UndoEncryptPicker(Context context, Account account) {
+        Intent i = new Intent(context, AccountSetupE3UndoEncryptPicker.class);
         i.setAction(Intent.ACTION_EDIT);
         i.putExtra(EXTRA_ACCOUNT, account.getUuid());
         return i;
@@ -46,7 +46,7 @@ public class AccountSetupE3ForceEncryptPicker extends AccountSetupE3FolderListPi
                     }
                 }
 
-                AccountSetupE3ForceEncrypt.actionE3ForceEncrypt(this, getAccount(), selectedItems);
+                AccountSetupE3UndoEncrypt.actionE3UndoEncrypt(this, getAccount(), selectedItems);
                 break;
         }
     }

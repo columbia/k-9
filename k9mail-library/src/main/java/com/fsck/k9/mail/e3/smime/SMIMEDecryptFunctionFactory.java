@@ -1,5 +1,7 @@
 package com.fsck.k9.mail.e3.smime;
 
+import android.content.Context;
+
 import com.fsck.k9.mail.Part;
 import com.fsck.k9.mail.e3.E3KeyStoreService;
 import com.fsck.k9.mail.e3.E3Utils;
@@ -31,5 +33,12 @@ public final class SMIMEDecryptFunctionFactory {
         } catch (final NoSuchAlgorithmException | UnrecoverableEntryException | KeyStoreException e) {
             throw new RuntimeException(e);
         }
+    }
+
+    public static Function<Part, ByteSource> get(final Context context, final String
+            keyAlias, final String keyPassword) {
+        final E3Utils e3Utils = new E3Utils(context);
+
+        return get(e3Utils, keyAlias, keyPassword);
     }
 }

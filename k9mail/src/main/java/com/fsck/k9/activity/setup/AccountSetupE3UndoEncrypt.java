@@ -2,7 +2,6 @@ package com.fsck.k9.activity.setup;
 
 import android.content.Context;
 import android.content.Intent;
-import android.os.AsyncTask;
 import android.os.Bundle;
 import android.view.View;
 import android.view.View.OnClickListener;
@@ -16,36 +15,35 @@ import com.fsck.k9.Preferences;
 import com.fsck.k9.R;
 import com.fsck.k9.activity.FolderListFilter;
 import com.fsck.k9.activity.K9ListActivity;
-import com.fsck.k9.e3.E3ForceEncryptFoldersAsyncTask;
+import com.fsck.k9.e3.E3UndoEncryptFoldersAsyncTask;
 import com.fsck.k9.mail.MessagingException;
-import com.fsck.k9.mail.e3.smime.SMIMEEncryptFunctionFactory;
+import com.fsck.k9.mail.Part;
+import com.fsck.k9.mail.e3.smime.ComposedDecryptSMIMEToMessageFunction;
 import com.fsck.k9.mail.internet.MimeMessage;
 import com.fsck.k9.mailstore.LocalFolder;
 import com.fsck.k9.mailstore.LocalStore;
 import com.google.common.base.Function;
-import com.google.common.base.Preconditions;
 
-import java.util.Arrays;
 import java.util.List;
 
 /**
- * Created on 1/12/2018.
+ * Created on 1/16/2018.
  *
  * @author koh
  */
 
-public class AccountSetupE3ForceEncrypt extends K9ListActivity implements OnClickListener {
+public class AccountSetupE3UndoEncrypt extends K9ListActivity implements OnClickListener {
     private static final String EXTRA_FOLDERS = "folders";
     private Account account;
     private LocalFolder[] folders;
     private ArrayAdapter<LocalFolder> adapter;
 
-    public static void actionE3ForceEncrypt(Context context, Account account, List<String> folders) {
-        context.startActivity(intentActionE3ForceEncrypt(context, account, folders));
+    public static void actionE3UndoEncrypt(Context context, Account account, List<String> folders) {
+        context.startActivity(intentActionE3UndoEncrypt(context, account, folders));
     }
 
-    public static Intent intentActionE3ForceEncrypt(Context context, Account account, List<String> folders) {
-        Intent i = new Intent(context, AccountSetupE3ForceEncrypt.class);
+    public static Intent intentActionE3UndoEncrypt(Context context, Account account, List<String> folders) {
+        Intent i = new Intent(context, AccountSetupE3UndoEncrypt.class);
         i.setAction(Intent.ACTION_EDIT);
         i.putExtra(AccountSetupE3FolderListPicker.EXTRA_ACCOUNT, account.getUuid());
         i.putExtra(EXTRA_FOLDERS, folders.toArray(new String[0]));
@@ -88,48 +86,21 @@ public class AccountSetupE3ForceEncrypt extends K9ListActivity implements OnClic
                 folders[i] = localStore.getFolder(strFolders[i]);
             }
 
-            new PopulateFolderListFromArrayTask(adapter).execute(folders);
+            new AccountSetupE3ForceEncrypt.PopulateFolderListFromArrayTask(adapter).execute(folders);
         } catch (final MessagingException e) {
             throw new RuntimeException(e);
         }
     }
+
     @Override
     public void onClick(View view) {
         switch (view.getId()) {
             case R.id.confirm:
-                Function<MimeMessage, MimeMessage> encryptFunction = SMIMEEncryptFunctionFactory.get(this, account.getE3KeyName(),
-                        account.getE3Password());
-                E3ForceEncryptFoldersAsyncTask forceEncryptTask = new E3ForceEncryptFoldersAsyncTask(this, account, encryptFunction);
+                Function<Part, MimeMessage> decryptFunction = new ComposedDecryptSMIMEToMessageFunction(this, account.getE3KeyName(), account.getE3Password());
+                E3UndoEncryptFoldersAsyncTask forceEncryptTask = new E3UndoEncryptFoldersAsyncTask(this, account, decryptFunction);
 
                 forceEncryptTask.execute(folders);
                 break;
-        }
-    }
-
-    static class PopulateFolderListFromArrayTask extends AsyncTask<LocalFolder, Void, List<LocalFolder>> {
-        private ArrayAdapter<LocalFolder> adapter;
-
-        PopulateFolderListFromArrayTask(ArrayAdapter<LocalFolder> adapter) {
-            this.adapter = adapter;
-        }
-
-        @Override
-        protected List<LocalFolder> doInBackground(LocalFolder... params) {
-            Preconditions.checkNotNull(params, "Must provide LocalFolders as execute parameter");
-
-            return Arrays.asList(params);
-        }
-
-        @Override
-        protected void onPreExecute() {
-        }
-
-        @Override
-        protected void onPostExecute(final List<LocalFolder> res) {
-            // Now we're in the UI-thread, we can safely change the contents of the adapter.
-            adapter.clear();
-            adapter.addAll(res);
-            adapter.notifyDataSetChanged();
         }
     }
 }

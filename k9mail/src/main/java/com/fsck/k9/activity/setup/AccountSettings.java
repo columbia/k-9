@@ -112,6 +112,7 @@ public class AccountSettings extends K9PreferenceActivity {
     private static final String PREFERENCE_SYNC_REMOTE_DELETIONS = "account_sync_remote_deletetions";
     private static final String PREFERENCE_E3_ENABLED = "e3_enabled";
     private static final String PREFERENCE_E3_FORCE_ENCRYPT = "e3_force_encrypt";
+    private static final String PREFERENCE_E3_UNDO_ENCRYPT = "e3_undo_encrypt";
     private static final String PREFERENCE_CRYPTO = "crypto";
     private static final String PREFERENCE_CRYPTO_KEY = "crypto_key";
     private static final String PREFERENCE_CLOUD_SEARCH_ENABLED = "remote_search_enabled";
@@ -707,6 +708,14 @@ public class AccountSettings extends K9PreferenceActivity {
             }
         });
 
+        findPreference(PREFERENCE_E3_UNDO_ENCRYPT).setOnPreferenceClickListener(
+        new Preference.OnPreferenceClickListener() {
+            public boolean onPreferenceClick(Preference preference) {
+                onE3UndoEncrypt();
+                return true;
+            }
+        });
+
         hasPgpCrypto = K9.isOpenPgpProviderConfigured();
         PreferenceScreen cryptoMenu = (PreferenceScreen) findPreference(PREFERENCE_CRYPTO);
         if (hasPgpCrypto) {
@@ -970,6 +979,10 @@ public class AccountSettings extends K9PreferenceActivity {
 
     private void onE3ForceEncrypt() {
         AccountSetupE3ForceEncryptPicker.actionE3ForceEncryptPicker(this, account);
+    }
+
+    private void onE3UndoEncrypt() {
+        AccountSetupE3UndoEncryptPicker.actionE3UndoEncryptPicker(this, account);
     }
 
     public void onChooseAutoExpandFolder() {
