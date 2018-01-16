@@ -623,6 +623,9 @@ Please submit bug reports, contribute new features and ask questions at
     <string name="account_settings_e3_undo">Undo E3</string>
     <string name="account_settings_e3_undo_summary">Removes E3 encryption from emails</string>
     <string name="account_settings_e3_undo_encrypt_title">Decrypting emails</string>
+    <string name="account_settings_e3_undo_encrypt_started_text">The emails in these folders will be decrypted:</string>
+    <string name="e3_undo_encrypt_confirm">Undo encryption</string>
+    <string name="e3_undo_encrypt_activity_title">Undo E3 encryption (decrypt) per folder</string>
     <string name="e3_undo_encrypt_completed">Undo E3 encryption completed. %s messages were decrypted.</string>
 
     <string name="account_settings_crypto">Cryptography</string>

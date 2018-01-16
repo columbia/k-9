@@ -106,7 +106,7 @@ public class E3UndoEncryptFoldersAsyncTask  extends AsyncTask<LocalFolder, Void,
 
                 Preconditions.checkNotNull(decryptedMessage, "Failed to decrypt originalEncryptedMsg: " + originalEncryptedMsg);
 
-                //decryptedMessageBytes.setUid("");
+                decryptedMessage.setUid("");
 
                 // Store the decrypted message locally
                 final LocalMessage localMessageDecrypted = folder.storeSmallMessage(decryptedMessage, new Runnable
@@ -125,8 +125,6 @@ public class E3UndoEncryptFoldersAsyncTask  extends AsyncTask<LocalFolder, Void,
                 // First: Set \Deleted and \E3_DONE on the original message
                 pendingCommandController.queueSetFlag(account, folder.getName(), true,
                         Flag.DELETED, uidSingleton);
-                pendingCommandController.queueSetFlag(account, folder.getName(), true,
-                        Flag.E3_DONE, uidSingleton);
 
                 // Second: Move original to Gmail's trash folder
                 pendingCommandController.queueMoveOrCopy(account, folder.getName(), false, uidSingleton);
@@ -135,7 +133,8 @@ public class E3UndoEncryptFoldersAsyncTask  extends AsyncTask<LocalFolder, Void,
                 pendingCommandController.queueAppend(account, folder.getName(), localMessageDecrypted.getUid());
 
                 // Fourth: Queue empty trash (expunge) command
-                pendingCommandController.queueEmptyTrash(account);
+                // Expunging is not really necessary since the email is encrypted.
+                //pendingCommandController.queueEmptyTrash(account);
 
                 decryptedSubjects.add(originalEncryptedMsg.getSubject());
             }

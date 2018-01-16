@@ -2,12 +2,20 @@ package com.fsck.k9.mail.e3.smime;
 
 import android.content.Context;
 
+import com.fsck.k9.mail.MessagingException;
 import com.fsck.k9.mail.Part;
 import com.fsck.k9.mail.internet.MimeMessage;
 import com.google.common.base.Function;
+import com.google.common.base.Preconditions;
 import com.google.common.io.ByteSource;
+import com.google.common.io.Closeables;
+
+import java.io.IOException;
+import java.io.InputStream;
 
 import javax.annotation.Nullable;
+
+import timber.log.Timber;
 
 /**
  * Created on 1/16/2018.
@@ -25,8 +33,22 @@ public class ComposedDecryptSMIMEToMessageFunction implements Function<Part, Mim
     @Nullable
     @Override
     public MimeMessage apply(final @Nullable Part smimeMsg) {
-        final ByteSource decryptedBytes = decryptFunction.apply(smimeMsg);
+        final ByteSource decryptedBytes = Preconditions.checkNotNull(decryptFunction.apply(smimeMsg), "Failed to decrypt smimeMsg");
 
-        return null;
+        InputStream decryptedIn = null;
+        try {
+            decryptedIn = decryptedBytes.openStream();
+            final MimeMessage decryptedMIME = new MimeMessage();
+            decryptedMIME.parse(decryptedIn);
+
+            return decryptedMIME;
+        } catch (final IOException | MessagingException e) {
+            Timber.e(e);
+            throw new RuntimeException(e);
+        } finally {
+            Closeables.closeQuietly(decryptedIn);
+        }
     }
+
+
 }

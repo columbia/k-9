@@ -56,7 +56,7 @@ public class AccountSetupE3UndoEncrypt extends K9ListActivity implements OnClick
         setContentView(R.layout.account_setup_e3_force_encrypt_started);
 
         final TextView mainText = (TextView) findViewById(R.id.e3_force_encrypt_started_text);
-        mainText.setText(getString(R.string.account_settings_e3_force_encrypt_started_text));
+        mainText.setText(getString(R.string.account_settings_e3_undo_encrypt_started_text));
         final Button confirmButton = (Button) findViewById(R.id.confirm);
         confirmButton.setOnClickListener(this);
 
@@ -96,7 +96,10 @@ public class AccountSetupE3UndoEncrypt extends K9ListActivity implements OnClick
     public void onClick(View view) {
         switch (view.getId()) {
             case R.id.confirm:
-                Function<Part, MimeMessage> decryptFunction = new ComposedDecryptSMIMEToMessageFunction(this, account.getE3KeyName(), account.getE3Password());
+                Function<Part, MimeMessage> decryptFunction =
+                        new ComposedDecryptSMIMEToMessageFunction(this,
+                                account.getE3KeyName(),
+                                account.getE3Password());
                 E3UndoEncryptFoldersAsyncTask forceEncryptTask = new E3UndoEncryptFoldersAsyncTask(this, account, decryptFunction);
 
                 forceEncryptTask.execute(folders);
