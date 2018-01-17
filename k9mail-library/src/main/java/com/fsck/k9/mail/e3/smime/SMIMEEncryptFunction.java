@@ -79,6 +79,7 @@ public class SMIMEEncryptFunction implements Function<MimeMessage, MimeMessage> 
         InputStream bodyInputStream;
 
         try {
+
             bodyInputStream = unencryptedBody.getInputStream();
         } catch (final UnsupportedOperationException e) {
             bodyInputStream = null;

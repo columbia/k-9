@@ -24,7 +24,6 @@ import com.google.common.base.Predicate;
 import com.google.common.collect.Collections2;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.Lists;
-import com.google.common.io.ByteSource;
 
 import java.util.ArrayList;
 import java.util.Collections;
@@ -102,10 +101,13 @@ public class E3UndoEncryptFoldersAsyncTask  extends AsyncTask<LocalFolder, Void,
                 // Need to set here because the decryptFunction is unaware of LocalMessage
                 originalEncryptedMsg.setMimeType(MessageCryptoStructureDetector.SMIME_CONTENT_TYPE);
 
+                final List<String> uidSingleton = Collections.singletonList(originalEncryptedMsg.getUid());
+
                 final MimeMessage decryptedMessage = decryptFunction.apply(originalEncryptedMsg);
 
                 Preconditions.checkNotNull(decryptedMessage, "Failed to decrypt originalEncryptedMsg: " + originalEncryptedMsg);
 
+                decryptedMessage.setFlag(Flag.E3, false);
                 decryptedMessage.setUid("");
 
                 // Store the decrypted message locally
@@ -120,14 +122,12 @@ public class E3UndoEncryptFoldersAsyncTask  extends AsyncTask<LocalFolder, Void,
 
                 folder.fetch(Collections.singletonList(localMessageDecrypted), fetchProfile, null);
 
-                final List<String> uidSingleton = Collections.singletonList(originalEncryptedMsg.getUid());
-
                 // First: Set \Deleted and \E3_DONE on the original message
                 pendingCommandController.queueSetFlag(account, folder.getName(), true,
                         Flag.DELETED, uidSingleton);
 
                 // Second: Move original to Gmail's trash folder
-                pendingCommandController.queueMoveOrCopy(account, folder.getName(), false, uidSingleton);
+                pendingCommandController.queueMoveToTrash(account, folder.getName(), uidSingleton);
 
                 // Third: Append decrypted remotely
                 pendingCommandController.queueAppend(account, folder.getName(), localMessageDecrypted.getUid());

@@ -72,9 +72,9 @@ public class PendingCommandController {
         queuePendingCommand(account, command);
     }
 
-    public void queueMoveOrCopy(final Account account, final String folderName, final boolean isCopy, final List<String> uids) {
+    public void queueMoveToTrash(final Account account, final String folderName, final List<String> uids) {
         final PendingMoveOrCopy moveCmd = PendingMoveOrCopy.create(folderName,
-                account.getTrashFolderName(), isCopy, uids);
+                account.getTrashFolderName(), false, uids);
         queuePendingCommand(account, moveCmd);
     }
 

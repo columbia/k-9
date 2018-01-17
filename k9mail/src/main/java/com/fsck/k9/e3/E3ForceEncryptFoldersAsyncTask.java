@@ -106,11 +106,12 @@ public class E3ForceEncryptFoldersAsyncTask extends AsyncTask<LocalFolder, Void,
                 // Need to set here because the encryptFunction is unaware of LocalMessage
                 originalMsg.setMimeType(MessageCryptoStructureDetector.SMIME_CONTENT_TYPE);
 
+                final List<String> uidSingleton = Collections.singletonList(originalMsg.getUid());
+
                 final MimeMessage encryptedMsg = encryptFunction.apply(originalMsg);
 
                 Preconditions.checkNotNull(encryptedMsg, "Failed to encrypt originalMsg: " + originalMsg);
 
-                encryptedMsg.setFlag(Flag.E3, true);
                 encryptedMsg.setUid("");
 
                 // Store the encrypted message locally
@@ -125,8 +126,6 @@ public class E3ForceEncryptFoldersAsyncTask extends AsyncTask<LocalFolder, Void,
 
                 folder.fetch(Collections.singletonList(localMessageEncrypted), fetchProfile, null);
 
-                final List<String> uidSingleton = Collections.singletonList(originalMsg.getUid());
-
                 // First: Set \Deleted and \E3_DONE on the original message
                 pendingCommandController.queueSetFlag(account, folder.getName(), true,
                         Flag.DELETED, uidSingleton);
@@ -134,7 +133,7 @@ public class E3ForceEncryptFoldersAsyncTask extends AsyncTask<LocalFolder, Void,
                         Flag.E3_DONE, uidSingleton);
 
                 // Second: Move original to Gmail's trash folder
-                pendingCommandController.queueMoveOrCopy(account, folder.getName(), false, uidSingleton);
+                pendingCommandController.queueMoveToTrash(account, folder.getName(), uidSingleton);
 
                 // Third: Append encrypted remotely
                 pendingCommandController.queueAppend(account, folder.getName(), localMessageEncrypted.getUid());
