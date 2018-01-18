@@ -472,6 +472,15 @@ public class MessageHeader extends LinearLayout implements OnClickListener, OnLo
             sb.append(label);
             sb.append(MimeUtility.unfoldAndDecode(additionalHeader.value));
         }
+        if (K9.isDebug()) {
+            sb.append("\n");
+            StyleSpan boldSpan = new StyleSpan(Typeface.BOLD);
+            SpannableString label = new SpannableString("Internal mUID: ");
+            label.setSpan(boldSpan, 0, label.length(), 0);
+            sb.append(label);
+            sb.append(mMessage.getUid());
+        }
+
         mAdditionalHeadersView.setText(sb);
     }
 

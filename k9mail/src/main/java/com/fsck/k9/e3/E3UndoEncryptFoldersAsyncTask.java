@@ -12,12 +12,14 @@ import com.fsck.k9.crypto.MessageCryptoStructureDetector;
 import com.fsck.k9.mail.FetchProfile;
 import com.fsck.k9.mail.FetchProfile.Item;
 import com.fsck.k9.mail.Flag;
+import com.fsck.k9.mail.Folder;
 import com.fsck.k9.mail.MessagingException;
 import com.fsck.k9.mail.Part;
 import com.fsck.k9.mail.e3.smime.SMIMEDetectorPredicate;
 import com.fsck.k9.mail.internet.MimeMessage;
 import com.fsck.k9.mailstore.LocalFolder;
 import com.fsck.k9.mailstore.LocalMessage;
+import com.fsck.k9.mailstore.LocalStore;
 import com.google.common.base.Function;
 import com.google.common.base.Preconditions;
 import com.google.common.base.Predicate;
@@ -28,6 +30,7 @@ import com.google.common.collect.Lists;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
+import java.util.Map;
 
 import timber.log.Timber;
 
@@ -84,63 +87,74 @@ public class E3UndoEncryptFoldersAsyncTask  extends AsyncTask<LocalFolder, Void,
     private List<String> decryptFolder(final LocalFolder folder) throws MessagingException {
         final List<String> decryptedSubjects = new ArrayList<>();
         final List<String> uids = folder.getAllMessageUids();
-
         final List<List<String>> partitions = Lists.partition(uids, BATCH_SZ);
 
-        for (final List<String> partition : partitions) {
-            final List<LocalMessage> batch = folder.getMessagesByUids(partition);
-            final List<LocalMessage> filtered = ImmutableList.copyOf(Collections2.filter(batch, isSMIMEPredicate));
+        final LocalStore localStore = account.getLocalStore();
+        final Folder trashFolder = localStore.getFolder(account.getTrashFolderName());
 
-            for (final LocalMessage originalEncryptedMsg : filtered) {
-                // Fetch the message contents before we try to decrypt it
-                final FetchProfile fetchProfile = new FetchProfile();
-                fetchProfile.add(Item.ENVELOPE);
-                fetchProfile.add(Item.BODY);
-                folder.fetch(Collections.singletonList(originalEncryptedMsg), fetchProfile, null);
+        try {
+            for (final List<String> partition : partitions) {
+                final List<LocalMessage> batch = folder.getMessagesByUids(partition);
+                final List<LocalMessage> filtered = ImmutableList.copyOf(Collections2.filter(batch, isSMIMEPredicate));
 
-                // Need to set here because the decryptFunction is unaware of LocalMessage
-                originalEncryptedMsg.setMimeType(MessageCryptoStructureDetector.SMIME_CONTENT_TYPE);
+                for (final LocalMessage originalEncryptedMsg : filtered) {
+                    final List<LocalMessage> singletonMsg = Collections.singletonList(originalEncryptedMsg);
+                    // Fetch the message contents before we try to decrypt it
+                    final FetchProfile fetchProfile = new FetchProfile();
+                    fetchProfile.add(Item.ENVELOPE);
+                    fetchProfile.add(Item.BODY);
+                    folder.fetch(Collections.singletonList(originalEncryptedMsg), fetchProfile, null);
 
-                final List<String> uidSingleton = Collections.singletonList(originalEncryptedMsg.getUid());
+                    // Need to set here because the decryptFunction is unaware of LocalMessage
+                    originalEncryptedMsg.setMimeType(MessageCryptoStructureDetector.SMIME_CONTENT_TYPE);
 
-                final MimeMessage decryptedMessage = decryptFunction.apply(originalEncryptedMsg);
+                    final List<String> uidSingleton = Collections.singletonList(originalEncryptedMsg.getUid());
 
-                Preconditions.checkNotNull(decryptedMessage, "Failed to decrypt originalEncryptedMsg: " + originalEncryptedMsg);
+                    final MimeMessage decryptedMessage = decryptFunction.apply(originalEncryptedMsg);
 
-                decryptedMessage.setFlag(Flag.E3, false);
-                decryptedMessage.setUid("");
+                    Preconditions.checkNotNull(decryptedMessage, "Failed to decrypt originalEncryptedMsg: " + originalEncryptedMsg);
 
-                // Store the decrypted message locally
-                final LocalMessage localMessageDecrypted = folder.storeSmallMessage(decryptedMessage, new Runnable
-                        () {
-                    @Override
-                    public void run() {
-                        // TODO: add completedDialog?
-                        //completedDialog.incrementAndGet();
-                    }
-                });
+                    decryptedMessage.setFlag(Flag.E3, false);
+                    decryptedMessage.setUid("");
 
-                folder.fetch(Collections.singletonList(localMessageDecrypted), fetchProfile, null);
+                    // Store the decrypted message locally
+                    final LocalMessage localMessageDecrypted = folder.storeSmallMessage(decryptedMessage, new Runnable
+                            () {
+                        @Override
+                        public void run() {
+                            // TODO: add completedDialog?
+                            //completedDialog.incrementAndGet();
+                        }
+                    });
 
-                // First: Set \Deleted and \E3_DONE on the original message
-                pendingCommandController.queueSetFlag(account, folder.getName(), true,
-                        Flag.DELETED, uidSingleton);
+                    folder.fetch(Collections.singletonList(localMessageDecrypted), fetchProfile, null);
 
-                // Second: Move original to Gmail's trash folder
-                pendingCommandController.queueMoveToTrash(account, folder.getName(), uidSingleton);
+                    final Map<String, String> trashUidMap = folder.moveMessages(singletonMsg, trashFolder);
 
-                // Third: Append decrypted remotely
-                pendingCommandController.queueAppend(account, folder.getName(), localMessageDecrypted.getUid());
+                    // First: Set \Deleted and \E3_DONE on the original message
+                    pendingCommandController.queueSetFlag(account, folder.getName(), true,
+                            Flag.DELETED, uidSingleton);
 
-                // Fourth: Queue empty trash (expunge) command
-                // Expunging is not really necessary since the email is encrypted.
-                //pendingCommandController.queueEmptyTrash(account);
+                    // Second: Move original to Gmail's trash folder
+                    pendingCommandController.queueMoveToTrash(account, folder.getName(), uidSingleton, trashUidMap);
 
-                decryptedSubjects.add(originalEncryptedMsg.getSubject());
+                    // Third: Append decrypted remotely
+                    pendingCommandController.queueAppend(account, folder.getName(), localMessageDecrypted.getUid());
+
+                    // Fourth: Queue empty trash (expunge) command
+                    // Expunging is not really necessary since the email is encrypted.
+                    //pendingCommandController.queueEmptyTrash(account);
+
+                    decryptedSubjects.add(originalEncryptedMsg.getSubject());
+                }
+
+                // Final: Run all the queued commands
+                pendingCommandController.processPendingCommandsSynchronous(account, Collections.<MessagingListener>emptySet());
             }
-
-            // Final: Run all the queued commands
-            pendingCommandController.processPendingCommandsSynchronous(account, Collections.<MessagingListener>emptySet());
+        } finally {
+            if (trashFolder != null) {
+                trashFolder.close();
+            }
         }
 
         return decryptedSubjects;

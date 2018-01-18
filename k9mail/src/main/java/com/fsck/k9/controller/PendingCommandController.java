@@ -72,9 +72,13 @@ public class PendingCommandController {
         queuePendingCommand(account, command);
     }
 
-    public void queueMoveToTrash(final Account account, final String folderName, final List<String> uids) {
-        final PendingMoveOrCopy moveCmd = PendingMoveOrCopy.create(folderName,
-                account.getTrashFolderName(), false, uids);
+    public void queueMoveToTrash(final Account account, final String folderName, final List<String> uids, final Map<String, String> mappedUids) {
+        final PendingMoveOrCopy moveCmd;
+        if (mappedUids == null || mappedUids.isEmpty()) {
+            moveCmd = PendingMoveOrCopy.create(folderName, account.getTrashFolderName(), false, uids);
+        } else {
+            moveCmd = PendingMoveOrCopy.create(folderName, account.getTrashFolderName(), false, mappedUids);
+        }
         queuePendingCommand(account, moveCmd);
     }
 

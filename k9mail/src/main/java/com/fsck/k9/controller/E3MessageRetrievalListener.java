@@ -202,7 +202,7 @@ public class E3MessageRetrievalListener<T extends Message> implements MessageRet
 
             return localMessage;
         } else {
-            // Store the original updated message locally, and return the LocalMessage
+            // Store the original message locally, and return the LocalMessage
             return localFolder.storeSmallMessage(original, new Runnable() {
                 @Override
                 public void run() {
