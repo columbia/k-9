@@ -178,23 +178,16 @@ public class E3MessageRetrievalListener<T extends Message> implements MessageRet
                         Flag.E3_DONE, uidSingleton);
 
                 // Second: Move original to Gmail's trash folder
-                final PendingMoveOrCopy moveCmd = PendingMoveOrCopy.create(localFolder.getName(),
-                        account.getTrashFolderName(), false, uidSingleton);
-
-                pendingCommandController.queuePendingCommand(account, moveCmd);
+                pendingCommandController.queueMoveToTrash(account, localFolder.getName(), uidSingleton, Collections.<String, String>emptyMap());
             }
 
             // Third: Append encrypted remotely
-            final PendingAppend appendCmd = PendingAppend.create(localFolder.getName(), message.getUid());
-            Log.d(E3Constants.LOG_TAG, "PendingAppend: " + appendCmd);
-
-            pendingCommandController.queuePendingCommand(account, appendCmd);
+            Log.d(E3Constants.LOG_TAG, String.format("PendingAppend: %s,%s", localFolder.getName(), message.getUid()));
+            pendingCommandController.queueAppend(account, localFolder.getName(), message.getUid());
 
             if (!folderIsTrash) {
                 // Fourth: Queue empty trash (expunge) command
-                final PendingEmptyTrash emptyTrashCmd = PendingEmptyTrash.create();
-
-                pendingCommandController.queuePendingCommand(account, emptyTrashCmd);
+                pendingCommandController.queueEmptyTrash(account);
             }
 
             // Final: Run all the queued commands
