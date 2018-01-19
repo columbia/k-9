@@ -3,6 +3,7 @@ package com.fsck.k9.e3;
 import android.app.AlertDialog;
 import android.content.Context;
 import android.os.AsyncTask;
+import android.util.Log;
 
 import com.fsck.k9.Account;
 import com.fsck.k9.R;
@@ -15,6 +16,7 @@ import com.fsck.k9.mail.Flag;
 import com.fsck.k9.mail.Folder;
 import com.fsck.k9.mail.MessagingException;
 import com.fsck.k9.mail.Part;
+import com.fsck.k9.mail.e3.E3Constants;
 import com.fsck.k9.mail.e3.smime.SMIMEDetectorPredicate;
 import com.fsck.k9.mail.internet.MimeMessage;
 import com.fsck.k9.mailstore.LocalFolder;
@@ -112,7 +114,14 @@ public class E3UndoEncryptFoldersAsyncTask  extends AsyncTask<LocalFolder, Void,
 
                     final MimeMessage decryptedMessage = decryptFunction.apply(originalEncryptedMsg);
 
-                    Preconditions.checkNotNull(decryptedMessage, "Failed to decrypt originalEncryptedMsg: " + originalEncryptedMsg);
+                    try {
+                        Preconditions.checkNotNull(decryptedMessage, "Failed to decrypt originalEncryptedMsg: " + originalEncryptedMsg);
+                        Log.d(E3Constants.LOG_TAG, String.format("Undo decryption for messageId=%s completed", originalEncryptedMsg.getMessageId()));
+                    } catch (final Exception e) {
+                        // This message might be bad, so let's skip it.
+                        Log.e(E3Constants.LOG_TAG, "Failed to decrypt a message", e);
+                        continue;
+                    }
 
                     decryptedMessage.setFlag(Flag.E3, false);
                     decryptedMessage.setUid("");
@@ -142,14 +151,17 @@ public class E3UndoEncryptFoldersAsyncTask  extends AsyncTask<LocalFolder, Void,
                     pendingCommandController.queueAppend(account, folder.getName(), localMessageDecrypted.getUid());
 
                     // Fourth: Queue empty trash (expunge) command
-                    // Expunging is not really necessary since the email is encrypted.
-                    //pendingCommandController.queueEmptyTrash(account);
+                    // Expunging is not really necessary since the email is encrypted. But if we don't, it messes up the threading in Gmail.
+                    pendingCommandController.queueEmptyTrash(account);
+
+                    // Final: Run all the queued commands
+                    // Invoking it here instead of for the entire batch is inefficient. However,
+                    // there seems to be some kind of bug in the ImapConnection handler so that
+                    // if we queue multiple commands for multiple messages, it gets null responses.
+                    pendingCommandController.processPendingCommandsSynchronous(account, Collections.<MessagingListener>emptySet());
 
                     decryptedSubjects.add(originalEncryptedMsg.getSubject());
                 }
-
-                // Final: Run all the queued commands
-                pendingCommandController.processPendingCommandsSynchronous(account, Collections.<MessagingListener>emptySet());
             }
         } finally {
             if (trashFolder != null) {

@@ -20,7 +20,7 @@ import timber.log.Timber;
 /**
  * Created on 1/16/2018.
  *
- * @author mauzel
+ * @author koh
  */
 
 public class ComposedDecryptSMIMEToMessageFunction implements Function<Part, MimeMessage> {
@@ -33,7 +33,11 @@ public class ComposedDecryptSMIMEToMessageFunction implements Function<Part, Mim
     @Nullable
     @Override
     public MimeMessage apply(final @Nullable Part smimeMsg) {
-        final ByteSource decryptedBytes = Preconditions.checkNotNull(decryptFunction.apply(smimeMsg), "Failed to decrypt smimeMsg");
+        final ByteSource decryptedBytes = decryptFunction.apply(smimeMsg);
+
+        if (decryptedBytes == null) {
+            return null;
+        }
 
         InputStream decryptedIn = null;
         try {

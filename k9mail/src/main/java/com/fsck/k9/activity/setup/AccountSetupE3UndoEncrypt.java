@@ -58,6 +58,7 @@ public class AccountSetupE3UndoEncrypt extends K9ListActivity implements OnClick
         final TextView mainText = (TextView) findViewById(R.id.e3_force_encrypt_started_text);
         mainText.setText(getString(R.string.account_settings_e3_undo_encrypt_started_text));
         final Button confirmButton = (Button) findViewById(R.id.confirm);
+        confirmButton.setText(R.string.e3_undo_encrypt_confirm);
         confirmButton.setOnClickListener(this);
 
         adapter = new ArrayAdapter<LocalFolder>(this, android.R.layout.simple_list_item_1) {

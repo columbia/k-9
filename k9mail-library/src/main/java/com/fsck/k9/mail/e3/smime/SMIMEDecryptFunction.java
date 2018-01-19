@@ -16,6 +16,7 @@ import com.fsck.k9.mail.message.MessageHeaderParser;
 import com.google.common.base.Charsets;
 import com.google.common.base.Function;
 import com.google.common.base.Preconditions;
+import com.google.common.collect.Iterables;
 import com.google.common.io.ByteSource;
 import com.google.common.io.ByteStreams;
 import com.google.common.io.Closeables;
@@ -32,6 +33,7 @@ import java.io.InputStream;
 import java.io.OutputStream;
 import java.security.KeyStore;
 import java.security.cert.CertificateEncodingException;
+import java.util.Arrays;
 
 import timber.log.Timber;
 
@@ -93,7 +95,10 @@ public class SMIMEDecryptFunction implements Function<Part, ByteSource> {
             final int decryptResult = cmsDecryptJNI(certDer, privateKeyDer, envelopedFile.getAbsolutePath(), decryptedFile.getAbsolutePath());
 
             if (decryptResult != 0) {
-                throw new RuntimeException("Failed to do JNI decrypt and verify, return code: " + decryptResult);
+                final String messageId = Iterables.getFirst(Arrays.asList(originalMessage.getHeader("Message-ID")), "no value found");
+                Timber.e(String.format("Failed to do JNI decrypt and verification, return code=%s, mUid=%s",
+                        decryptResult, messageId));
+                return null;
             }
 
             Timber.d(E3Constants.LOG_TAG, "Got good JNI decrypt and verify result for " + decryptedFile.getAbsolutePath());

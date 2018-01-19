@@ -150,11 +150,15 @@ public class E3ForceEncryptFoldersAsyncTask extends AsyncTask<LocalFolder, Void,
                     // Fourth: Queue empty trash (expunge) command
                     pendingCommandController.queueEmptyTrash(account);
 
+                    // Final: Run all the queued commands.
+                    // Invoking it here instead of for the entire batch is inefficient. However,
+                    // there seems to be some kind of bug in the ImapConnection handler so that
+                    // if we queue multiple commands for multiple messages, it gets null responses.
+                    pendingCommandController.processPendingCommandsSynchronous(account, Collections.<MessagingListener>emptySet());
+
                     encryptedSubjects.add(originalMsg.getSubject());
                 }
 
-                // Final: Run all the queued commands
-                pendingCommandController.processPendingCommandsSynchronous(account, Collections.<MessagingListener>emptySet());
             }
         } finally {
             if (trashFolder != null) {
