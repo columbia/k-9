@@ -18,6 +18,7 @@ import com.fsck.k9.mail.MessagingException;
 import com.fsck.k9.mail.Part;
 import com.fsck.k9.mail.e3.E3Constants;
 import com.fsck.k9.mail.e3.smime.SMIMEDetectorPredicate;
+import com.fsck.k9.mail.internet.MessageIdGenerator;
 import com.fsck.k9.mail.internet.MimeMessage;
 import com.fsck.k9.mailstore.LocalFolder;
 import com.fsck.k9.mailstore.LocalMessage;
@@ -93,6 +94,7 @@ public class E3UndoEncryptFoldersAsyncTask  extends AsyncTask<LocalFolder, Void,
 
         final LocalStore localStore = account.getLocalStore();
         final Folder trashFolder = localStore.getFolder(account.getTrashFolderName());
+        final MessageIdGenerator messageIdGenerator = MessageIdGenerator.getInstance();
 
         try {
             for (final List<String> partition : partitions) {
@@ -126,6 +128,9 @@ public class E3UndoEncryptFoldersAsyncTask  extends AsyncTask<LocalFolder, Void,
                     decryptedMessage.setFlag(Flag.E3, false);
                     decryptedMessage.setUid("");
 
+                    // Create a new message ID, otherwise the original copy may be retained on the server by mistake?
+                    decryptedMessage.setMessageId(messageIdGenerator.generateMessageId(decryptedMessage));
+
                     // Store the decrypted message locally
                     final LocalMessage localMessageDecrypted = folder.storeSmallMessage(decryptedMessage, new Runnable
                             () {
@@ -136,8 +141,7 @@ public class E3UndoEncryptFoldersAsyncTask  extends AsyncTask<LocalFolder, Void,
                         }
                     });
 
-                    folder.fetch(Collections.singletonList(localMessageDecrypted), fetchProfile, null);
-
+                    folder.setFlags(singletonMsg, Collections.singleton(Flag.DELETED), true);
                     final Map<String, String> trashUidMap = folder.moveMessages(singletonMsg, trashFolder);
 
                     // First: Set \Deleted and \E3_DONE on the original message
