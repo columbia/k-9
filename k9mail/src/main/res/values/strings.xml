@@ -376,6 +376,12 @@ Please submit bug reports, contribute new features and ask questions at
     <string name="account_setup_basics_show_password">Show password</string>
     <string name="account_setup_basics_manual_setup_action">Manual setup</string>
 
+    <string name="account_setup_e3_choose_type_title">Choose E3 mode</string>
+    <string name="account_setup_e3_choose_type_help">Determines what E3 will do on this client.</string>
+    <string name="account_setup_e3_choose_type_choice_standalone">Standalone</string>
+    <string name="account_setup_e3_choose_type_choice_passive">Passive</string>
+    <string name="account_setup_e3_choose_type_choice_help">Standalone: This client will actively encrypt received emails and store them on your mail server.\n\nPassive: This client will request your other standalone E3 client to encrypt emails.</string>
+
     <string name="account_setup_e3_title">Set up E3 protection</string>
     <string name="account_setup_e3_password_header">E3 Password</string>
     <string name="account_setup_e3_password_hint">Choose E3 password</string>

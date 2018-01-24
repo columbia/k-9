@@ -28,6 +28,7 @@ import com.fsck.k9.mail.MessagingException;
 import com.fsck.k9.mail.NetworkType;
 import com.fsck.k9.mail.Store;
 import com.fsck.k9.mail.Folder.FolderClass;
+import com.fsck.k9.mail.e3.E3Type;
 import com.fsck.k9.mail.filter.Base64;
 import com.fsck.k9.mail.store.RemoteStore;
 import com.fsck.k9.mail.store.StoreConfig;
@@ -230,6 +231,7 @@ public class Account implements BaseAccount, StoreConfig {
     private boolean remoteSearchFullText;
     private int remoteSearchNumResults;
     private boolean e3EncryptionEnabled;
+    private E3Type e3Type;
 
     private ColorChip unreadColorChip;
     private ColorChip readColorChip;
@@ -1710,6 +1712,14 @@ public class Account implements BaseAccount, StoreConfig {
 
     public void setE3EncryptionEnabled(boolean e3EncryptionEnabled) {
         this.e3EncryptionEnabled = e3EncryptionEnabled;
+    }
+
+    public E3Type getE3Type() {
+        return e3Type;
+    }
+
+    public void setE3Type(E3Type e3Type) {
+        this.e3Type = e3Type;
     }
 
     public String getInboxFolderName() {

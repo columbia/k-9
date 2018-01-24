@@ -51,9 +51,9 @@ import java.util.concurrent.ExecutionException;
  * @author koh
  */
 public class AccountSetupE3 extends K9Activity implements OnClickListener, TextWatcher {
-    private static final String EXTRA_ACCOUNT = "account";
-    private static final String EXTRA_MAKE_DEFAULT = "makeDefault";
-    private static final String EXTRA_ACCOUNT_PASSWORD = "accountPassword";
+    static final String EXTRA_ACCOUNT = "account";
+    static final String EXTRA_MAKE_DEFAULT = "makeDefault";
+    static final String EXTRA_ACCOUNT_PASSWORD = "accountPassword";
     private final static String STATE_KEY_CHECKED_INCOMING = "com.fsck.k9.AccountSetupE3.checkedIncoming";
 
     private Account mAccount;

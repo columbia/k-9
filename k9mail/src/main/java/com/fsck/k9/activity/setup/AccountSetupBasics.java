@@ -325,7 +325,7 @@ public class AccountSetupBasics extends K9Activity
             ServerSettings incomingSettings = RemoteStore.decodeStoreUri(incomingUri.toString());
             mAccount.setDeletePolicy(AccountCreator.getDefaultDeletePolicy(incomingSettings.type));
 
-            AccountSetupE3.actionStartE3Setup(this, mAccount, password, false);
+            AccountSetupE3ChooseType.actionStartE3ChooseType(this, mAccount, password, false);
             Timber.d("E3_SETUP", "Reached after actionStartE3Setup()");
         } catch (URISyntaxException use) {
             /*

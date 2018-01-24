@@ -1,0 +1,72 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:orientation="vertical" android:layout_width="match_parent"
+    android:layout_height="match_parent">
+
+    <ScrollView
+        android:layout_width="wrap_content"
+        android:layout_height="0dp"
+        android:layout_weight="1"
+        android:fadingEdge="none"
+        android:padding="6dip"
+        android:scrollbarStyle="outsideInset">
+
+        <LinearLayout
+            android:layout_width="fill_parent"
+            android:layout_height="wrap_content"
+            android:layout_gravity="center_vertical|top"
+            android:padding="20dp"
+            android:orientation="vertical">
+
+            <TextView
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:text="@string/account_setup_e3_choose_type_title"
+                android:textSize="20sp"/>
+
+            <TextView
+                android:layout_width="match_parent"
+                android:layout_height="fill_parent"
+                android:layout_marginBottom="15dp"
+                android:layout_marginStart="2dp"
+                android:text="@string/account_setup_e3_choose_type_help"
+                android:textSize="14sp"/>
+
+            <RadioGroup
+                android:id="@+id/e3_choose_type_radio_group"
+                android:layout_width="match_parent"
+                android:layout_height="90dp">
+                <RadioButton
+                    android:id="@+id/radioButton"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:checked="false"
+                    android:text="@string/account_setup_e3_choose_type_choice_standalone" />
+
+                <RadioButton
+                    android:id="@+id/radioButton2"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:checked="false"
+                    android:text="@string/account_setup_e3_choose_type_choice_passive" />
+            </RadioGroup>
+
+            <TextView
+                android:layout_width="match_parent"
+                android:layout_height="fill_parent"
+                android:layout_marginBottom="15dp"
+                android:layout_marginStart="2dp"
+                android:text="@string/account_setup_e3_choose_type_choice_help"
+                android:textSize="14sp"/>
+
+
+            <View
+                android:layout_width="fill_parent"
+                android:layout_height="0dip"
+                android:layout_weight="1"/>
+        </LinearLayout>
+    </ScrollView>
+
+    <include layout="@layout/wizard_setup"/>
+
+</LinearLayout>
