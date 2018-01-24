@@ -24,11 +24,11 @@ import java.security.UnrecoverableEntryException;
  */
 
 public final class SMIMEEncryptFunctionFactory {
-    public static Function<MimeMessage, MimeMessage> get(final Context context, final String
+    public static Function<MimeMessage, MimeMessage> get(final Context context, final String accountUuid, final String
             keyAlias, final String keyPassword) {
         try {
             final E3Utils e3Utils = new E3Utils(context);
-            final E3KeyStoreService keyStoreService = new E3KeyStoreService(e3Utils, keyPassword);
+            final E3KeyStoreService keyStoreService = new E3KeyStoreService(e3Utils, accountUuid, keyPassword);
             final char[] e3Password = Preconditions.checkNotNull(keyPassword).toCharArray();
 
             Log.d(E3Constants.LOG_TAG, "Got alias: " + keyAlias);

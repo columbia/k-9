@@ -10,7 +10,6 @@ import com.fsck.k9.Account;
 import com.fsck.k9.K9;
 import com.fsck.k9.R;
 import com.fsck.k9.activity.misc.Attachment;
-import com.fsck.k9.controller.MessagingController;
 import com.fsck.k9.controller.MessagingControllerCommands.PendingAppend;
 import com.fsck.k9.mail.Address;
 import com.fsck.k9.mail.Flag;
@@ -42,16 +41,20 @@ public class AppendE3KeyAsyncTask extends AsyncTask<E3Key, Void, Void> {
     private final Resources res;
     private final Account account;
     private final String e3BackupFolder;
-    private final File e3PfxFile;
+    private final File e3File;
+    private final String mimeType;
 
-    private static final String PFX_MIME_TYPE = "application/x-pkcs12";
+    public static final String PFX_MIME_TYPE = "application/x-pkcs12";
+    public static final String PEM_MIME_TYPE = "application/x-pem-file";
+    public static final String X509_MIME_TYPE = "application/x-x509-ca-cert";
 
     public AppendE3KeyAsyncTask(final Resources res, final Account account, final String
-            e3BackupFolder, final File e3PfxFile) {
+            e3BackupFolder, final File e3File, final String mimeType) {
         this.res = res;
         this.account = account;
         this.e3BackupFolder = e3BackupFolder;
-        this.e3PfxFile = e3PfxFile;
+        this.e3File = e3File;
+        this.mimeType = mimeType;
     }
 
     @Override
@@ -106,7 +109,7 @@ public class AppendE3KeyAsyncTask extends AsyncTask<E3Key, Void, Void> {
     private MessageBuilder createE3BackupEmailBuilder(final E3Key e3Key) {
         final MessageBuilder builder = SimpleMessageBuilder.newInstance();
         final Address selfAddr = new Address(account.getEmail());
-        final Attachment pfxAttachment = getPfxAttachment();
+        final Attachment pfxAttachment = getE3KeyAsAttachment(mimeType);
         final List<Attachment> attachments = Collections.singletonList(pfxAttachment);
 
         builder.setSubject(res.getString(R.string.account_setup_e3_email_subject, e3Key
@@ -124,11 +127,11 @@ public class AppendE3KeyAsyncTask extends AsyncTask<E3Key, Void, Void> {
         return builder;
     }
 
-    private Attachment getPfxAttachment() {
-        final Uri pfxUri = Uri.fromFile(e3PfxFile);
+    private Attachment getE3KeyAsAttachment(final String mimeType) {
+        final Uri pfxUri = Uri.fromFile(e3File);
 
-        return Attachment.createAttachment(pfxUri, 1, PFX_MIME_TYPE) //
-                .deriveWithMetadataLoaded(PFX_MIME_TYPE, e3PfxFile.getName(), e3PfxFile.length()) //
-                .deriveWithLoadComplete(e3PfxFile.getAbsolutePath());
+        return Attachment.createAttachment(pfxUri, 1, mimeType) //
+                .deriveWithMetadataLoaded(mimeType, e3File.getName(), e3File.length()) //
+                .deriveWithLoadComplete(e3File.getAbsolutePath());
     }
 }

@@ -1268,7 +1268,7 @@ public class MessagingController {
         Timber.d("SYNC: Fetching %d small messages for folder %s", smallMessages.size(), folder);
 
         // Need to get at runtime because we don't know account when instantiating MessagingController
-        final Function<MimeMessage, MimeMessage> encryptFunction = SMIMEEncryptFunctionFactory.get(context, account.getE3KeyName(),
+        final Function<MimeMessage, MimeMessage> encryptFunction = SMIMEEncryptFunctionFactory.get(context, account.getUuid(), account.getE3KeyName(),
                 account.getE3Password());
 
         @SuppressWarnings("unchecked") // Due to the remote folder setter
@@ -2190,7 +2190,7 @@ public class MessagingController {
 
             if (shouldEncrypt) {
                 final Function<MimeMessage, MimeMessage> encryptFunction =
-                        SMIMEEncryptFunctionFactory.get(context, account.getE3KeyName(), account
+                        SMIMEEncryptFunctionFactory.get(context, account.getUuid(), account.getE3KeyName(), account
                                 .getE3Password());
                 final Optional<Message> encryptedOptional = encryptMessageHelper(encryptFunction,
                         original);

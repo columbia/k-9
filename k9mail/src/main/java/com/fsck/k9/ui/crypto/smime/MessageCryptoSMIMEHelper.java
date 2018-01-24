@@ -92,7 +92,7 @@ public class MessageCryptoSMIMEHelper implements MessageCryptoHelperInterface<SM
         this.cachedDecryptionResult = cachedDecryptionResult;
 
         // TODO: Set an actual key entry
-        this.smimeDecrypt = SMIMEDecryptFunctionFactory.get(new E3Utils(context), account.getE3KeyName(), account.getE3Password());
+        this.smimeDecrypt = SMIMEDecryptFunctionFactory.get(new E3Utils(context), account.getUuid(), account.getE3KeyName(), account.getE3Password());
 
         nextStep();
     }

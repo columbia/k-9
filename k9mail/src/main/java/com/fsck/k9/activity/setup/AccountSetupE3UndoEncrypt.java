@@ -99,6 +99,7 @@ public class AccountSetupE3UndoEncrypt extends K9ListActivity implements OnClick
             case R.id.confirm:
                 Function<Part, MimeMessage> decryptFunction =
                         new ComposedDecryptSMIMEToMessageFunction(this,
+                                account.getUuid(),
                                 account.getE3KeyName(),
                                 account.getE3Password());
                 E3UndoEncryptFoldersAsyncTask forceEncryptTask = new E3UndoEncryptFoldersAsyncTask(this, account, decryptFunction);

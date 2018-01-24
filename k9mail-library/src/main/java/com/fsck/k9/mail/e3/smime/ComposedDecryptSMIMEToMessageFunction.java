@@ -26,8 +26,8 @@ import timber.log.Timber;
 public class ComposedDecryptSMIMEToMessageFunction implements Function<Part, MimeMessage> {
     private final Function<Part, ByteSource> decryptFunction;
 
-    public ComposedDecryptSMIMEToMessageFunction(final Context context, final String keyAlias, final String keyPassword) {
-        this.decryptFunction = SMIMEDecryptFunctionFactory.get(context, keyAlias, keyPassword);
+    public ComposedDecryptSMIMEToMessageFunction(final Context context, final String accountUuid, final String keyAlias, final String keyPassword) {
+        this.decryptFunction = SMIMEDecryptFunctionFactory.get(context, accountUuid, keyAlias, keyPassword);
     }
 
     @Nullable

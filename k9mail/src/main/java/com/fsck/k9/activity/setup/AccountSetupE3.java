@@ -27,6 +27,7 @@ import com.fsck.k9.mail.e3.E3AliasFunction;
 import com.fsck.k9.mail.e3.E3Constants;
 import com.fsck.k9.mail.e3.E3Key;
 import com.fsck.k9.mail.e3.E3KeyStoreService;
+import com.fsck.k9.mail.e3.E3Type;
 import com.fsck.k9.mail.e3.E3Utils;
 import com.fsck.k9.mail.e3.E3X509PKCS12Generator;
 import com.google.common.base.Function;
@@ -94,7 +95,7 @@ public class AccountSetupE3 extends K9Activity implements OnClickListener, TextW
         mAccount = Preferences.getPreferences(this).getAccount(accountUuid);
 
         accountPassword = getIntent().getStringExtra(EXTRA_ACCOUNT_PASSWORD);
-        keyStoreService = new E3KeyStoreService(new E3Utils(getApplicationContext()));
+        keyStoreService = new E3KeyStoreService(new E3Utils(getApplicationContext()), accountUuid);
         pkcs12Generator = new E3X509PKCS12Generator();
     }
 
@@ -194,13 +195,17 @@ public class AccountSetupE3 extends K9Activity implements OnClickListener, TextW
         mAccount.setE3Password(e3Password);
         mAccount.setE3KeyName(e3KeyName);
         mAccount.setE3BackupFolder(e3BackupFolder);
-        mAccount.setE3EncryptionEnabled(true);
+
+        if (mAccount.getE3Type() == E3Type.PASSIVE) {
+            mAccount.setE3EncryptionEnabled(false);
+        } else {
+            mAccount.setE3EncryptionEnabled(true);
+        }
 
         try {
             if (keyStoreService.getEntry(e3KeyName, protParam) == null) {
                 final FetchE3KeyAsyncTask e3KeyAsyncTask = new FetchE3KeyAsyncTask(mAccount,
                         e3BackupFolder, e3KeyName, e3Password);
-
 
                 final Optional<E3Key> e3KeyOptional;
 
@@ -211,14 +216,14 @@ public class AccountSetupE3 extends K9Activity implements OnClickListener, TextW
                     throw new RuntimeException(e);
                 }
 
-                E3Key generatedKey = null;
+                E3Key generatedE3Key = null;
                 if (e3KeyOptional.isPresent()) {
                     putE3KeyInKeyStore(e3KeyOptional.get());
                     Log.d(E3Constants.LOG_TAG, "Successfully retrieved and stored E3 key from " +
                             "user's IMAP account");
                 } else {
-                    generatedKey = generateNewKey(e3Password);
-                    putE3KeyInKeyStore(generatedKey);
+                    generatedE3Key = generateNewKey(e3Password);
+                    putE3KeyInKeyStore(generatedE3Key);
                 }
 
                 try {
@@ -228,15 +233,23 @@ public class AccountSetupE3 extends K9Activity implements OnClickListener, TextW
                     throw new RuntimeException("Failed to store your E3 key store to disk");
                 }
 
-                if (generatedKey != null) {
-                    // Could not find private key remotely, so need to generate and append
+                if (generatedE3Key != null) {
+                    // Could not find private key remotely, so need to append
                     final Optional<File> pfxFile = keyStoreService.getStoreFile();
                     Preconditions.checkState(pfxFile.isPresent(), ".pfx file could not be found " +
                             "even though we just generated it?");
                     final Resources res = getApplicationContext().getResources();
-                    final AppendE3KeyAsyncTask putE3KeyAsyncTask = new AppendE3KeyAsyncTask
-                            (res, mAccount, e3BackupFolder, pfxFile.get());
-                    putE3KeyAsyncTask.execute(generatedKey);
+
+                    final AppendE3KeyAsyncTask putE3KeyAsyncTask;
+                    if (mAccount.getE3Type() == E3Type.PASSIVE) {
+                        putE3KeyAsyncTask = new AppendE3KeyAsyncTask
+                                (res, mAccount, e3BackupFolder, pfxFile.get(), AppendE3KeyAsyncTask.PEM_MIME_TYPE);
+                    } else {
+                        putE3KeyAsyncTask = new AppendE3KeyAsyncTask
+                                (res, mAccount, e3BackupFolder, pfxFile.get(), AppendE3KeyAsyncTask.PFX_MIME_TYPE);
+                    }
+
+                    putE3KeyAsyncTask.execute(generatedE3Key);
 
                     Log.d(E3Constants.LOG_TAG, "Successfully generated and stored E3 key");
                 }

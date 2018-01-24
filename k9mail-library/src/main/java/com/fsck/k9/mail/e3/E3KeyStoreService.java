@@ -43,25 +43,27 @@ public final class E3KeyStoreService {
     static final String BC_PROVIDER = "SC";
 
     @VisibleForTesting
-    static final String PKCS12_FILE_NAME = "e3_pkcs12_store.pfx";
+    static final String PKCS12_FILE_NAME_SUFFIX = "_e3_pkcs12_store.pfx";
 
     private static KeyStore KEY_STORE;
     private final E3Utils e3Utils;
     private final String password;
+    private final String pkcs12FileName;
 
     static {
         Security.addProvider(new BouncyCastleProvider());
     }
 
-    public E3KeyStoreService(final E3Utils e3Utils, @Nullable final String password) {
+    public E3KeyStoreService(final E3Utils e3Utils, final String accountUuid, @Nullable final String password) {
         this.e3Utils = e3Utils;
         this.password = password;
+        this.pkcs12FileName = accountUuid + PKCS12_FILE_NAME_SUFFIX;
 
         initializeKeyStore();
     }
 
-    public E3KeyStoreService(final E3Utils e3Utils) {
-        this(e3Utils, null);
+    public E3KeyStoreService(final E3Utils e3Utils, final String accountUuid) {
+        this(e3Utils, accountUuid, null);
     }
 
     /**
@@ -77,14 +79,14 @@ public final class E3KeyStoreService {
         OutputStream output = null;
 
         try {
-            output = e3Utils.openFileOutput(PKCS12_FILE_NAME, Context.MODE_PRIVATE);
+            output = e3Utils.openFileOutput(pkcs12FileName, Context.MODE_PRIVATE);
 
             KEY_STORE.store(output, password.toCharArray());
 
-            Log.i(E3Constants.LOG_TAG, "Stored PKCS#12 store to disk in " + e3Utils.getFileStreamPath(PKCS12_FILE_NAME));
+            Log.i(E3Constants.LOG_TAG, "Stored PKCS#12 store to disk in " + e3Utils.getFileStreamPath(pkcs12FileName));
         } catch (final KeyStoreException | NoSuchAlgorithmException | CertificateException e) {
             if (output == null) {
-                throw new RuntimeException("Failed to open " + PKCS12_FILE_NAME);
+                throw new RuntimeException("Failed to open " + pkcs12FileName);
             }
 
             throw new RuntimeException("Failed to store the PKCS12 keystore");
@@ -101,7 +103,7 @@ public final class E3KeyStoreService {
      * @return An {@link Optional} which may or may not contain a {@link File}.
      */
     public Optional<File> getStoreFile() {
-        final File pkcs12File = e3Utils.getFileStreamPath(PKCS12_FILE_NAME);
+        final File pkcs12File = e3Utils.getFileStreamPath(pkcs12FileName);
 
         if (pkcs12File.exists()) {
             return Optional.of(pkcs12File);
@@ -166,7 +168,7 @@ public final class E3KeyStoreService {
             try {
                 KEY_STORE = KeyStore.getInstance("PKCS12", BC_PROVIDER);
 
-                final File keyStoreFile = e3Utils.getFileStreamPath(PKCS12_FILE_NAME);
+                final File keyStoreFile = e3Utils.getFileStreamPath(pkcs12FileName);
 
                 if (keyStoreFile != null && keyStoreFile.exists() && password != null) {
                     input = new FileInputStream(keyStoreFile);

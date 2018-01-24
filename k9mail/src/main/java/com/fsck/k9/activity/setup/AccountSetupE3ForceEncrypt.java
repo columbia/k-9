@@ -97,7 +97,7 @@ public class AccountSetupE3ForceEncrypt extends K9ListActivity implements OnClic
     public void onClick(View view) {
         switch (view.getId()) {
             case R.id.confirm:
-                Function<MimeMessage, MimeMessage> encryptFunction = SMIMEEncryptFunctionFactory.get(this, account.getE3KeyName(),
+                Function<MimeMessage, MimeMessage> encryptFunction = SMIMEEncryptFunctionFactory.get(this, account.getUuid(), account.getE3KeyName(),
                         account.getE3Password());
                 E3ForceEncryptFoldersAsyncTask forceEncryptTask = new E3ForceEncryptFoldersAsyncTask(this, account, encryptFunction);
 
