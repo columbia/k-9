@@ -54,10 +54,10 @@ android {
     buildToolsVersion androidBuildToolsVersion
 
     defaultConfig {
-        applicationId "com.fsck.k9"
-        testApplicationId "com.fsck.k9.tests"
+        applicationId "net.mauzel.k9"
+        testApplicationId "net.mauzel.k9.tests"
 
-        versionCode 23540
+        versionCode 2291
         versionName '5.304'
 
         minSdkVersion 21
