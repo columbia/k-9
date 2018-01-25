@@ -109,7 +109,7 @@ public class AppendE3KeyAsyncTask extends AsyncTask<E3Key, Void, Void> {
     private MessageBuilder createE3BackupEmailBuilder(final E3Key e3Key) {
         final MessageBuilder builder = SimpleMessageBuilder.newInstance();
         final Address selfAddr = new Address(account.getEmail());
-        final Attachment pfxAttachment = getE3KeyAsAttachment(mimeType);
+        final Attachment pfxAttachment = getE3KeypairAsAttachment();
         final List<Attachment> attachments = Collections.singletonList(pfxAttachment);
 
         builder.setSubject(res.getString(R.string.account_setup_e3_email_subject, e3Key
@@ -127,7 +127,7 @@ public class AppendE3KeyAsyncTask extends AsyncTask<E3Key, Void, Void> {
         return builder;
     }
 
-    private Attachment getE3KeyAsAttachment(final String mimeType) {
+    private Attachment getE3KeypairAsAttachment() {
         final Uri pfxUri = Uri.fromFile(e3File);
 
         return Attachment.createAttachment(pfxUri, 1, mimeType) //

@@ -1,11 +1,13 @@
 package com.fsck.k9.mail.e3.smime;
 
 import android.content.Context;
+import android.text.TextUtils;
 
 import com.fsck.k9.mail.Part;
 import com.fsck.k9.mail.e3.E3KeyStoreService;
 import com.fsck.k9.mail.e3.E3Utils;
 import com.google.common.base.Function;
+import com.google.common.base.Preconditions;
 import com.google.common.io.ByteSource;
 
 import java.security.KeyStore;
@@ -29,6 +31,7 @@ public final class SMIMEDecryptFunctionFactory {
 
         try {
             final KeyStore.PrivateKeyEntry entry = keyStoreService.getEntry(keyAlias, protParam);
+            Preconditions.checkNotNull(entry, "Got null key entry, key store contains: " + TextUtils.join(", ", keyStoreService.aliases()));
             return new SMIMEDecryptFunction(entry, e3Utils);
         } catch (final NoSuchAlgorithmException | UnrecoverableEntryException | KeyStoreException e) {
             throw new RuntimeException(e);
