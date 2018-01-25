@@ -34,8 +34,12 @@ import com.google.common.base.Function;
 import com.google.common.base.Optional;
 import com.google.common.base.Preconditions;
 import com.google.common.base.Strings;
+import com.google.common.io.Closeables;
+
+import org.spongycastle.openssl.PEMWriter;
 
 import java.io.File;
+import java.io.FileWriter;
 import java.io.IOException;
 import java.security.KeyStore.PasswordProtection;
 import java.security.KeyStore.ProtectionParameter;
@@ -68,6 +72,7 @@ public class AccountSetupE3 extends K9Activity implements OnClickListener, TextW
     private String accountPassword;
     private E3X509PKCS12Generator pkcs12Generator;
     private E3KeyStoreService keyStoreService;
+    private E3Utils e3Utils;
 
     public static void actionStartE3Setup(final Context context, final Account account, final
     String password, final boolean makeDefault) {
@@ -95,7 +100,8 @@ public class AccountSetupE3 extends K9Activity implements OnClickListener, TextW
         mAccount = Preferences.getPreferences(this).getAccount(accountUuid);
 
         accountPassword = getIntent().getStringExtra(EXTRA_ACCOUNT_PASSWORD);
-        keyStoreService = new E3KeyStoreService(new E3Utils(getApplicationContext()), accountUuid);
+        e3Utils = new E3Utils(getApplicationContext());
+        keyStoreService = new E3KeyStoreService(e3Utils, accountUuid);
         pkcs12Generator = new E3X509PKCS12Generator();
     }
 
@@ -211,29 +217,13 @@ public class AccountSetupE3 extends K9Activity implements OnClickListener, TextW
                 // If STANDALONE with no remote key, generate a new key to put remotely.
                 // If PASSIVE, generate a key because we don't have one.
                 if (mAccount.getE3Type() == E3Type.PASSIVE || standaloneWithNoRemoteKey) {
-                    final E3Key keyToAppend = generateKeyInKeyStore(e3Password);
-                    final Optional<File> pfxFile = keyStoreService.getStoreFile();
-                    Preconditions.checkState(pfxFile.isPresent(), ".pfx file could not be found " +
-                            "even though we just generated it?");
-                    final Resources res = getApplicationContext().getResources();
-                    final AppendE3KeyAsyncTask putE3KeyAsyncTask;
-
-                    if (mAccount.getE3Type() == E3Type.PASSIVE) {
-                        putE3KeyAsyncTask = new AppendE3KeyAsyncTask
-                                (res, mAccount, e3BackupFolder, pfxFile.get(), AppendE3KeyAsyncTask.PEM_MIME_TYPE);
-                    } else {
-                        putE3KeyAsyncTask = new AppendE3KeyAsyncTask
-                                (res, mAccount, e3BackupFolder, pfxFile.get(), AppendE3KeyAsyncTask.PFX_MIME_TYPE);
-                    }
-
-                    putE3KeyAsyncTask.execute(keyToAppend);
-
-                    Log.d(E3Constants.LOG_TAG, "Successfully generated and stored E3 key");
+                    appendKeyRemotely(e3BackupFolder, e3Password);
                 }
             }
-        } catch (final NoSuchAlgorithmException | UnrecoverableEntryException | KeyStoreException
-                e) {
+        } catch (final NoSuchAlgorithmException | UnrecoverableEntryException | KeyStoreException e) {
             throw new RuntimeException("Something went wrong when querying the local key store", e);
+        } catch (final IOException e) {
+            throw new RuntimeException("Got IOException when creating file for temporary public key storage", e);
         }
 
         try {
@@ -249,6 +239,38 @@ public class AccountSetupE3 extends K9Activity implements OnClickListener, TextW
         // Check incoming here.  Then check outgoing in onActivityResult()
         AccountSetupCheckSettings.actionCheckSettings(this, mAccount, AccountSetupCheckSettings
                 .CheckDirection.INCOMING);
+    }
+
+    private void appendKeyRemotely(final String e3BackupFolder, final String e3Password) throws IOException {
+        final E3Key keyToAppend = generateKeyInKeyStore(e3Password);
+        final Optional<File> pfxFile = keyStoreService.getStoreFile();
+        Preconditions.checkState(pfxFile.isPresent(), ".pfx file could not be found " +
+                "even though we just generated it?");
+        final Resources res = getApplicationContext().getResources();
+        final AppendE3KeyAsyncTask putE3KeyAsyncTask;
+
+        if (mAccount.getE3Type() == E3Type.PASSIVE) {
+            final File tempPubFile = e3Utils.getTempFile(mAccount.getUuid(), "_pub_key.pem");
+            final FileWriter pubFileWriter = new FileWriter(tempPubFile);
+            PEMWriter pemWriter = null;
+            try {
+                pemWriter = new PEMWriter(pubFileWriter);
+                pemWriter.writeObject(keyToAppend.getKeyPair().getPublic());
+                pemWriter.flush();
+            } finally {
+                Closeables.close(pemWriter, true);
+            }
+
+            putE3KeyAsyncTask = new AppendE3KeyAsyncTask
+                    (res, mAccount, e3BackupFolder, tempPubFile, AppendE3KeyAsyncTask.PEM_MIME_TYPE);
+        } else {
+            putE3KeyAsyncTask = new AppendE3KeyAsyncTask
+                    (res, mAccount, e3BackupFolder, pfxFile.get(), AppendE3KeyAsyncTask.PFX_MIME_TYPE);
+        }
+
+        putE3KeyAsyncTask.execute(keyToAppend);
+
+        Log.d(E3Constants.LOG_TAG, "Successfully generated and stored E3 key");
     }
 
     private Optional<E3Key> storeExistingRemoteE3Key(final String e3BackupFolder, final String e3KeyName, final String e3Password) {

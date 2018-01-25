@@ -4,6 +4,7 @@ import android.app.PendingIntent;
 import android.content.res.Resources;
 import android.net.Uri;
 import android.os.AsyncTask;
+import android.os.Build;
 import android.util.Log;
 
 import com.fsck.k9.Account;
@@ -112,10 +113,13 @@ public class AppendE3KeyAsyncTask extends AsyncTask<E3Key, Void, Void> {
         final Attachment pfxAttachment = getE3KeypairAsAttachment();
         final List<Attachment> attachments = Collections.singletonList(pfxAttachment);
 
-        builder.setSubject(res.getString(R.string.account_setup_e3_email_subject, e3Key
-                .getKeyName())) //
-                .setText(res.getString(R.string.account_setup_e3_email_text, e3Key.getKeyName(),
-                        e3Key.getSHA256Digest())) //
+        final String subject = res.getString(R.string.account_setup_e3_email_subject,
+                e3Key.getKeyName(), Build.MODEL);
+        final String text = res.getString(R.string.account_setup_e3_email_text, e3Key.getKeyName(),
+                e3Key.getSHA256Digest(), Build.MODEL);
+
+        builder.setSubject(subject) //
+                .setText(text) //
                 .setAttachments(attachments) //
                 .setSentDate(new Date()) //
                 .setHideTimeZone(K9.hideTimeZone()) //
