@@ -204,36 +204,13 @@ public class AccountSetupE3 extends K9Activity implements OnClickListener, TextW
 
         try {
             if (keyStoreService.getEntry(e3KeyName, protParam) == null) {
-                final FetchE3KeyAsyncTask e3KeyAsyncTask = new FetchE3KeyAsyncTask(mAccount,
-                        e3BackupFolder, e3KeyName, e3Password);
+                Optional<E3Key> generatedKeyToAppend = Optional.absent();
 
-                final Optional<E3Key> e3KeyOptional;
-
-                try {
-                    e3KeyAsyncTask.execute();
-                    e3KeyOptional = e3KeyAsyncTask.get();
-                } catch (final InterruptedException | ExecutionException e) {
-                    throw new RuntimeException(e);
+                if (mAccount.getE3Type() == E3Type.STANDALONE) {
+                    generatedKeyToAppend = lookForExistingRemoteE3Key(e3BackupFolder, e3KeyName, e3Password);
                 }
 
-                E3Key generatedE3Key = null;
-                if (e3KeyOptional.isPresent()) {
-                    putE3KeyInKeyStore(e3KeyOptional.get());
-                    Log.d(E3Constants.LOG_TAG, "Successfully retrieved and stored E3 key from " +
-                            "user's IMAP account");
-                } else {
-                    generatedE3Key = generateNewKey(e3Password);
-                    putE3KeyInKeyStore(generatedE3Key);
-                }
-
-                try {
-                    // All key generation/retrieval is complete, so write to disk for safekeeping
-                    keyStoreService.store(e3Password);
-                } catch (final IOException e) {
-                    throw new RuntimeException("Failed to store your E3 key store to disk");
-                }
-
-                if (generatedE3Key != null) {
+                if (generatedKeyToAppend.isPresent()) {
                     // Could not find private key remotely, so need to append
                     final Optional<File> pfxFile = keyStoreService.getStoreFile();
                     Preconditions.checkState(pfxFile.isPresent(), ".pfx file could not be found " +
@@ -249,7 +226,7 @@ public class AccountSetupE3 extends K9Activity implements OnClickListener, TextW
                                 (res, mAccount, e3BackupFolder, pfxFile.get(), AppendE3KeyAsyncTask.PFX_MIME_TYPE);
                     }
 
-                    putE3KeyAsyncTask.execute(generatedE3Key);
+                    putE3KeyAsyncTask.execute(generatedKeyToAppend.get());
 
                     Log.d(E3Constants.LOG_TAG, "Successfully generated and stored E3 key");
                 }
@@ -262,6 +239,38 @@ public class AccountSetupE3 extends K9Activity implements OnClickListener, TextW
         // Check incoming here.  Then check outgoing in onActivityResult()
         AccountSetupCheckSettings.actionCheckSettings(this, mAccount, AccountSetupCheckSettings
                 .CheckDirection.INCOMING);
+    }
+
+    private Optional<E3Key> lookForExistingRemoteE3Key(final String e3BackupFolder, final String e3KeyName, final String e3Password) {
+        final FetchE3KeyAsyncTask e3KeyAsyncTask = new FetchE3KeyAsyncTask(mAccount,
+                e3BackupFolder, e3KeyName, e3Password);
+        final Optional<E3Key> e3KeyOptional;
+        E3Key generatedKeyToAppend = null;
+
+        try {
+            e3KeyAsyncTask.execute();
+            e3KeyOptional = e3KeyAsyncTask.get();
+        } catch (final InterruptedException | ExecutionException e) {
+            throw new RuntimeException(e);
+        }
+
+        if (e3KeyOptional.isPresent()) {
+            putE3KeyInKeyStore(e3KeyOptional.get());
+            Log.d(E3Constants.LOG_TAG, "Successfully retrieved and stored E3 key from " +
+                    "user's IMAP account");
+        } else {
+            generatedKeyToAppend = generateNewKey(e3Password);
+            putE3KeyInKeyStore(generatedKeyToAppend);
+        }
+
+        try {
+            // All key generation/retrieval is complete, so write to disk for safekeeping
+            keyStoreService.store(e3Password);
+        } catch (final IOException e) {
+            throw new RuntimeException("Failed to store your E3 key store to disk");
+        }
+
+        return Optional.fromNullable(generatedKeyToAppend);
     }
 
     private void putE3KeyInKeyStore(final E3Key e3Key) {
