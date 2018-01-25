@@ -113,6 +113,7 @@ public class AccountSettings extends K9PreferenceActivity {
     private static final String PREFERENCE_E3_ENABLED = "e3_enabled";
     private static final String PREFERENCE_E3_FORCE_ENCRYPT = "e3_force_encrypt";
     private static final String PREFERENCE_E3_UNDO_ENCRYPT = "e3_undo_encrypt";
+    private static final String PREFERENCE_E3_KEY_STORE_PATH = "e3_key_store_path";
     private static final String PREFERENCE_CRYPTO = "crypto";
     private static final String PREFERENCE_CRYPTO_KEY = "crypto_key";
     private static final String PREFERENCE_CLOUD_SEARCH_ENABLED = "remote_search_enabled";
@@ -715,6 +716,8 @@ public class AccountSettings extends K9PreferenceActivity {
                 return true;
             }
         });
+
+        findPreference(PREFERENCE_E3_KEY_STORE_PATH).setSummary(account.getE3KeyStorePath());
 
         hasPgpCrypto = K9.isOpenPgpProviderConfigured();
         PreferenceScreen cryptoMenu = (PreferenceScreen) findPreference(PREFERENCE_CRYPTO);

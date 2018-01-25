@@ -236,6 +236,16 @@ public class AccountSetupE3 extends K9Activity implements OnClickListener, TextW
             throw new RuntimeException("Something went wrong when querying the local key store", e);
         }
 
+        try {
+            keyStoreService.store(e3Password);
+        } catch (final IOException e) {
+            throw new RuntimeException("IOException while trying to write the E3 keystore to disk", e);
+        }
+
+        final Optional<File> keyStoreFile = keyStoreService.getStoreFile();
+        Preconditions.checkState(keyStoreFile.isPresent(), "KeyStore file is missing");
+        mAccount.setE3KeyStorePath(keyStoreFile.get().toString());
+
         // Check incoming here.  Then check outgoing in onActivityResult()
         AccountSetupCheckSettings.actionCheckSettings(this, mAccount, AccountSetupCheckSettings
                 .CheckDirection.INCOMING);

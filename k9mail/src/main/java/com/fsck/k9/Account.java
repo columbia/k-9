@@ -230,6 +230,7 @@ public class Account implements BaseAccount, StoreConfig {
     private boolean allowRemoteSearch;
     private boolean remoteSearchFullText;
     private int remoteSearchNumResults;
+    private String e3KeyStorePath;
     private boolean e3EncryptionEnabled;
     private E3Type e3Type;
 
@@ -1704,6 +1705,14 @@ public class Account implements BaseAccount, StoreConfig {
 
     public void setRemoteSearchNumResults(int val) {
         remoteSearchNumResults = (val >= 0 ? val : 0);
+    }
+
+    public String getE3KeyStorePath() {
+        return e3KeyStorePath;
+    }
+
+    public void setE3KeyStorePath(String e3KeyStorePath) {
+        this.e3KeyStorePath = e3KeyStorePath;
     }
 
     public boolean isE3EncryptionEnabled() {

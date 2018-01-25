@@ -634,6 +634,8 @@ Please submit bug reports, contribute new features and ask questions at
     <string name="e3_undo_encrypt_activity_title">Undo E3 encryption (decrypt) per folder</string>
     <string name="e3_undo_encrypt_completed">Undo E3 encryption completed. %s messages were decrypted.</string>
 
+    <string name="e3_key_store_path">E3 key store location</string>
+
     <string name="account_settings_crypto">Cryptography</string>
     <string name="account_settings_crypto_app">OpenPGP app</string>
     <string name="account_settings_crypto_key">My Key</string>
