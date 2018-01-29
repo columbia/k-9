@@ -24,7 +24,6 @@ import com.fsck.k9.provider.DecryptedFileProvider;
 import com.fsck.k9.ui.crypto.MessageCryptoCallback;
 import com.fsck.k9.ui.crypto.MessageCryptoHelperInterface;
 import com.google.common.base.Function;
-import com.google.common.base.Preconditions;
 import com.google.common.io.ByteSource;
 import com.google.common.io.Closeables;
 

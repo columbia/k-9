@@ -3,15 +3,12 @@ package com.fsck.k9.mail.e3.smime;
 import android.util.Log;
 
 import com.fsck.k9.mail.Body;
-import com.fsck.k9.mail.Message;
 import com.fsck.k9.mail.MessagingException;
-import com.fsck.k9.mail.Multipart;
 import com.fsck.k9.mail.Part;
 import com.fsck.k9.mail.e3.E3Constants;
 import com.fsck.k9.mail.e3.E3Utils;
 import com.fsck.k9.mail.internet.MimeBodyPart;
 import com.fsck.k9.mail.internet.MimeHeader;
-import com.fsck.k9.mail.internet.MimeMessage;
 import com.fsck.k9.mail.message.MessageHeaderParser;
 import com.google.common.base.Charsets;
 import com.google.common.base.Function;
@@ -31,7 +28,7 @@ import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
-import java.security.KeyStore;
+import java.security.KeyStore.PrivateKeyEntry;
 import java.security.cert.CertificateEncodingException;
 import java.util.Arrays;
 
@@ -43,15 +40,22 @@ import timber.log.Timber;
 
 public class SMIMEDecryptFunction implements Function<Part, ByteSource> {
     private final E3Utils e3Utils;
-    private final KeyStore.PrivateKeyEntry keyEntry;
+    private final byte[] privateKeyDer;
+    private final byte[] certDer;
 
     static {
         System.loadLibrary("e3-jni");
     }
 
-    public SMIMEDecryptFunction(final KeyStore.PrivateKeyEntry keyEntry, final E3Utils e3Utils) {
+    public SMIMEDecryptFunction(final PrivateKeyEntry keyEntry, final E3Utils e3Utils) {
         this.e3Utils = e3Utils;
-        this.keyEntry = keyEntry;
+        this.privateKeyDer = keyEntry.getPrivateKey().getEncoded();
+
+        try {
+            this.certDer = keyEntry.getCertificate().getEncoded();
+        } catch (final CertificateEncodingException e) {
+            throw new RuntimeException(e);
+        }
     }
 
     public ByteSource apply(final Part originalMessage) {
@@ -87,9 +91,6 @@ public class SMIMEDecryptFunction implements Function<Part, ByteSource> {
             }
 
             E3Utils.logDuration(E3Constants.MEASURE_LOG_TAG, "OpenSSL startPrepareEnvelopedData", startPrepareEnvelopedData);
-
-            final byte[] privateKeyDer = keyEntry.getPrivateKey().getEncoded();
-            final byte[] certDer = keyEntry.getCertificate().getEncoded();
 
             final long startDecryptJNI = System.currentTimeMillis();
             final int decryptResult = cmsDecryptJNI(certDer, privateKeyDer, envelopedFile.getAbsolutePath(), decryptedFile.getAbsolutePath());
@@ -134,7 +135,7 @@ public class SMIMEDecryptFunction implements Function<Part, ByteSource> {
                 Closeables.close(originalHeaders, true);
                 Closeables.close(originalHeadersOut, true);
             }
-        } catch (final IOException | CertificateEncodingException | MessagingException e) {
+        } catch (final IOException | MessagingException e) {
             throw new RuntimeException(e);
         } finally {
             Timber.d(E3Constants.LOG_TAG, "Finished parse...");
