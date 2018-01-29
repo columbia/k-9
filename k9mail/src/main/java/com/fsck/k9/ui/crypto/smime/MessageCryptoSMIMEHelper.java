@@ -5,6 +5,7 @@ import android.os.Parcelable;
 import android.support.annotation.Nullable;
 
 import com.fsck.k9.Account;
+import com.fsck.k9.R;
 import com.fsck.k9.crypto.MessageCryptoStructureDetector;
 import com.fsck.k9.mail.Message;
 import com.fsck.k9.mail.MessagingException;
@@ -12,10 +13,13 @@ import com.fsck.k9.mail.Part;
 import com.fsck.k9.mail.e3.E3Utils;
 import com.fsck.k9.mail.e3.smime.SMIMEDecryptFunctionFactory;
 import com.fsck.k9.mail.internet.MimeBodyPart;
+import com.fsck.k9.mail.internet.MimeHeader;
+import com.fsck.k9.mail.internet.TextBody;
 import com.fsck.k9.mailstore.MessageHelper;
 import com.fsck.k9.mailstore.MimePartStreamParser;
 import com.fsck.k9.mailstore.SMIMECryptoResultAnnotation;
 import com.fsck.k9.mail.util.FileFactory;
+import com.fsck.k9.mailstore.SMIMECryptoResultAnnotation.CryptoError;
 import com.fsck.k9.provider.DecryptedFileProvider;
 import com.fsck.k9.ui.crypto.MessageCryptoCallback;
 import com.fsck.k9.ui.crypto.MessageCryptoHelperInterface;
@@ -177,37 +181,49 @@ public class MessageCryptoSMIMEHelper implements MessageCryptoHelperInterface<SM
     }
 
     private void decryptSMIME() throws IOException, MessagingException {
-        ByteSource decryptedBytes = Preconditions.checkNotNull(smimeDecrypt.apply(currentSMIMEPart.part));
-        InputStream decryptedIn = null;
-        try {
-            decryptedIn = decryptedBytes.openStream();
+        ByteSource decryptedBytes = smimeDecrypt.apply(currentSMIMEPart.part);
 
-            FileFactory fileFactory = DecryptedFileProvider.getFileFactory(context);
-            MimeBodyPart decryptedResult = MimePartStreamParser.parse(fileFactory, decryptedIn);
-            SMIMECryptoResultAnnotation resultAnnotation = SMIMECryptoResultAnnotation.createSMIMEResultAnnotation(decryptedResult);
+        SMIMECryptoResultAnnotation resultAnnotation;
 
-            // Now add result to things
-            Part part = currentSMIMEPart.part;
-            messageAnnotations.put(part, resultAnnotation);
+        if (decryptedBytes == null) {
+            Timber.e("Decryption failed - do you have the right private key?");
+            final MimeBodyPart errorBodyPart = new MimeBodyPart();
+            errorBodyPart.setHeader(MimeHeader.HEADER_CONTENT_TYPE, "text/plain");
+            errorBodyPart.setBody(new TextBody(String.format("***%s***", context.getResources().getString(R.string.crypto_msg_encrypted_error))));
+            resultAnnotation = SMIMECryptoResultAnnotation.createErrorAnnotation(CryptoError.SMIME_FAILED, errorBodyPart);
+        } else {
 
-            boolean currentPartIsFirstInQueue = partsToProcess.peekFirst() == currentSMIMEPart;
+            InputStream decryptedIn = null;
+            try {
+                decryptedIn = decryptedBytes.openStream();
 
-            if (!currentPartIsFirstInQueue) {
-                throw new IllegalStateException(
-                        "Trying to remove part from queue that is not the currently processed one!");
+                FileFactory fileFactory = DecryptedFileProvider.getFileFactory(context);
+                MimeBodyPart decryptedResult = MimePartStreamParser.parse(fileFactory, decryptedIn);
+                resultAnnotation = SMIMECryptoResultAnnotation.createSMIMEResultAnnotation(decryptedResult);
+            } finally {
+                Closeables.closeQuietly(decryptedIn);
             }
-
-            if (currentSMIMEPart != null) {
-                partsToProcess.removeFirst();
-                currentSMIMEPart = null;
-            } else {
-                Timber.e(new Throwable(), "Got to end of decryptSMIME() with no part in processing!");
-            }
-
-            nextStep();
-        } finally {
-            Closeables.closeQuietly(decryptedIn);
         }
+
+        // Now add result to things
+        Part part = currentSMIMEPart.part;
+        messageAnnotations.put(part, resultAnnotation);
+
+        boolean currentPartIsFirstInQueue = partsToProcess.peekFirst() == currentSMIMEPart;
+
+        if (!currentPartIsFirstInQueue) {
+            throw new IllegalStateException(
+                    "Trying to remove part from queue that is not the currently processed one!");
+        }
+
+        if (currentSMIMEPart != null) {
+            partsToProcess.removeFirst();
+            currentSMIMEPart = null;
+        } else {
+            Timber.e(new Throwable(), "Got to end of decryptSMIME() with no part in processing!");
+        }
+
+        nextStep();
     }
 
     private void callbackReturnResult() {

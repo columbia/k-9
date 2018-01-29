@@ -47,5 +47,6 @@ public class SMIMECryptoResultAnnotation {
         SMIME_ENCRYPTED,
         SMIME_ENCRYPTED_BUT_INCOMPLETE,
         SMIME_OK,
+        SMIME_FAILED,
     }
 }
