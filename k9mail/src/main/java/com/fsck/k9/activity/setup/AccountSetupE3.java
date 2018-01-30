@@ -34,6 +34,7 @@ import com.google.common.base.Function;
 import com.google.common.base.Optional;
 import com.google.common.base.Preconditions;
 import com.google.common.base.Strings;
+import com.google.common.collect.Iterables;
 import com.google.common.io.Closeables;
 
 import org.spongycastle.openssl.PEMWriter;
@@ -46,6 +47,8 @@ import java.security.KeyStore.ProtectionParameter;
 import java.security.KeyStoreException;
 import java.security.NoSuchAlgorithmException;
 import java.security.UnrecoverableEntryException;
+import java.security.cert.Certificate;
+import java.util.Arrays;
 import java.util.concurrent.ExecutionException;
 
 /**
@@ -254,8 +257,9 @@ public class AccountSetupE3 extends K9Activity implements OnClickListener, TextW
             final FileWriter pubFileWriter = new FileWriter(tempPubFile);
             PEMWriter pemWriter = null;
             try {
+                final Certificate cert = Iterables.getOnlyElement(Arrays.asList(keyToAppend.getCertChain()));
                 pemWriter = new PEMWriter(pubFileWriter);
-                pemWriter.writeObject(keyToAppend.getKeyPair().getPublic());
+                pemWriter.writeObject(cert);
                 pemWriter.flush();
             } finally {
                 Closeables.close(pemWriter, true);
