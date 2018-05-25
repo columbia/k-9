@@ -449,4 +449,19 @@
 
     </PreferenceScreen>
 
+    <PreferenceScreen
+        android:key="e3"
+        android:title="@string/account_settings_e3_crypto">
+
+        <SwitchPreference
+            android:key="e3_provider"
+            android:title="@string/account_settings_e3_crypto_app" />
+
+        <org.openintents.openpgp.util.OpenPgpKeyPreference
+            android:dependency="e3_provider"
+            android:key="e3_key"
+            android:title="@string/account_settings_e3_crypto_key" />
+
+    </PreferenceScreen>
+
 </PreferenceScreen>
