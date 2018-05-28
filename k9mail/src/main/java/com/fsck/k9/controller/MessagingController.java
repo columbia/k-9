@@ -1302,10 +1302,10 @@ public class MessagingController {
         remoteFolder.fetch(smallMessages,
                 fp, new MessageRetrievalListener<T>() {
                     @Override
-                    public void messageFinished(final T message, int number, int ofTotal) {
+                    public void messageFinished(final T originalMessage, int number, int ofTotal) {
                         try {
-                            final LocalMessage localMessage;
-                            if (context instanceof K9Activity && account.isOpenPgpProviderConfigured() && message instanceof MimeMessage) {
+                            final T message;
+                            if (context instanceof K9Activity && account.isOpenPgpProviderConfigured() && originalMessage instanceof MimeMessage) {
                                 // K9Activity indirectly extends LifecycleOwner, and almost every time MessagingController
                                 // is used, it's for an activity. The only time it isn't is when the K9 application invokes it.
                                 OpenPgpApiManager openPgpApiManager = new OpenPgpApiManager(context, (K9Activity) context);
@@ -1316,16 +1316,19 @@ public class MessagingController {
                                 final String[] accountEmail = new String[]{account.getIdentity(0).getEmail()};
 
                                 final SimplePgpEncryptor encryptor = new SimplePgpEncryptor(openPgpApiManager, accountCryptoKey);
-                                localMessage = encryptor.encryptMessage((MimeMessage) message, accountEmail);
+                                final MimeMessage encryptedMessage = encryptor.encryptMessage((MimeMessage) originalMessage, accountEmail);
+                                message = (T) encryptedMessage;
                             } else {
-                                // Store the updated message locally
-                                localMessage = localFolder.storeSmallMessage(message, new Runnable() {
-                                    @Override
-                                    public void run() {
-                                        progress.incrementAndGet();
-                                    }
-                                });
+                                message = originalMessage;
                             }
+
+                            // Store the updated message locally
+                            final LocalMessage localMessage = localFolder.storeSmallMessage(message, new Runnable() {
+                                @Override
+                                public void run() {
+                                    progress.incrementAndGet();
+                                }
+                            });
 
                             // Increment the number of "new messages" if the newly downloaded message is
                             // not marked as read.

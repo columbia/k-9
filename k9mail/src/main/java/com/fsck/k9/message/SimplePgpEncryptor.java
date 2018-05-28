@@ -39,7 +39,7 @@ public class SimplePgpEncryptor {
         this.pgpKeyId = pgpKeyId;
     }
 
-    public LocalMessage encryptMessage(final MimeMessage originalMessage, final String[] recipients) throws MessagingException {
+    public MimeMessage encryptMessage(final MimeMessage originalMessage, final String[] recipients) throws MessagingException {
         Intent pgpApiIntent = new Intent(OpenPgpApi.ACTION_SIGN_AND_ENCRYPT);
 
         long[] selfEncryptIds = { pgpKeyId };
@@ -78,7 +78,8 @@ public class SimplePgpEncryptor {
                         "multipart/encrypted; boundary=\"%s\";\r\n  protocol=\"application/pgp-encrypted\"",
                         multipartEncrypted.getBoundary());
                 originalMessage.setHeader(MimeHeader.HEADER_CONTENT_TYPE, contentType);
-                return null;
+
+                return originalMessage;
 
             case OpenPgpApi.RESULT_CODE_USER_INTERACTION_REQUIRED:
                 PendingIntent returnedPendingIntent = result.getParcelableExtra(OpenPgpApi.RESULT_INTENT);
