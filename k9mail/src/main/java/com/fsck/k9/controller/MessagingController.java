@@ -45,6 +45,7 @@ import com.fsck.k9.K9.Intents;
 import com.fsck.k9.Preferences;
 import com.fsck.k9.R;
 import com.fsck.k9.activity.ActivityListener;
+import com.fsck.k9.activity.K9Activity;
 import com.fsck.k9.activity.MessageReference;
 import com.fsck.k9.activity.setup.AccountSetupCheckSettings.CheckDirection;
 import com.fsck.k9.cache.EmailProviderCache;
@@ -67,7 +68,6 @@ import com.fsck.k9.mail.FetchProfile;
 import com.fsck.k9.mail.FetchProfile.Item;
 import com.fsck.k9.mail.Flag;
 import com.fsck.k9.mail.Folder;
-import com.fsck.k9.mail.Folder.FolderType;
 import com.fsck.k9.mail.Message;
 import com.fsck.k9.mail.Message.RecipientType;
 import com.fsck.k9.mail.MessageRetrievalListener;
@@ -78,6 +78,7 @@ import com.fsck.k9.mail.Pusher;
 import com.fsck.k9.mail.Transport;
 import com.fsck.k9.mail.TransportProvider;
 import com.fsck.k9.mail.internet.MessageExtractor;
+import com.fsck.k9.mail.internet.MimeMessage;
 import com.fsck.k9.mail.internet.MimeUtility;
 import com.fsck.k9.mail.power.TracingPowerManager;
 import com.fsck.k9.mail.power.TracingPowerManager.TracingWakeLock;
@@ -89,10 +90,14 @@ import com.fsck.k9.mailstore.LocalMessage;
 import com.fsck.k9.mailstore.LocalStore;
 import com.fsck.k9.mailstore.MessageRemovalListener;
 import com.fsck.k9.mailstore.UnavailableStorageException;
+import com.fsck.k9.message.SimplePgpEncryptor;
 import com.fsck.k9.notification.NotificationController;
 import com.fsck.k9.search.LocalSearch;
 import com.fsck.k9.search.SearchAccount;
 import com.fsck.k9.search.SearchSpecification;
+
+import org.openintents.openpgp.OpenPgpApiManager;
+
 import timber.log.Timber;
 
 import static com.fsck.k9.K9.MAX_SEND_ATTEMPTS;
@@ -1299,14 +1304,28 @@ public class MessagingController {
                     @Override
                     public void messageFinished(final T message, int number, int ofTotal) {
                         try {
-
-                            // Store the updated message locally
-                            final LocalMessage localMessage = localFolder.storeSmallMessage(message, new Runnable() {
-                                @Override
-                                public void run() {
-                                    progress.incrementAndGet();
+                            final LocalMessage localMessage;
+                            if (context instanceof K9Activity && account.isOpenPgpProviderConfigured() && message instanceof MimeMessage) {
+                                // K9Activity indirectly extends LifecycleOwner, and almost every time MessagingController
+                                // is used, it's for an activity. The only time it isn't is when the K9 application invokes it.
+                                OpenPgpApiManager openPgpApiManager = new OpenPgpApiManager(context, (K9Activity) context);
+                                Long accountCryptoKey = account.getOpenPgpKey();
+                                if (accountCryptoKey == Account.NO_OPENPGP_KEY) {
+                                    accountCryptoKey = null;
                                 }
-                            });
+                                final String[] accountEmail = new String[]{account.getIdentity(0).getEmail()};
+
+                                final SimplePgpEncryptor encryptor = new SimplePgpEncryptor(openPgpApiManager, accountCryptoKey);
+                                localMessage = encryptor.encryptMessage((MimeMessage) message, accountEmail);
+                            } else {
+                                // Store the updated message locally
+                                localMessage = localFolder.storeSmallMessage(message, new Runnable() {
+                                    @Override
+                                    public void run() {
+                                        progress.incrementAndGet();
+                                    }
+                                });
+                            }
 
                             // Increment the number of "new messages" if the newly downloaded message is
                             // not marked as read.
