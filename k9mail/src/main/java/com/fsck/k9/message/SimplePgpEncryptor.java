@@ -14,10 +14,8 @@ import com.fsck.k9.mail.internet.MimeMessage;
 import com.fsck.k9.mail.internet.MimeMessageHelper;
 import com.fsck.k9.mail.internet.MimeMultipart;
 import com.fsck.k9.mail.internet.TextBody;
-import com.fsck.k9.mailstore.LocalMessage;
 
 import org.apache.james.mime4j.util.MimeUtil;
-import org.openintents.openpgp.OpenPgpApiManager;
 import org.openintents.openpgp.OpenPgpError;
 import org.openintents.openpgp.util.OpenPgpApi;
 import org.openintents.openpgp.util.OpenPgpApi.OpenPgpDataSource;
@@ -32,10 +30,10 @@ import java.io.OutputStream;
  */
 public class SimplePgpEncryptor {
     private final Long pgpKeyId;
-    private final OpenPgpApiManager openPgpApiManager;
+    private final OpenPgpApi openPgpApi;
 
-    public SimplePgpEncryptor(final OpenPgpApiManager openPgpApiManager, final Long pgpKeyId) {
-        this.openPgpApiManager = openPgpApiManager;
+    public SimplePgpEncryptor(final OpenPgpApi openPgpApi, final Long pgpKeyId) {
+        this.openPgpApi = openPgpApi;
         this.pgpKeyId = pgpKeyId;
     }
 
@@ -61,7 +59,6 @@ public class SimplePgpEncryptor {
             throw new MessagingException("could not allocate temp file for storage!", e);
         }
 
-        OpenPgpApi openPgpApi = openPgpApiManager.getOpenPgpApi();
         Intent result = openPgpApi.executeApi(pgpApiIntent, dataSource, outputStream);
 
         switch (result.getIntExtra(OpenPgpApi.RESULT_CODE, OpenPgpApi.RESULT_CODE_ERROR)) {

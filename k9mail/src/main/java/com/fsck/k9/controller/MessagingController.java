@@ -45,7 +45,6 @@ import com.fsck.k9.K9.Intents;
 import com.fsck.k9.Preferences;
 import com.fsck.k9.R;
 import com.fsck.k9.activity.ActivityListener;
-import com.fsck.k9.activity.K9Activity;
 import com.fsck.k9.activity.MessageReference;
 import com.fsck.k9.activity.setup.AccountSetupCheckSettings.CheckDirection;
 import com.fsck.k9.cache.EmailProviderCache;
@@ -96,7 +95,8 @@ import com.fsck.k9.search.LocalSearch;
 import com.fsck.k9.search.SearchAccount;
 import com.fsck.k9.search.SearchSpecification;
 
-import org.openintents.openpgp.OpenPgpApiManager;
+import org.openintents.openpgp.util.OpenPgpApi;
+import org.openintents.openpgp.util.OpenPgpServiceConnection;
 
 import timber.log.Timber;
 
@@ -1305,20 +1305,27 @@ public class MessagingController {
                     public void messageFinished(final T originalMessage, int number, int ofTotal) {
                         try {
                             final T message;
-                            if (context instanceof K9Activity && account.isOpenPgpProviderConfigured() && originalMessage instanceof MimeMessage) {
-                                // K9Activity indirectly extends LifecycleOwner, and almost every time MessagingController
-                                // is used, it's for an activity. The only time it isn't is when the K9 application invokes it.
-                                OpenPgpApiManager openPgpApiManager = new OpenPgpApiManager(context, (K9Activity) context);
-                                Long accountCryptoKey = account.getOpenPgpKey();
-                                if (accountCryptoKey == Account.NO_OPENPGP_KEY) {
-                                    accountCryptoKey = null;
-                                }
+
+                            final Long accountCryptoKey = account.getOpenPgpKey();
+                            final boolean pgpConfigured = account.isOpenPgpProviderConfigured();
+                            final boolean supportedMessageType = originalMessage instanceof MimeMessage;
+                            final boolean hasPgpKey = accountCryptoKey != Account.NO_OPENPGP_KEY;
+
+                            if (pgpConfigured && supportedMessageType && hasPgpKey) {
+                                final String openPgpProvider = account.getOpenPgpProvider();
+                                final OpenPgpServiceConnection pgpServiceConnection = new OpenPgpServiceConnection(context, openPgpProvider);
+                                pgpServiceConnection.bindToService();
+                                final OpenPgpApi openPgpApi = new OpenPgpApi(context, pgpServiceConnection.getService());
+
                                 final String[] accountEmail = new String[]{account.getIdentity(0).getEmail()};
 
-                                final SimplePgpEncryptor encryptor = new SimplePgpEncryptor(openPgpApiManager, accountCryptoKey);
+                                final SimplePgpEncryptor encryptor = new SimplePgpEncryptor(openPgpApi, accountCryptoKey);
                                 final MimeMessage encryptedMessage = encryptor.encryptMessage((MimeMessage) originalMessage, accountEmail);
                                 message = (T) encryptedMessage;
                             } else {
+                                if (pgpConfigured && !hasPgpKey) {
+                                    Timber.w("PGP is enabled but no PGP key is set!");
+                                }
                                 message = originalMessage;
                             }
 
