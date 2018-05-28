@@ -51,7 +51,6 @@ import com.fsck.k9.backend.api.SyncListener;
 =======
 import com.fsck.k9.R;
 import com.fsck.k9.activity.ActivityListener;
-import com.fsck.k9.activity.K9Activity;
 import com.fsck.k9.activity.MessageReference;
 import com.fsck.k9.activity.setup.AccountSetupCheckSettings.CheckDirection;
 >>>>>>> Untested: implement PGP encryption on receipt:k9mail/src/main/java/com/fsck/k9/controller/MessagingController.java
@@ -98,7 +97,8 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 =======
 
-import org.openintents.openpgp.OpenPgpApiManager;
+import org.openintents.openpgp.util.OpenPgpApi;
+import org.openintents.openpgp.util.OpenPgpServiceConnection;
 
 >>>>>>> Untested: implement PGP encryption on receipt:k9mail/src/main/java/com/fsck/k9/controller/MessagingController.java
 import timber.log.Timber;
