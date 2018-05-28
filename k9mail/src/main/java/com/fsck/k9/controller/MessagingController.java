@@ -1257,8 +1257,10 @@ public class MessagingController {
                                 return;
                             }
 
+                            // TODO: E3 update the PGP check to check E3 instead
                             if (account.getMaximumAutoDownloadMessageSize() > 0 &&
-                                    message.getSize() > account.getMaximumAutoDownloadMessageSize()) {
+                                    message.getSize() > account.getMaximumAutoDownloadMessageSize() &&
+                                    !account.isOpenPgpProviderConfigured()) {
                                 largeMessages.add(message);
                             } else {
                                 smallMessages.add(message);
