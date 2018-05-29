@@ -304,6 +304,7 @@ public class Account implements BaseAccount, StoreConfig {
         stripSignature = DEFAULT_STRIP_SIGNATURE;
         syncRemoteDeletions = true;
         openPgpKey = NO_OPENPGP_KEY;
+        e3Key = NO_OPENPGP_KEY;
         allowRemoteSearch = false;
         remoteSearchFullText = false;
         remoteSearchNumResults = DEFAULT_REMOTE_SEARCH_NUM_RESULTS;
@@ -709,6 +710,7 @@ public class Account implements BaseAccount, StoreConfig {
         editor.putBoolean(accountUuid + ".replyAfterQuote", replyAfterQuote);
         editor.putBoolean(accountUuid + ".stripSignature", stripSignature);
         editor.putLong(accountUuid + ".cryptoKey", openPgpKey);
+        editor.putLong(accountUuid + ".e3Key", e3Key);
         editor.putBoolean(accountUuid + ".openPgpHideSignOnly", openPgpHideSignOnly);
         editor.putBoolean(accountUuid + ".openPgpEncryptSubject", openPgpEncryptSubject);
         editor.putString(accountUuid + ".openPgpProvider", openPgpProvider);
@@ -1547,8 +1549,8 @@ public class Account implements BaseAccount, StoreConfig {
         return e3Key;
     }
 
-    public void setE3Key(long e3Key) {
-        this.e3Key = e3Key;
+    public void setE3Key(long keyId) {
+        this.e3Key = keyId;
     }
 
     public boolean hasOpenPgpKey() {

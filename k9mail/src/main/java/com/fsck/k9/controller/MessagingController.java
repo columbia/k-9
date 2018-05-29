@@ -1306,8 +1306,8 @@ public class MessagingController {
                         try {
                             final T message;
 
-                            final Long accountCryptoKey = account.getOpenPgpKey();
-                            final boolean pgpConfigured = account.isOpenPgpProviderConfigured();
+                            final Long accountCryptoKey = account.getE3Key();
+                            final boolean pgpConfigured = account.isE3ProviderConfigured();
                             final boolean supportedMessageType = originalMessage instanceof MimeMessage;
                             final boolean hasPgpKey = accountCryptoKey != Account.NO_OPENPGP_KEY;
 
