@@ -208,6 +208,8 @@ public class Account implements BaseAccount, StoreConfig {
     private boolean autocryptPreferEncryptMutual;
     private boolean openPgpHideSignOnly;
     private boolean openPgpEncryptSubject;
+    private String e3Provider;
+    private long e3Key;
     private boolean markMessageAsReadOnView;
     private boolean alwaysShowCcBcc;
     private boolean allowRemoteSearch;
@@ -438,6 +440,9 @@ public class Account implements BaseAccount, StoreConfig {
         openPgpHideSignOnly = storage.getBoolean(accountUuid + ".openPgpHideSignOnly", true);
         openPgpEncryptSubject = storage.getBoolean(accountUuid + ".openPgpEncryptSubject", true);
         autocryptPreferEncryptMutual = storage.getBoolean(accountUuid + ".autocryptMutualMode", false);
+        e3Provider = storage.getString(accountUuid + ".e3Provider", "");
+        e3Key = storage.getLong(accountUuid + ".e3Key", NO_OPENPGP_KEY);
+
         allowRemoteSearch = storage.getBoolean(accountUuid + ".allowRemoteSearch", false);
         remoteSearchFullText = storage.getBoolean(accountUuid + ".remoteSearchFullText", false);
         remoteSearchNumResults = storage.getInt(accountUuid + ".remoteSearchNumResults", DEFAULT_REMOTE_SEARCH_NUM_RESULTS);
@@ -1538,6 +1543,14 @@ public class Account implements BaseAccount, StoreConfig {
         openPgpKey = keyId;
     }
 
+    public long getE3Key() {
+        return e3Key;
+    }
+
+    public void setE3Key(long e3Key) {
+        this.e3Key = e3Key;
+    }
+
     public boolean hasOpenPgpKey() {
         return openPgpKey != NO_OPENPGP_KEY;
     }
@@ -1564,6 +1577,22 @@ public class Account implements BaseAccount, StoreConfig {
 
     public void setOpenPgpEncryptSubject(boolean openPgpEncryptSubject) {
         this.openPgpEncryptSubject = openPgpEncryptSubject;
+    }
+
+    @Nullable
+    public String getE3Provider() {
+        if (TextUtils.isEmpty(e3Provider)) {
+            return null;
+        }
+        return e3Provider;
+    }
+
+    public void setE3Provider(String e3Provider) {
+        this.e3Provider = e3Provider;
+    }
+
+    public boolean isE3ProviderConfigured() {
+        return !TextUtils.isEmpty(e3Provider);
     }
 
     public boolean allowRemoteSearch() {

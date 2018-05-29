@@ -38,6 +38,7 @@ import timber.log.Timber;
 
 public class OpenPgpAppSelectDialog extends FragmentActivity {
     private static final String EXTRA_ACCOUNT = "account";
+    private static final String EXTRA_PROVIDER_TYPE = "providerType";
 
     private static final String OPENKEYCHAIN_PACKAGE = "org.sufficientlysecure.keychain";
     private static final String PACKAGE_NAME_APG = "org.thialfihar.android.apg";
@@ -54,10 +55,12 @@ public class OpenPgpAppSelectDialog extends FragmentActivity {
 
     private boolean isStopped;
     private Account account;
+    private ProviderType providerType;
 
-    public static void startOpenPgpChooserActivity(Context context, Account account) {
+    public static void startOpenPgpChooserActivity(Context context, Account account, ProviderType providerType) {
         Intent i = new Intent(context, OpenPgpAppSelectDialog.class);
         i.putExtra(EXTRA_ACCOUNT, account.getUuid());
+        i.putExtra(EXTRA_PROVIDER_TYPE, providerType.name());
         context.startActivity(i);
     }
 
@@ -67,6 +70,8 @@ public class OpenPgpAppSelectDialog extends FragmentActivity {
 
         String accountUuid = getIntent().getStringExtra(EXTRA_ACCOUNT);
         account = Preferences.getPreferences(this).getAccount(accountUuid);
+        String providerString = getIntent().getStringExtra(EXTRA_PROVIDER_TYPE);
+        providerType = ProviderType.valueOf(providerString);
 
         setTheme(K9.getK9Theme() == K9.Theme.LIGHT ?
                 R.style.Theme_K9_Dialog_Translucent_Light : R.style.Theme_K9_Dialog_Translucent_Dark);
@@ -331,7 +336,17 @@ public class OpenPgpAppSelectDialog extends FragmentActivity {
     }
 
     private void persistOpenPgpProviderSetting(String selectedPackage) {
-        account.setOpenPgpProvider(selectedPackage);
+        switch(providerType) {
+            case OPENPGP:
+                account.setOpenPgpProvider(selectedPackage);
+                break;
+            case E3:
+                account.setE3Provider(selectedPackage);
+                break;
+            default:
+                throw new IllegalArgumentException("ProviderType not implemented! " + providerType.name());
+        }
+
         account.save(Preferences.getPreferences(this));
     }
 
@@ -362,5 +377,10 @@ public class OpenPgpAppSelectDialog extends FragmentActivity {
         public String toString() {
             return simpleName;
         }
+    }
+
+    public enum ProviderType {
+        OPENPGP,
+        E3
     }
 }

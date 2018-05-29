@@ -144,6 +144,10 @@ class AccountSettingsFragment : PreferenceFragmentCompat() {
         findPreference(PREFERENCE_OPENPGP)?.let {
             configureCryptoPreferences(account)
         }
+
+        findPreference(PREFERENCE_E3)?.let {
+            configureE3CryptoPreferences(account)
+        }
     }
 
     private fun configureCryptoPreferences(account: Account) {
@@ -163,8 +167,28 @@ class AccountSettingsFragment : PreferenceFragmentCompat() {
         }
 
         configureEnablePgpSupport(account, isPgpConfigured, pgpProviderName)
-        configurePgpKey(account, pgpProvider)
+        configurePgpKey(PREFERENCE_OPENPGP_KEY, account, pgpProvider)
         configureAutocryptTransfer(account)
+    }
+
+    private fun configureE3CryptoPreferences(account: Account) {
+        var e3ProviderName: String? = null
+        var e3Provider = account.e3Provider
+        var isE3Configured = account.isE3ProviderConfigured
+
+        if (isE3Configured) {
+            e3ProviderName = getOpenPgpProviderName(e3Provider)
+            if (e3ProviderName == null) {
+                Toast.makeText(requireContext(), R.string.account_settings_e3_missing, Toast.LENGTH_LONG).show()
+
+                account.e3Provider = null
+                e3Provider = null
+                isE3Configured = false
+            }
+        }
+
+        configureEnableE3Support(account, isE3Configured, e3Provider)
+        configurePgpKey(PREFERENCE_E3_KEY, account, e3Provider)
     }
 
     private fun getOpenPgpProviderName(pgpProvider: String?): String? {
@@ -184,7 +208,7 @@ class AccountSettingsFragment : PreferenceFragmentCompat() {
                         account.openPgpProvider = openPgpProviderPackages[0]
                         configureCryptoPreferences(account)
                     } else {
-                        OpenPgpAppSelectDialog.startOpenPgpChooserActivity(requireActivity(), account)
+                        OpenPgpAppSelectDialog.startOpenPgpChooserActivity(requireActivity(), account, OpenPgpAppSelectDialog.ProviderType.OPENPGP)
                     }
                 }
             } else {
@@ -199,9 +223,9 @@ class AccountSettingsFragment : PreferenceFragmentCompat() {
         }
     }
 
-    private fun configurePgpKey(account: Account, pgpProvider: String?) {
-        (findPreference(PREFERENCE_OPENPGP_KEY) as OpenPgpKeyPreference).apply {
-            setOpenPgpProvider(openPgpApiManager, pgpProvider)
+    private fun configurePgpKey(preferenceName : String?, account: Account, cryptoProvider: String?) {
+        (findPreference(preferenceName) as OpenPgpKeyPreference).apply {
+            setOpenPgpProvider(openPgpApiManager, cryptoProvider)
             setIntentSenderFragment(this@AccountSettingsFragment)
             setDefaultUserId(OpenPgpApiHelper.buildUserId(account.getIdentity(0)))
             setShowAutocryptHint(true)
@@ -212,6 +236,33 @@ class AccountSettingsFragment : PreferenceFragmentCompat() {
         findPreference(PREFERENCE_AUTOCRYPT_TRANSFER).onClick {
             val intent = AutocryptKeyTransferActivity.createIntent(requireContext(), account.uuid)
             startActivity(intent)
+        }
+    }
+
+    private fun configureEnableE3Support(account: Account, isE3Configured: Boolean, e3ProviderName : String?) {
+        (findPreference(PREFERENCE_E3_ENABLE) as SwitchPreference).apply {
+            if (!isE3Configured) {
+                isChecked = false
+                setSummary(R.string.account_settings_e3_crypto_summary_off)
+                oneTimeClickListener(clickHandled = false) {
+                    val context = requireContext().applicationContext
+                    val cryptoProviderPackages = OpenPgpProviderUtil.getOpenPgpProviderPackages(context)
+                    if (cryptoProviderPackages.size == 1) {
+                        account.e3Provider = cryptoProviderPackages[0]
+                        configureE3CryptoPreferences(account)
+                    } else {
+                        OpenPgpAppSelectDialog.startOpenPgpChooserActivity(requireActivity(), account, OpenPgpAppSelectDialog.ProviderType.E3)
+                    }
+                }
+            } else {
+                isChecked = true
+                summary = getString(R.string.account_settings_e3_crypto_summary_on, e3ProviderName)
+                oneTimeClickListener {
+                    account.e3Provider = null
+                    account.e3Key = Account.NO_OPENPGP_KEY
+                    configureE3CryptoPreferences(account)
+                }
+            }
         }
     }
 
@@ -254,6 +305,7 @@ class AccountSettingsFragment : PreferenceFragmentCompat() {
 
     companion object {
         internal const val PREFERENCE_OPENPGP = "openpgp"
+        internal const val PREFERENCE_E3 = "e3"
         private const val ARG_ACCOUNT_UUID = "accountUuid"
         private const val PREFERENCE_INCOMING_SERVER = "incoming"
         private const val PREFERENCE_COMPOSITION = "composition"
@@ -270,6 +322,8 @@ class AccountSettingsFragment : PreferenceFragmentCompat() {
         private const val PREFERENCE_OPENPGP_ENABLE = "openpgp_provider"
         private const val PREFERENCE_OPENPGP_KEY = "openpgp_key"
         private const val PREFERENCE_AUTOCRYPT_TRANSFER = "autocrypt_transfer"
+        private const val PREFERENCE_E3_ENABLE = "e3_provider"
+        private const val PREFERENCE_E3_KEY = "e3_key"
         private const val PREFERENCE_FOLDERS = "folders"
         private const val PREFERENCE_AUTO_EXPAND_FOLDER = "account_setup_auto_expand_folder"
         private const val PREFERENCE_ARCHIVE_FOLDER = "archive_folder"
