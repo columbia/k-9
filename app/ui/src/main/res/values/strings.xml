@@ -604,6 +604,8 @@ Please submit bug reports, contribute new features and ask questions at
     <string name="account_settings_e3_crypto">Encrypt on receipt (E3)</string>
     <string name="account_settings_e3_crypto_app">Enable E3 support</string>
     <string name="account_settings_e3_crypto_key">Configure E3 key</string>
+    <string name="account_settings_e3_crypto_summary_off">No E3 or OpenPGP app configured</string>
+    <string name="account_settings_e3_crypto_summary_on">Connected to %s</string>
 
     <string name="account_settings_mail_check_frequency_label">Folder poll frequency</string>
 
@@ -679,6 +681,7 @@ Please submit bug reports, contribute new features and ask questions at
     <string name="account_settings_sync_remote_deletetions_summary">Remove messages when deleted on server</string>
 
     <string name="account_settings_openpgp_missing">Missing OpenPGP app - was it uninstalled?</string>
+    <string name="account_settings_e3_missing">Missing OpenPGP or E3 app - was it uninstalled?</string>
 
     <string name="folder_settings_title">Folder settings</string>
 
