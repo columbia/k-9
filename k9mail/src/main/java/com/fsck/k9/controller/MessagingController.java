@@ -1311,7 +1311,11 @@ public class MessagingController {
                             final boolean supportedMessageType = originalMessage instanceof MimeMessage;
                             final boolean hasPgpKey = accountCryptoKey != Account.NO_OPENPGP_KEY;
 
-                            if (pgpConfigured && supportedMessageType && hasPgpKey) {
+                            // TODO: E3 Should we re-encrypt already encrypted email to our key?
+                            final boolean isEncrypted = MimeUtility.mimeTypeMatches(originalMessage.getMimeType(), "*/pgp")
+                                    || MimeUtility.mimeTypeMatches(originalMessage.getMimeType(), "*/pkcs*");
+
+                            if (pgpConfigured && supportedMessageType && hasPgpKey && !isEncrypted) {
                                 final String openPgpProvider = account.getOpenPgpProvider();
                                 final OpenPgpServiceConnection pgpServiceConnection = new OpenPgpServiceConnection(context, openPgpProvider);
                                 pgpServiceConnection.bindToService();
@@ -1322,9 +1326,11 @@ public class MessagingController {
                                 final SimplePgpEncryptor encryptor = new SimplePgpEncryptor(openPgpApi, accountCryptoKey);
                                 final MimeMessage encryptedMessage = encryptor.encryptMessage((MimeMessage) originalMessage, accountEmail);
                                 message = (T) encryptedMessage;
+
+                                pgpServiceConnection.unbindFromService();
                             } else {
-                                if (pgpConfigured && !hasPgpKey) {
-                                    Timber.w("PGP is enabled but no PGP key is set!");
+                                if (pgpConfigured && !hasPgpKey && !isEncrypted) {
+                                    Timber.w("PGP is enabled but no PGP key is set! Will not encrypt this plaintext email");
                                 }
                                 message = originalMessage;
                             }
