@@ -96,6 +96,7 @@ class AccountSettingsDataStore(
     override fun getLong(key: String?, defValue: Long): Long {
         return when (key) {
             "openpgp_key" -> account.openPgpKey
+            "e3_key" -> account.e3Key
             else -> defValue
         }
     }
@@ -103,6 +104,7 @@ class AccountSettingsDataStore(
     override fun putLong(key: String?, value: Long) {
         when (key) {
             "openpgp_key" -> account.openPgpKey = value
+            "e3_key" -> account.e3Key = value
             else -> return
         }
 
