@@ -302,15 +302,16 @@ class AccountSettingsFragment : PreferenceFragmentCompat() {
     }
 
     override fun onActivityResult(requestCode: Int, resultCode: Int, data: Intent?) {
-        val openPgpKeyPreference = findPreference(PREFERENCE_OPENPGP_KEY) as? OpenPgpKeyPreference
+        var openPgpKeyPreference = findPreference(PREFERENCE_OPENPGP_KEY) as? OpenPgpKeyPreference
+
+        if (openPgpKeyPreference == null) {
+            openPgpKeyPreference = findPreference(PREFERENCE_E3_KEY) as? OpenPgpKeyPreference
+        }
+
         if (openPgpKeyPreference?.handleOnActivityResult(requestCode, resultCode, data) == true) {
             return
         }
 
-        val e3OpenPgpKeyPreference = findPreference(PREFERENCE_E3_KEY) as? OpenPgpKeyPreference
-        if (e3OpenPgpKeyPreference?.handleOnActivityResult(requestCode, resultCode, data) == true) {
-            return
-        }
         super.onActivityResult(requestCode, resultCode, data)
     }
 
