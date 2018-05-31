@@ -306,6 +306,11 @@ class AccountSettingsFragment : PreferenceFragmentCompat() {
         if (openPgpKeyPreference?.handleOnActivityResult(requestCode, resultCode, data) == true) {
             return
         }
+
+        val e3OpenPgpKeyPreference = findPreference(PREFERENCE_E3_KEY) as? OpenPgpKeyPreference
+        if (e3OpenPgpKeyPreference?.handleOnActivityResult(requestCode, resultCode, data) == true) {
+            return
+        }
         super.onActivityResult(requestCode, resultCode, data)
     }
 
