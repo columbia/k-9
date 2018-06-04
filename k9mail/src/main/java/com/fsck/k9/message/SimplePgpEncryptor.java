@@ -2,13 +2,8 @@ package com.fsck.k9.message;
 
 import android.app.PendingIntent;
 import android.content.Intent;
-import android.os.Bundle;
 import android.support.annotation.NonNull;
-import android.widget.Toast;
 
-import com.fsck.k9.Account;
-import com.fsck.k9.R;
-import com.fsck.k9.activity.K9Activity;
 import com.fsck.k9.mail.BoundaryGenerator;
 import com.fsck.k9.mail.MessagingException;
 import com.fsck.k9.mail.filter.EOLConvertingOutputStream;
@@ -21,10 +16,6 @@ import com.fsck.k9.mail.internet.MimeMultipart;
 import com.fsck.k9.mail.internet.TextBody;
 
 import org.apache.james.mime4j.util.MimeUtil;
-import org.openintents.openpgp.OpenPgpApiManager;
-import org.openintents.openpgp.OpenPgpApiManager.OpenPgpApiManagerCallback;
-import org.openintents.openpgp.OpenPgpApiManager.OpenPgpProviderError;
-import org.openintents.openpgp.OpenPgpApiManager.OpenPgpProviderState;
 import org.openintents.openpgp.OpenPgpError;
 import org.openintents.openpgp.util.OpenPgpApi;
 import org.openintents.openpgp.util.OpenPgpApi.OpenPgpDataSource;
@@ -32,30 +23,16 @@ import org.openintents.openpgp.util.OpenPgpApi.OpenPgpDataSource;
 import java.io.IOException;
 import java.io.OutputStream;
 
-public class SimplePgpEncryptor extends K9Activity {
-    public static final String EXTRA_PGP_KEY_ID = "pgp_key_id";
-    public static final String EXTRA_PGP_PROVIDER = "pgp_provider";
-    public static final String EXTRA_RECIPIENTS = "recipients";
+public class SimplePgpEncryptor {
+    private final Long pgpKeyId;
+    private final OpenPgpApi openPgpApi;
 
-    private Long pgpKeyId;
-    private OpenPgpApiManager pgpApiManager;
-    private String[] recipients;
-
-    @Override
-    public void onCreate(Bundle savedInstanceState) {
-        super.onCreate(savedInstanceState);
-
-        final Intent intent = getIntent();
-
-        final String pgpProvider = intent.getStringExtra(EXTRA_PGP_PROVIDER);
-        pgpKeyId = intent.getLongExtra(EXTRA_PGP_KEY_ID, Account.NO_OPENPGP_KEY);
-        recipients = intent.getStringArrayExtra(EXTRA_RECIPIENTS);
-
-        pgpApiManager = new OpenPgpApiManager(getApplicationContext(), this);
-        pgpApiManager.setOpenPgpProvider(pgpProvider, openPgpCallback);
+    public SimplePgpEncryptor(final OpenPgpApi openPgpApi, final Long pgpKeyId) {
+        this.openPgpApi = openPgpApi;
+        this.pgpKeyId = pgpKeyId;
     }
 
-    public MimeMessage encryptMessage(final MimeMessage originalMessage) throws MessagingException {
+    public MimeMessage encryptMessage(final MimeMessage originalMessage, final String[] recipients) throws MessagingException {
         Intent pgpApiIntent = new Intent(OpenPgpApi.ACTION_SIGN_AND_ENCRYPT);
 
         long[] selfEncryptIds = { pgpKeyId };
@@ -77,7 +54,7 @@ public class SimplePgpEncryptor extends K9Activity {
             throw new MessagingException("could not allocate temp file for storage!", e);
         }
 
-        Intent result = pgpApiManager.getOpenPgpApi().executeApi(pgpApiIntent, dataSource, outputStream);
+        Intent result = openPgpApi.executeApi(pgpApiIntent, dataSource, outputStream);
 
         switch (result.getIntExtra(OpenPgpApi.RESULT_CODE, OpenPgpApi.RESULT_CODE_ERROR)) {
             case OpenPgpApi.RESULT_CODE_SUCCESS:
@@ -129,30 +106,4 @@ public class SimplePgpEncryptor extends K9Activity {
             }
         };
     }
-
-    // TODO: E3 replace Toasts with something better?
-    private final OpenPgpApiManagerCallback openPgpCallback = new OpenPgpApiManagerCallback() {
-        @Override
-        public void onOpenPgpProviderStatusChanged() {
-            if (pgpApiManager.getOpenPgpProviderState() == OpenPgpProviderState.UI_REQUIRED) {
-                Toast.makeText(getApplication(), R.string.error_crypto_provider_ui_required, Toast.LENGTH_LONG).show();
-            }
-        }
-
-        @Override
-        public void onOpenPgpProviderError(OpenPgpProviderError error) {
-            switch (error) {
-                case ConnectionLost:
-                    pgpApiManager.refreshConnection();
-                    break;
-                case VersionIncompatible:
-                    Toast.makeText(getApplication(),R.string.error_crypto_provider_incompatible, Toast.LENGTH_LONG).show();
-                    break;
-                case ConnectionFailed:
-                default:
-                    Toast.makeText(getApplication(), R.string.error_crypto_provider_connect, Toast.LENGTH_LONG).show();
-                    break;
-            }
-        }
-    };
 }
