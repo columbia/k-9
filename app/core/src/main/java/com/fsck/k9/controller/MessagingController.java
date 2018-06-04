@@ -97,10 +97,13 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 =======
 
+<<<<<<< HEAD:app/core/src/main/java/com/fsck/k9/controller/MessagingController.java
 import org.openintents.openpgp.util.OpenPgpApi;
 import org.openintents.openpgp.util.OpenPgpServiceConnection;
 
 >>>>>>> Untested: implement PGP encryption on receipt:k9mail/src/main/java/com/fsck/k9/controller/MessagingController.java
+=======
+>>>>>>> WIP: Tried to convert SimplePgpEncryptor to Activity (DO NOT DEPLOY):k9mail/src/main/java/com/fsck/k9/controller/MessagingController.java
 import timber.log.Timber;
 
 import static com.fsck.k9.K9.MAX_SEND_ATTEMPTS;
