@@ -186,6 +186,13 @@
             />
 
         <activity
+            android:name=".message.SimplePgpEncryptor"
+            android:configChanges="locale"
+            android:label="@string/simple_openpgp_encryptor"
+            android:theme="@android:style/Theme.NoDisplay"
+            />
+
+        <activity
             android:name=".activity.FolderList"
             android:configChanges="locale"
             android:uiOptions="splitActionBarWhenNarrow">

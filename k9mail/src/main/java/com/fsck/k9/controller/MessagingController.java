@@ -95,9 +95,6 @@ import com.fsck.k9.search.LocalSearch;
 import com.fsck.k9.search.SearchAccount;
 import com.fsck.k9.search.SearchSpecification;
 
-import org.openintents.openpgp.util.OpenPgpApi;
-import org.openintents.openpgp.util.OpenPgpServiceConnection;
-
 import timber.log.Timber;
 
 import static com.fsck.k9.K9.MAX_SEND_ATTEMPTS;
@@ -1304,36 +1301,7 @@ public class MessagingController {
                     @Override
                     public void messageFinished(final T originalMessage, int number, int ofTotal) {
                         try {
-                            final T message;
-
-                            final Long accountCryptoKey = account.getE3Key();
-                            final boolean pgpConfigured = account.isE3ProviderConfigured();
-                            final boolean supportedMessageType = originalMessage instanceof MimeMessage;
-                            final boolean hasPgpKey = accountCryptoKey != Account.NO_OPENPGP_KEY;
-
-                            // TODO: E3 Should we re-encrypt already encrypted email to our key?
-                            final boolean isEncrypted = MimeUtility.mimeTypeMatches(originalMessage.getMimeType(), "*/pgp")
-                                    || MimeUtility.mimeTypeMatches(originalMessage.getMimeType(), "*/pkcs*");
-
-                            if (pgpConfigured && supportedMessageType && hasPgpKey && !isEncrypted) {
-                                final String openPgpProvider = account.getOpenPgpProvider();
-                                final OpenPgpServiceConnection pgpServiceConnection = new OpenPgpServiceConnection(context, openPgpProvider);
-                                pgpServiceConnection.bindToService();
-                                final OpenPgpApi openPgpApi = new OpenPgpApi(context, pgpServiceConnection.getService());
-
-                                final String[] accountEmail = new String[]{account.getIdentity(0).getEmail()};
-
-                                final SimplePgpEncryptor encryptor = new SimplePgpEncryptor(openPgpApi, accountCryptoKey);
-                                final MimeMessage encryptedMessage = encryptor.encryptMessage((MimeMessage) originalMessage, accountEmail);
-                                message = (T) encryptedMessage;
-
-                                pgpServiceConnection.unbindFromService();
-                            } else {
-                                if (pgpConfigured && !hasPgpKey && !isEncrypted) {
-                                    Timber.w("PGP is enabled but no PGP key is set! Will not encrypt this plaintext email");
-                                }
-                                message = originalMessage;
-                            }
+                            final T message = handleOriginalMessage(originalMessage);
 
                             // Store the updated message locally
                             final LocalMessage localMessage = localFolder.storeSmallMessage(message, new Runnable() {
@@ -1377,6 +1345,42 @@ public class MessagingController {
 
                     @Override
                     public void messagesFinished(int total) {
+                    }
+
+                    private T handleOriginalMessage(final T originalMessage) {
+                        final Long accountCryptoKeyId = account.getE3Key();
+                        final String e3Provider = account.getE3Provider();
+                        final boolean pgpConfigured = account.isE3ProviderConfigured();
+                        final boolean supportedMessageType = originalMessage instanceof MimeMessage;
+                        final boolean hasPgpKey = accountCryptoKeyId != Account.NO_OPENPGP_KEY;
+
+                        // TODO: E3 Should we re-encrypt already encrypted email to our key?
+                        final boolean isEncrypted = MimeUtility.mimeTypeMatches(originalMessage.getMimeType(), "*/pgp")
+                                || MimeUtility.mimeTypeMatches(originalMessage.getMimeType(), "*/pkcs*");
+
+                        if (pgpConfigured && supportedMessageType && hasPgpKey && !isEncrypted) {
+                            //final OpenPgpServiceConnection pgpServiceConnection = new OpenPgpServiceConnection(context, e3Provider);
+                            //pgpServiceConnection.bindToService();
+                            //final OpenPgpApi openPgpApi = new OpenPgpApi(context, pgpServiceConnection.getService());
+                            //final SimplePgpEncryptor encryptor = new SimplePgpEncryptor(openPgpApi, accountCryptoKeyId);
+                            //final MimeMessage encryptedMessage = encryptor.encryptMessage((MimeMessage) originalMessage, accountEmail);
+
+                            final String[] accountEmail = new String[]{account.getIdentity(0).getEmail()};
+                            Intent i = new Intent(context, SimplePgpEncryptor.class);
+                            i.putExtra(SimplePgpEncryptor.EXTRA_PGP_KEY_ID, accountCryptoKeyId);
+                            i.putExtra(SimplePgpEncryptor.EXTRA_PGP_PROVIDER, e3Provider);
+                            i.putExtra(SimplePgpEncryptor.EXTRA_RECIPIENTS, accountEmail);
+                            i.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
+                            context.startActivity(i);
+
+                            return (T) encryptedMessage;
+                            //pgpServiceConnection.unbindFromService();
+                        } else {
+                            if (pgpConfigured && !hasPgpKey && !isEncrypted) {
+                                Timber.w("PGP is enabled but no PGP key is set! Will not encrypt this plaintext email");
+                            }
+                            return originalMessage;
+                        }
                     }
                 });
 

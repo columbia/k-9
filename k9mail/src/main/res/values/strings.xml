@@ -1299,6 +1299,7 @@ Please submit bug reports, contribute new features and ask questions at
     <string name="openpgp_enabled_error_back">Back</string>
     <string name="openpgp_enabled_error_disable">Disable Encryption</string>
     <string name="openpgp_encryption">OpenPGP Encryption</string>
+    <string name="simple_openpgp_encryptor">OpenPGP Encryptor</string>
 
     <string name="account_settings_crypto_prefer_encrypt">Autocrypt mutual mode</string>
     <string name="dialog_autocrypt_mutual_title">Autocrypt mutual mode</string>
