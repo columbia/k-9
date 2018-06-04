@@ -95,6 +95,9 @@ import com.fsck.k9.search.LocalSearch;
 import com.fsck.k9.search.SearchAccount;
 import com.fsck.k9.search.SearchSpecification;
 
+import org.openintents.openpgp.util.OpenPgpApi;
+import org.openintents.openpgp.util.OpenPgpServiceConnection;
+
 import timber.log.Timber;
 
 import static com.fsck.k9.K9.MAX_SEND_ATTEMPTS;
@@ -1347,7 +1350,7 @@ public class MessagingController {
                     public void messagesFinished(int total) {
                     }
 
-                    private T handleOriginalMessage(final T originalMessage) {
+                    private T handleOriginalMessage(final T originalMessage) throws MessagingException {
                         final Long accountCryptoKeyId = account.getE3Key();
                         final String e3Provider = account.getE3Provider();
                         final boolean pgpConfigured = account.isE3ProviderConfigured();
@@ -1359,22 +1362,15 @@ public class MessagingController {
                                 || MimeUtility.mimeTypeMatches(originalMessage.getMimeType(), "*/pkcs*");
 
                         if (pgpConfigured && supportedMessageType && hasPgpKey && !isEncrypted) {
-                            //final OpenPgpServiceConnection pgpServiceConnection = new OpenPgpServiceConnection(context, e3Provider);
-                            //pgpServiceConnection.bindToService();
-                            //final OpenPgpApi openPgpApi = new OpenPgpApi(context, pgpServiceConnection.getService());
-                            //final SimplePgpEncryptor encryptor = new SimplePgpEncryptor(openPgpApi, accountCryptoKeyId);
-                            //final MimeMessage encryptedMessage = encryptor.encryptMessage((MimeMessage) originalMessage, accountEmail);
-
                             final String[] accountEmail = new String[]{account.getIdentity(0).getEmail()};
-                            Intent i = new Intent(context, SimplePgpEncryptor.class);
-                            i.putExtra(SimplePgpEncryptor.EXTRA_PGP_KEY_ID, accountCryptoKeyId);
-                            i.putExtra(SimplePgpEncryptor.EXTRA_PGP_PROVIDER, e3Provider);
-                            i.putExtra(SimplePgpEncryptor.EXTRA_RECIPIENTS, accountEmail);
-                            i.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
-                            context.startActivity(i);
+                            final OpenPgpServiceConnection pgpServiceConnection = new OpenPgpServiceConnection(context, e3Provider);
+                            pgpServiceConnection.bindToService();
+                            final OpenPgpApi openPgpApi = new OpenPgpApi(context, pgpServiceConnection.getService());
+                            final SimplePgpEncryptor encryptor = new SimplePgpEncryptor(openPgpApi, accountCryptoKeyId);
+                            final MimeMessage encryptedMessage = encryptor.encryptMessage((MimeMessage) originalMessage, accountEmail);
 
+                            pgpServiceConnection.unbindFromService();
                             return (T) encryptedMessage;
-                            //pgpServiceConnection.unbindFromService();
                         } else {
                             if (pgpConfigured && !hasPgpKey && !isEncrypted) {
                                 Timber.w("PGP is enabled but no PGP key is set! Will not encrypt this plaintext email");
