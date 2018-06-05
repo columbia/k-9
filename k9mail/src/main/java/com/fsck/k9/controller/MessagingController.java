@@ -1307,32 +1307,12 @@ public class MessagingController {
                     public void messageFinished(final T originalMessage, int number, int ofTotal) {
                         try {
                             final Long accountCryptoKeyId = account.getE3Key();
-                            final String e3Provider = account.getE3Provider();
-                            final String[] accountEmail = new String[]{account.getIdentity(0).getEmail()};
 
                             if (shouldEncrypt(originalMessage, accountCryptoKeyId)) {
-                                final OpenPgpServiceConnection pgpServiceConnection = new OpenPgpServiceConnection(context, e3Provider, new OnBound() {
-                                    @Override
-                                    public void onBound(IOpenPgpService2 service) {
-                                        final OpenPgpApi openPgpApi = new OpenPgpApi(context, service);
-                                        final SimplePgpEncryptor encryptor = new SimplePgpEncryptor(openPgpApi, accountCryptoKeyId);
-
-                                        try {
-                                            final MimeMessage encryptedMessage = encryptor.encryptMessage((MimeMessage) originalMessage, accountEmail);
-                                            synchronizeMessageLocally((T) encryptedMessage);
-                                        } catch (MessagingException e) {
-                                            throw new RuntimeException("Failed to encrypt on receipt!", e);
-                                        }
-                                    }
-
-                                    @Override
-                                    public void onError(Exception e) {
-                                        Timber.e("Got error while binding to OpenPGP service", e);
-                                    }
-                                });
-                                pgpServiceConnection.bindToService();
+                                encryptOnReceipt(originalMessage, accountCryptoKeyId);
                             } else {
-                                synchronizeMessageLocally(originalMessage);
+                                final LocalMessage localMessage = synchronizeMessageLocally(originalMessage);
+                                updateListeners(originalMessage, localMessage);
                             }
                         } catch (MessagingException me) {
                             Timber.e(me, "SYNC: fetch small messages");
@@ -1347,15 +1327,98 @@ public class MessagingController {
                     public void messagesFinished(int total) {
                     }
 
-                    private void synchronizeMessageLocally(final T message) throws MessagingException {
+                    private void encryptOnReceipt(final T originalMessage, final long accountCryptoKeyId) {
+                        final String e3Provider = account.getE3Provider();
+                        final String[] accountEmail = new String[]{account.getIdentity(0).getEmail()};
+                        final OpenPgpServiceConnection pgpServiceConnection = new OpenPgpServiceConnection(context, e3Provider, new OnBound() {
+                            @Override
+                            public void onBound(IOpenPgpService2 service) {
+                                final OpenPgpApi openPgpApi = new OpenPgpApi(context, service);
+                                final SimplePgpEncryptor encryptor = new SimplePgpEncryptor(openPgpApi, accountCryptoKeyId);
+
+                                try {
+                                    final T encryptedMessage = (T) encryptor.encryptMessage((MimeMessage) originalMessage, accountEmail);
+
+                                    putBackground("Synchronize encrypted-on-receipt email and update listeners", null, new Runnable() {
+                                        @Override
+                                        public void run() {
+                                            final LocalMessage localEncryptedMessage = synchronizeEncrypted(encryptedMessage, originalMessage.getUid());
+                                            updateListeners(encryptedMessage, localEncryptedMessage);
+                                        }
+                                    });
+
+                                } catch (MessagingException e) {
+                                    throw new RuntimeException("Failed to encrypt on receipt!", e);
+                                }
+                            }
+
+                            @Override
+                            public void onError(Exception e) {
+                                Timber.e("Got error while binding to OpenPGP service", e);
+                            }
+                        });
+                        pgpServiceConnection.bindToService();
+                    }
+
+                    private LocalMessage synchronizeEncrypted(final T encryptedMessage, final String originalUid) {
+                        try {
+                            encryptedMessage.setFlag(Flag.E3, true);
+
+                            // Store the encrypted message locally
+                            final LocalMessage localMessage = synchronizeMessageLocally(encryptedMessage);
+
+                            final List<LocalMessage> localMessageList = Collections.singletonList(localMessage);
+                            final FetchProfile fp = new FetchProfile();
+                            fp.add(FetchProfile.Item.ENVELOPE);
+                            fp.add(FetchProfile.Item.BODY);
+                            localFolder.fetch(localMessageList, fp, null);
+
+                            final String trashFolder = account.getTrashFolder();
+                            final boolean folderIsTrash = trashFolder.equals(localFolder.getName());
+                            final List<String> uidSingleton = Collections.singletonList(originalUid);
+
+                            if (!folderIsTrash) {
+                                // First: Set \Deleted and \E3_DONE on the original message
+                                queueSetFlag(account, localFolder.getName(), true,
+                                        Flag.DELETED, uidSingleton);
+                                queueSetFlag(account, localFolder.getName(), true,
+                                        Flag.E3_DONE, uidSingleton);
+
+                                // Second: Move original to Gmail's trash folder
+                                queueMoveOrCopy(account, localFolder.getName(), trashFolder, false, uidSingleton);
+                            }
+
+                            // Third: Append encrypted remotely
+                            Timber.d(String.format("Pending APPEND: %s,%s", localFolder.getName(), encryptedMessage.getUid()));
+                            final PendingCommand appendCmd = PendingAppend.create(localFolder.getServerId(), encryptedMessage.getUid());
+                            queuePendingCommand(account, appendCmd);
+
+                            if (!folderIsTrash) {
+                                // Fourth: Queue empty trash (expunge) command
+                                final PendingCommand emptyTrashCmd = PendingEmptyTrash.create();
+                                queuePendingCommand(account, emptyTrashCmd);
+                            }
+
+                            // Final: Run all the queued commands
+                            processPendingCommandsSynchronous(account);
+
+                            return localMessage;
+                        } catch (final MessagingException e) {
+                            throw new RuntimeException("Failed to replace plaintext email with encrypted email", e);
+                        }
+                    }
+
+                    private LocalMessage synchronizeMessageLocally(final T message) throws MessagingException {
                         // Store the updated message locally
-                        final LocalMessage localMessage = localFolder.storeSmallMessage(message, new Runnable() {
+                        return localFolder.storeSmallMessage(message, new Runnable() {
                             @Override
                             public void run() {
                                 progress.incrementAndGet();
                             }
                         });
+                    }
 
+                    private void updateListeners(final T message, final LocalMessage localMessage) {
                         // Increment the number of "new messages" if the newly downloaded message is
                         // not marked as read.
                         if (!localMessage.isSet(Flag.SEEN)) {
