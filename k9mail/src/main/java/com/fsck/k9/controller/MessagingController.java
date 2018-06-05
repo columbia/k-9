@@ -95,8 +95,10 @@ import com.fsck.k9.search.LocalSearch;
 import com.fsck.k9.search.SearchAccount;
 import com.fsck.k9.search.SearchSpecification;
 
+import org.openintents.openpgp.IOpenPgpService2;
 import org.openintents.openpgp.util.OpenPgpApi;
 import org.openintents.openpgp.util.OpenPgpServiceConnection;
+import org.openintents.openpgp.util.OpenPgpServiceConnection.OnBound;
 
 import timber.log.Timber;
 
@@ -1304,39 +1306,34 @@ public class MessagingController {
                     @Override
                     public void messageFinished(final T originalMessage, int number, int ofTotal) {
                         try {
-                            final T message = handleOriginalMessage(originalMessage);
+                            final Long accountCryptoKeyId = account.getE3Key();
+                            final String e3Provider = account.getE3Provider();
+                            final String[] accountEmail = new String[]{account.getIdentity(0).getEmail()};
 
-                            // Store the updated message locally
-                            final LocalMessage localMessage = localFolder.storeSmallMessage(message, new Runnable() {
-                                @Override
-                                public void run() {
-                                    progress.incrementAndGet();
-                                }
-                            });
+                            if (shouldEncrypt(originalMessage, accountCryptoKeyId)) {
+                                final OpenPgpServiceConnection pgpServiceConnection = new OpenPgpServiceConnection(context, e3Provider, new OnBound() {
+                                    @Override
+                                    public void onBound(IOpenPgpService2 service) {
+                                        final OpenPgpApi openPgpApi = new OpenPgpApi(context, service);
+                                        final SimplePgpEncryptor encryptor = new SimplePgpEncryptor(openPgpApi, accountCryptoKeyId);
 
-                            // Increment the number of "new messages" if the newly downloaded message is
-                            // not marked as read.
-                            if (!localMessage.isSet(Flag.SEEN)) {
-                                newMessages.incrementAndGet();
+                                        try {
+                                            final MimeMessage encryptedMessage = encryptor.encryptMessage((MimeMessage) originalMessage, accountEmail);
+                                            synchronizeMessageLocally((T) encryptedMessage);
+                                        } catch (MessagingException e) {
+                                            throw new RuntimeException("Failed to encrypt on receipt!", e);
+                                        }
+                                    }
+
+                                    @Override
+                                    public void onError(Exception e) {
+                                        Timber.e("Got error while binding to OpenPGP service", e);
+                                    }
+                                });
+                                pgpServiceConnection.bindToService();
+                            } else {
+                                synchronizeMessageLocally(originalMessage);
                             }
-
-                            Timber.v("About to notify listeners that we got a new small message %s:%s:%s",
-                                    account, folder, message.getUid());
-
-                            // Update the listener with what we've found
-                            for (MessagingListener l : getListeners()) {
-                                l.synchronizeMailboxProgress(account, folder, progress.get(), todo);
-                                if (!localMessage.isSet(Flag.SEEN)) {
-                                    l.synchronizeMailboxNewMessage(account, folder, localMessage);
-                                }
-                            }
-                            // Send a notification of this message
-
-                            if (shouldNotifyForMessage(account, localFolder, message)) {
-                                // Notify with the localMessage so that we don't have to recalculate the content preview.
-                                notificationController.addNewMailNotification(account, localMessage, unreadBeforeStart);
-                            }
-
                         } catch (MessagingException me) {
                             Timber.e(me, "SYNC: fetch small messages");
                         }
@@ -1350,33 +1347,53 @@ public class MessagingController {
                     public void messagesFinished(int total) {
                     }
 
-                    private T handleOriginalMessage(final T originalMessage) throws MessagingException {
-                        final Long accountCryptoKeyId = account.getE3Key();
-                        final String e3Provider = account.getE3Provider();
+                    private void synchronizeMessageLocally(final T message) throws MessagingException {
+                        // Store the updated message locally
+                        final LocalMessage localMessage = localFolder.storeSmallMessage(message, new Runnable() {
+                            @Override
+                            public void run() {
+                                progress.incrementAndGet();
+                            }
+                        });
+
+                        // Increment the number of "new messages" if the newly downloaded message is
+                        // not marked as read.
+                        if (!localMessage.isSet(Flag.SEEN)) {
+                            newMessages.incrementAndGet();
+                        }
+
+                        Timber.v("About to notify listeners that we got a new small message %s:%s:%s",
+                                account, folder, message.getUid());
+
+                        // Update the listener with what we've found
+                        for (MessagingListener l : getListeners()) {
+                            l.synchronizeMailboxProgress(account, folder, progress.get(), todo);
+                            if (!localMessage.isSet(Flag.SEEN)) {
+                                l.synchronizeMailboxNewMessage(account, folder, localMessage);
+                            }
+                        }
+                        // Send a notification of this message
+
+                        if (shouldNotifyForMessage(account, localFolder, message)) {
+                            // Notify with the localMessage so that we don't have to recalculate the content preview.
+                            notificationController.addNewMailNotification(account, localMessage, unreadBeforeStart);
+                        }
+                    }
+
+                    private boolean shouldEncrypt(final T originalMessage, final long keyId) {
                         final boolean pgpConfigured = account.isE3ProviderConfigured();
                         final boolean supportedMessageType = originalMessage instanceof MimeMessage;
-                        final boolean hasPgpKey = accountCryptoKeyId != Account.NO_OPENPGP_KEY;
+                        final boolean hasPgpKey = keyId != Account.NO_OPENPGP_KEY;
 
                         // TODO: E3 Should we re-encrypt already encrypted email to our key?
                         final boolean isEncrypted = MimeUtility.mimeTypeMatches(originalMessage.getMimeType(), "*/pgp")
                                 || MimeUtility.mimeTypeMatches(originalMessage.getMimeType(), "*/pkcs*");
 
-                        if (pgpConfigured && supportedMessageType && hasPgpKey && !isEncrypted) {
-                            final String[] accountEmail = new String[]{account.getIdentity(0).getEmail()};
-                            final OpenPgpServiceConnection pgpServiceConnection = new OpenPgpServiceConnection(context, e3Provider);
-                            pgpServiceConnection.bindToService();
-                            final OpenPgpApi openPgpApi = new OpenPgpApi(context, pgpServiceConnection.getService());
-                            final SimplePgpEncryptor encryptor = new SimplePgpEncryptor(openPgpApi, accountCryptoKeyId);
-                            final MimeMessage encryptedMessage = encryptor.encryptMessage((MimeMessage) originalMessage, accountEmail);
-
-                            pgpServiceConnection.unbindFromService();
-                            return (T) encryptedMessage;
-                        } else {
-                            if (pgpConfigured && !hasPgpKey && !isEncrypted) {
-                                Timber.w("PGP is enabled but no PGP key is set! Will not encrypt this plaintext email");
-                            }
-                            return originalMessage;
+                        if (pgpConfigured && !hasPgpKey && !isEncrypted) {
+                            Timber.w("PGP is enabled but no PGP key is set! Will not encrypt this plaintext email");
                         }
+
+                        return pgpConfigured && supportedMessageType && hasPgpKey && !isEncrypted;
                     }
                 });
 
