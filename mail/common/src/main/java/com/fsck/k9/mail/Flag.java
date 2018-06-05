@@ -67,4 +67,12 @@ public enum Flag {
      * This flag is added to messages when their subject is overridden with a decrypted one in the database.
      */
     X_SUBJECT_DECRYPTED,
+
+    E3,
+
+    /**
+     * This flag indicates that a plaintext email has been successfully encrypted and already stored
+     * locally, so it's "done" being processed.
+     */
+    E3_DONE,
 }
