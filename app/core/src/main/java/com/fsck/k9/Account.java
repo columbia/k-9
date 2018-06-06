@@ -711,6 +711,7 @@ public class Account implements BaseAccount, StoreConfig {
         editor.putBoolean(accountUuid + ".openPgpHideSignOnly", openPgpHideSignOnly);
         editor.putBoolean(accountUuid + ".openPgpEncryptSubject", openPgpEncryptSubject);
         editor.putString(accountUuid + ".openPgpProvider", openPgpProvider);
+        editor.putString(accountUuid + ".e3Provider", e3Provider);
         editor.putBoolean(accountUuid + ".autocryptMutualMode", autocryptPreferEncryptMutual);
         editor.putBoolean(accountUuid + ".allowRemoteSearch", allowRemoteSearch);
         editor.putBoolean(accountUuid + ".remoteSearchFullText", remoteSearchFullText);
