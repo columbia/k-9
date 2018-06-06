@@ -1362,10 +1362,9 @@ public class MessagingController {
 
                     private LocalMessage synchronizeEncrypted(final T encryptedMessage, final String originalUid) {
                         try {
-                            encryptedMessage.setFlag(Flag.E3, true);
-
                             // Store the encrypted message locally
                             final LocalMessage localMessage = synchronizeMessageLocally(encryptedMessage);
+                            localMessage.setFlag(Flag.E3, true);
 
                             final List<LocalMessage> localMessageList = Collections.singletonList(localMessage);
                             final FetchProfile fp = new FetchProfile();

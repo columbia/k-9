@@ -229,6 +229,13 @@ public class MessageLoaderHelper {
             return;
         }
 
+        boolean isE3Encrypted = localMessage.isSet(Flag.E3);
+
+        if (account.isE3ProviderConfigured() && isE3Encrypted) {
+            startOrResumeCryptoOperation(account.getE3Provider());
+            return;
+        }
+
         if (account.isOpenPgpProviderConfigured()) {
             String openPgpProvider = account.getOpenPgpProvider();
             startOrResumeCryptoOperation(openPgpProvider);
