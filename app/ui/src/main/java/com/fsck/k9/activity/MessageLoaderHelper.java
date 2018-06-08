@@ -144,9 +144,11 @@ public class MessageLoaderHelper {
         cancelAndClearCryptoOperation();
         cancelAndClearDecodeLoader();
 
-        if (account.isOpenPgpProviderConfigured()) {
+        if (account.isOpenPgpProviderConfigured() && !localMessage.isSet(Flag.E3)) {
             String openPgpProvider = account.getOpenPgpProvider();
-            startOrResumeCryptoOperation(openPgpProvider);
+            startOrResumeCryptoOperation(openPgpProvider, null);
+        } else if (account.isE3ProviderConfigured()) {
+            startOrResumeCryptoOperation(account.getE3Provider(), account.getE3Key());
         } else {
             startOrResumeDecodeMessage();
         }
@@ -235,13 +237,13 @@ public class MessageLoaderHelper {
         boolean isE3Encrypted = localMessage.isSet(Flag.E3);
 
         if (account.isE3ProviderConfigured() && isE3Encrypted) {
-            startOrResumeCryptoOperation(account.getE3Provider());
+            startOrResumeCryptoOperation(account.getE3Provider(), account.getE3Key());
             return;
         }
 
         if (account.isOpenPgpProviderConfigured()) {
             String openPgpProvider = account.getOpenPgpProvider();
-            startOrResumeCryptoOperation(openPgpProvider);
+            startOrResumeCryptoOperation(openPgpProvider, null);
             return;
         }
 
@@ -296,14 +298,14 @@ public class MessageLoaderHelper {
 
     // process with crypto helper
 
-    private void startOrResumeCryptoOperation(String openPgpProvider) {
+    private void startOrResumeCryptoOperation(String openPgpProvider, @Nullable Long pgpKey) {
         RetainFragment<MessageCryptoHelper> retainCryptoHelperFragment = getMessageCryptoHelperRetainFragment(true);
         if (retainCryptoHelperFragment.hasData()) {
             messageCryptoHelper = retainCryptoHelperFragment.getData();
         }
         if (messageCryptoHelper == null || !messageCryptoHelper.isConfiguredForOpenPgpProvider(openPgpProvider)) {
             messageCryptoHelper = new MessageCryptoHelper(
-                    context, new OpenPgpApiFactory(), AutocryptOperations.getInstance(), openPgpProvider);
+                    context, new OpenPgpApiFactory(), AutocryptOperations.getInstance(), openPgpProvider, pgpKey);
             retainCryptoHelperFragment.setData(messageCryptoHelper);
         }
         messageCryptoHelper.asyncStartOrResumeProcessingMessage(
