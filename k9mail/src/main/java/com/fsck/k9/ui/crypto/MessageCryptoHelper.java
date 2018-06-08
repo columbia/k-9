@@ -63,6 +63,7 @@ public class MessageCryptoHelper {
 
     private final Context context;
     private final String openPgpProvider;
+    private final Long pgpKeyId;
     private final AutocryptOperations autocryptOperations;
     private final Object callbackLock = new Object();
     private final Deque<CryptoPart> partsToProcess = new ArrayDeque<>();
@@ -91,12 +92,13 @@ public class MessageCryptoHelper {
 
 
     public MessageCryptoHelper(Context context, OpenPgpApiFactory openPgpApiFactory,
-            AutocryptOperations autocryptOperations, @NonNull String openPgpProvider) {
+            AutocryptOperations autocryptOperations, @NonNull String openPgpProvider, @Nullable Long pgpKeyId) {
         this.context = context.getApplicationContext();
 
         this.autocryptOperations = autocryptOperations;
         this.openPgpApiFactory = openPgpApiFactory;
         this.openPgpProvider = openPgpProvider;
+        this.pgpKeyId = pgpKeyId;
     }
 
     public boolean isConfiguredForOpenPgpProvider(String openPgpProvider) {
@@ -128,7 +130,8 @@ public class MessageCryptoHelper {
                 continue;
             }
             if (MessageCryptoStructureDetector.isMultipartEncryptedOpenPgpProtocol(part)) {
-                CryptoPart cryptoPart = new CryptoPart(CryptoPartType.PGP_ENCRYPTED, part);
+                final CryptoPartType type = currentMessage.isSet(Flag.E3) ? CryptoPartType.PGP_E3 : CryptoPartType.PGP_ENCRYPTED;
+                CryptoPart cryptoPart = new CryptoPart(type, part);
                 partsToProcess.add(cryptoPart);
                 continue;
             }
@@ -275,6 +278,10 @@ public class MessageCryptoHelper {
         decryptIntent.putExtra(OpenPgpApi.EXTRA_SUPPORT_OVERRIDE_CRYPTO_WARNING, true);
         decryptIntent.putExtra(OpenPgpApi.EXTRA_DECRYPTION_RESULT, cachedDecryptionResult);
 
+        if (currentMessage.isSet(Flag.E3) && pgpKeyId != null) {
+            decryptIntent.putExtra(OpenPgpApi.EXTRA_KEY_ID, pgpKeyId);
+        }
+
         return decryptIntent;
     }
 
@@ -296,6 +303,9 @@ public class MessageCryptoHelper {
                 }
                 case PLAIN_AUTOCRYPT:
                     throw new IllegalStateException("This part type must have been handled previously!");
+                case PGP_E3:
+                    callAsyncDecrypt(apiIntent);
+                    return;
             }
 
             throw new IllegalStateException("Unknown crypto part type: " + cryptoPartType);
@@ -436,7 +446,7 @@ public class MessageCryptoHelper {
                 Part part = currentCryptoPart.part;
                 CryptoPartType cryptoPartType = currentCryptoPart.type;
                 Body body;
-                if (cryptoPartType == CryptoPartType.PGP_ENCRYPTED) {
+                if (cryptoPartType == CryptoPartType.PGP_ENCRYPTED || cryptoPartType == CryptoPartType.PGP_E3) {
                     Multipart multipartEncryptedMultipart = (Multipart) part.getBody();
                     BodyPart encryptionPayloadPart = multipartEncryptedMultipart.getBodyPart(1);
                     body = encryptionPayloadPart.getBody();
@@ -457,7 +467,7 @@ public class MessageCryptoHelper {
                 try {
                     Part part = currentCryptoPart.part;
                     CryptoPartType cryptoPartType = currentCryptoPart.type;
-                    if (cryptoPartType == CryptoPartType.PGP_ENCRYPTED) {
+                    if (cryptoPartType == CryptoPartType.PGP_ENCRYPTED || cryptoPartType == CryptoPartType.PGP_E3) {
                         Multipart multipartEncryptedMultipart = (Multipart) part.getBody();
                         BodyPart encryptionPayloadPart = multipartEncryptedMultipart.getBodyPart(1);
                         Body encryptionPayloadBody = encryptionPayloadPart.getBody();
@@ -787,7 +797,8 @@ public class MessageCryptoHelper {
         PGP_INLINE,
         PGP_ENCRYPTED,
         PGP_SIGNED,
-        PLAIN_AUTOCRYPT
+        PLAIN_AUTOCRYPT,
+        PGP_E3
     }
 
     @Nullable
