@@ -603,6 +603,8 @@ Please submit bug reports, contribute new features and ask questions at
     <string name="account_settings_e3_crypto_key">Configure E3 key</string>
     <string name="account_settings_e3_crypto_summary_off">No E3 or OpenPGP app configured</string>
     <string name="account_settings_e3_crypto_summary_on">Connected to %s</string>
+    <string name="account_settings_e3_crypto_mode_passive">Passive</string>
+    <string name="account_settings_e3_crypto_mode_standalone">Standalone</string>
 
     <string name="account_settings_mail_check_frequency_label">Folder poll frequency</string>
 
@@ -1306,6 +1308,11 @@ Please submit bug reports, contribute new features and ask questions at
     <string name="dialog_autocrypt_mutual_description_1">Messages will normally be encrypted by choice, or when replying to an encrypted message.</string>
     <string name="dialog_autocrypt_mutual_description_2">If both sender and recipients enable mutual mode, encryption will be enabled by default.</string>
     <string name="dialog_autocrypt_mutual_learn_more">You can <a href="https://k9mail.github.io/2018/02/26/OpenPGP-Considerations-Part-III-Autocrypt.html">click here</a> to learn more.</string>
+
+    <string name="account_settings_crypto_e3_mode">E3 mode</string>
+    <string name="dialog_e3_mode_title">E3 mode</string>
+    <string name="dialog_e3_mode_description">Passive: Messages will only be decrypted when read using your E3 key.\n\nStandalone: Messages will be encrypted on receipt and decrypted when read using your E3 key.</string>
+    <string name="dialog_e3_mode_learn_more"><a href="">Learn more about E3 modes</a>.</string>
 
     <string name="general_settings_title">General settings</string>
 

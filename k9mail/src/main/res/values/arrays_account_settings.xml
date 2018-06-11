@@ -371,4 +371,14 @@
         <item>0</item>
     </string-array>
 
+    <string-array name="e3_mode_entries">
+        <item>@string/account_settings_e3_crypto_mode_passive</item>
+        <item>@string/account_settings_e3_crypto_mode_standalone</item>
+    </string-array>
+
+    <string-array name="e3_mode_values" translatable="false">
+        <item>PASSIVE</item>
+        <item>STANDALONE</item>
+    </string-array>
+
 </resources>

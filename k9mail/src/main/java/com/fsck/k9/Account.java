@@ -208,6 +208,7 @@ public class Account implements BaseAccount, StoreConfig {
     private boolean autocryptPreferEncryptMutual;
     private boolean openPgpHideSignOnly;
     private boolean openPgpEncryptSubject;
+    private E3Mode e3Mode;
     private String e3Provider;
     private long e3Key;
     private boolean markMessageAsReadOnView;
@@ -265,6 +266,10 @@ public class Account implements BaseAccount, StoreConfig {
         TEXT, HTML, AUTO
     }
 
+    public enum E3Mode {
+        STANDALONE, PASSIVE
+    }
+
     protected Account(Context context) {
         accountUuid = UUID.randomUUID().toString();
         localStorageProviderId = StorageManager.getInstance(context).getDefaultProviderId();
@@ -305,6 +310,7 @@ public class Account implements BaseAccount, StoreConfig {
         syncRemoteDeletions = true;
         openPgpKey = NO_OPENPGP_KEY;
         e3Key = NO_OPENPGP_KEY;
+        e3Mode = E3Mode.PASSIVE;
         allowRemoteSearch = false;
         remoteSearchFullText = false;
         remoteSearchNumResults = DEFAULT_REMOTE_SEARCH_NUM_RESULTS;
@@ -441,6 +447,8 @@ public class Account implements BaseAccount, StoreConfig {
         openPgpHideSignOnly = storage.getBoolean(accountUuid + ".openPgpHideSignOnly", true);
         openPgpEncryptSubject = storage.getBoolean(accountUuid + ".openPgpEncryptSubject", true);
         autocryptPreferEncryptMutual = storage.getBoolean(accountUuid + ".autocryptMutualMode", false);
+
+        e3Mode = getEnumStringPref(storage, accountUuid + ".e3ModeEnum", E3Mode.PASSIVE);
         e3Provider = storage.getString(accountUuid + ".e3Provider", "");
         e3Key = storage.getLong(accountUuid + ".e3Key", NO_OPENPGP_KEY);
 
@@ -711,6 +719,7 @@ public class Account implements BaseAccount, StoreConfig {
         editor.putBoolean(accountUuid + ".stripSignature", stripSignature);
         editor.putLong(accountUuid + ".cryptoKey", openPgpKey);
         editor.putLong(accountUuid + ".e3Key", e3Key);
+        editor.putString(accountUuid + ".e3ModeEnum", e3Mode.name());
         editor.putBoolean(accountUuid + ".openPgpHideSignOnly", openPgpHideSignOnly);
         editor.putBoolean(accountUuid + ".openPgpEncryptSubject", openPgpEncryptSubject);
         editor.putString(accountUuid + ".openPgpProvider", openPgpProvider);
@@ -1552,6 +1561,14 @@ public class Account implements BaseAccount, StoreConfig {
 
     public void setE3Key(long keyId) {
         this.e3Key = keyId;
+    }
+
+    public synchronized E3Mode getE3Mode() {
+        return e3Mode;
+    }
+
+    public synchronized void setE3Mode(E3Mode e3Mode) {
+        this.e3Mode = e3Mode;
     }
 
     public boolean hasOpenPgpKey() {
