@@ -12,6 +12,7 @@ import android.content.Context;
 
 import com.fsck.k9.Account;
 import com.fsck.k9.Account.DeletePolicy;
+import com.fsck.k9.Account.E3Mode;
 import com.fsck.k9.Account.Expunge;
 import com.fsck.k9.Account.FolderMode;
 import com.fsck.k9.Account.MessageFormat;
@@ -238,6 +239,8 @@ public class AccountSettings {
         ));
         s.put("uploadSentMessages", Settings.versions(
                 new V(52, new BooleanSetting(true))
+        s.put("e3ModeEnum", Settings.versions(
+                new V(52, new EnumSetting<>(E3Mode.class, E3Mode.PASSIVE))
         ));
         // note that there is no setting for openPgpProvider, because this will have to be set up together
         // with the actual provider after import anyways.

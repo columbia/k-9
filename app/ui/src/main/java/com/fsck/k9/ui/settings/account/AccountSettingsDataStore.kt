@@ -143,6 +143,7 @@ class AccountSettingsDataStore(
             "account_remote_search_num_results" -> account.remoteSearchNumResults.toString()
             "local_storage_provider" -> account.localStorageProviderId
             "account_ringtone" -> account.notificationSetting.ringtone
+            "e3_mode" -> account.e3Mode.name
             else -> defValue
         }
     }
@@ -202,6 +203,7 @@ class AccountSettingsDataStore(
                 isRingEnabled = true
                 ringtone = value
             }
+            "e3_mode" -> account.e3Mode = Account.E3Mode.valueOf(value)
             else -> return
         }
 
