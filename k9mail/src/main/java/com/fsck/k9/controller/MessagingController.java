@@ -37,6 +37,7 @@ import android.support.annotation.VisibleForTesting;
 
 import com.fsck.k9.Account;
 import com.fsck.k9.Account.DeletePolicy;
+import com.fsck.k9.Account.E3Mode;
 import com.fsck.k9.Account.Expunge;
 import com.fsck.k9.AccountStats;
 import com.fsck.k9.BuildConfig;
@@ -1446,6 +1447,7 @@ public class MessagingController {
                     }
 
                     private boolean shouldEncrypt(final T originalMessage, final long keyId) {
+                        final boolean inE3StandaloneMode = account.getE3Mode() == E3Mode.STANDALONE;
                         final boolean pgpConfigured = account.isE3ProviderConfigured();
                         final boolean supportedMessageType = originalMessage instanceof MimeMessage;
                         final boolean hasPgpKey = keyId != Account.NO_OPENPGP_KEY;
@@ -1458,7 +1460,7 @@ public class MessagingController {
                             Timber.w("PGP is enabled but no PGP key is set! Will not encrypt this plaintext email");
                         }
 
-                        return pgpConfigured && supportedMessageType && hasPgpKey && !isEncrypted;
+                        return inE3StandaloneMode && pgpConfigured && supportedMessageType && hasPgpKey && !isEncrypted;
                     }
                 });
 
