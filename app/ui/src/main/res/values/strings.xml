@@ -606,8 +606,8 @@ Please submit bug reports, contribute new features and ask questions at
     <string name="account_settings_e3_crypto_key">Configure E3 key</string>
     <string name="account_settings_e3_crypto_summary_off">No E3 or OpenPGP app configured</string>
     <string name="account_settings_e3_crypto_summary_on">Connected to %s</string>
-    <string name="account_settings_e3_crypto_mode_passive">Passive</string>
-    <string name="account_settings_e3_crypto_mode_standalone">Standalone</string>
+    <string name="account_settings_e3_crypto_mode_passive">Passive: Only decrypt messages</string>
+    <string name="account_settings_e3_crypto_mode_standalone">Standalone: Encrypt on receipt</string>
 
     <string name="account_settings_mail_check_frequency_label">Folder poll frequency</string>
 
@@ -1314,7 +1314,6 @@ Please submit bug reports, contribute new features and ask questions at
 
     <string name="account_settings_crypto_e3_mode">E3 mode</string>
     <string name="dialog_e3_mode_title">E3 mode</string>
-    <string name="dialog_e3_mode_description">Passive: Messages will only be decrypted when read using your E3 key.\n\nStandalone: Messages will be encrypted on receipt and decrypted when read using your E3 key.</string>
     <string name="dialog_e3_mode_learn_more"><a href="">Learn more about E3 modes</a>.</string>
 
     <string name="general_settings_title">General settings</string>
