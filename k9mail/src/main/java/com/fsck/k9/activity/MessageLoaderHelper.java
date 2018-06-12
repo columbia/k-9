@@ -20,9 +20,11 @@ import com.fsck.k9.autocrypt.AutocryptOperations;
 import com.fsck.k9.controller.MessagingController;
 import com.fsck.k9.controller.MessagingListener;
 import com.fsck.k9.controller.SimpleMessagingListener;
+import com.fsck.k9.crypto.E3Constants;
 import com.fsck.k9.helper.RetainFragment;
 import com.fsck.k9.mail.Flag;
 import com.fsck.k9.mail.MessagingException;
+import com.fsck.k9.mail.internet.MimeMessage;
 import com.fsck.k9.mailstore.LocalMessage;
 import com.fsck.k9.mailstore.MessageViewInfo;
 import com.fsck.k9.ui.crypto.MessageCryptoAnnotations;
@@ -231,7 +233,8 @@ public class MessageLoaderHelper {
             return;
         }
 
-        boolean isE3Encrypted = localMessage.isSet(Flag.E3);
+        boolean isE3Encrypted = localMessage.isSet(Flag.E3)
+                || (localMessage instanceof MimeMessage && localMessage.getHeader(E3Constants.MIME_E3_ENCRYPTED_HEADER).length > 0);
 
         if (account.isE3ProviderConfigured() && isE3Encrypted) {
             startOrResumeCryptoOperation(account.getE3Provider(), account.getE3Key());

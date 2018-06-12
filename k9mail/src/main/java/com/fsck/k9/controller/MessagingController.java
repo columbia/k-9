@@ -57,6 +57,7 @@ import com.fsck.k9.controller.MessagingControllerCommands.PendingMoveOrCopy;
 import com.fsck.k9.controller.MessagingControllerCommands.PendingSetFlag;
 import com.fsck.k9.controller.ProgressBodyFactory.ProgressListener;
 import com.fsck.k9.controller.imap.ImapMessageStore;
+import com.fsck.k9.crypto.E3Constants;
 import com.fsck.k9.helper.Contacts;
 import com.fsck.k9.mail.Address;
 import com.fsck.k9.mail.AuthenticationFailedException;
@@ -1337,7 +1338,9 @@ public class MessagingController {
                                 final SimplePgpEncryptor encryptor = new SimplePgpEncryptor(openPgpApi, accountCryptoKeyId);
 
                                 try {
-                                    final T encryptedMessage = (T) encryptor.encryptMessage((MimeMessage) originalMessage, accountEmail);
+                                    final MimeMessage encryptedMimeMessage = encryptor.encryptMessage((MimeMessage) originalMessage, accountEmail);
+                                    encryptedMimeMessage.setHeader(E3Constants.MIME_E3_ENCRYPTED_HEADER, accountEmail[0]);
+                                    final T encryptedMessage = (T) encryptedMimeMessage;
 
                                     putBackground("Synchronize encrypted-on-receipt email and update listeners", null, new Runnable() {
                                         @Override
