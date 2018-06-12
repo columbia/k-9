@@ -467,7 +467,7 @@
             android:entries="@array/e3_mode_entries"
             android:entryValues="@array/e3_mode_values"
             android:key="e3_mode_enum"
-            android:summary="@string/dialog_e3_mode_description"
+            android:summary="%s"
             android:title="@string/dialog_e3_mode_title"
             android:dependency="e3_provider"/>
 
