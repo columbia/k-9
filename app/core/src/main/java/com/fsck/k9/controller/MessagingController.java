@@ -63,6 +63,11 @@ import com.fsck.k9.controller.MessagingControllerCommands.PendingMarkAllAsRead;
 import com.fsck.k9.controller.MessagingControllerCommands.PendingMoveOrCopy;
 import com.fsck.k9.controller.MessagingControllerCommands.PendingSetFlag;
 import com.fsck.k9.controller.ProgressBodyFactory.ProgressListener;
+<<<<<<< HEAD:app/core/src/main/java/com/fsck/k9/controller/MessagingController.java
+=======
+import com.fsck.k9.controller.imap.ImapMessageStore;
+import com.fsck.k9.crypto.E3Constants;
+>>>>>>> Workaround for E3 flag by adding X-E3-ENCRYPTED header:k9mail/src/main/java/com/fsck/k9/controller/MessagingController.java
 import com.fsck.k9.helper.Contacts;
 import com.fsck.k9.mail.Address;
 import com.fsck.k9.mail.AuthenticationFailedException;
