@@ -606,6 +606,8 @@ Please submit bug reports, contribute new features and ask questions at
     <string name="account_settings_e3_crypto_key">Configure E3 key</string>
     <string name="account_settings_e3_crypto_summary_off">No E3 or OpenPGP app configured</string>
     <string name="account_settings_e3_crypto_summary_on">Connected to %s</string>
+    <string name="account_settings_e3_crypto_key_upload">Upload public key</string>
+    <string name="account_settings_e3_crypto_key_upload_summary">Store your E3 public key on the IMAP server</string>
     <string name="account_settings_e3_crypto_mode_passive">Passive: Only decrypt messages</string>
     <string name="account_settings_e3_crypto_mode_standalone">Standalone: Encrypt on receipt</string>
 
@@ -1315,6 +1317,13 @@ Please submit bug reports, contribute new features and ask questions at
     <string name="account_settings_crypto_e3_mode">E3 mode</string>
     <string name="dialog_e3_mode_title">E3 mode</string>
     <string name="dialog_e3_mode_learn_more"><a href="">Learn more about E3 modes</a>.</string>
+    <string name="e3_key_upload_title">Upload E3 public key</string>
+    <string name="e3_key_upload_intro">Uploading your E3 public key allows your selected standalone E3 client to discover it.</string>
+    <string name="e3_key_upload_button">Upload E3 Public Key</string>
+    <string name="e3_key_upload_destined_for">The email with your E3 public key will be sent to:</string>
+    <string name="e3_key_upload_uploading_to">Uploading E3 public key to:</string>
+    <string name="e3_key_upload_finish">E3 public key upload complete. Refresh your standalone E3 client to encrypt email to your new E3 public key.</string>
+    <string name="e3_key_upload_error_upload">An error occurred while uploading the E3 public key. Please check your network connectivity and outgoing server configuration.</string>
 
     <string name="general_settings_title">General settings</string>
 

@@ -205,6 +205,12 @@
             />
 
         <activity
+            android:name=".ui.e3.E3KeyUploadActivity"
+            android:configChanges="locale"
+            android:label="@string/e3_key_upload_title"
+            />
+
+        <activity
             android:name=".activity.FolderList"
             android:configChanges="locale"
             android:uiOptions="splitActionBarWhenNarrow">
