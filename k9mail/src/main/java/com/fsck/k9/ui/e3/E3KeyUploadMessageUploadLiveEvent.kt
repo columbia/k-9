@@ -8,7 +8,7 @@ import kotlinx.coroutines.experimental.delay
 import kotlinx.coroutines.experimental.launch
 import org.jetbrains.anko.coroutines.experimental.bg
 
-class E3KeyUploadMessageUploadLiveEvent : SingleLiveEvent<E3KeyUploadMEssageUploadResult>() {
+class E3KeyUploadMessageUploadLiveEvent : SingleLiveEvent<E3KeyUploadMessageUploadResult>() {
     fun sendMessageAsync(transport: Transport, setupMsg: E3KeyUploadMessage) {
         launch(UI) {
             val setupMessage = bg {
@@ -19,15 +19,15 @@ class E3KeyUploadMessageUploadLiveEvent : SingleLiveEvent<E3KeyUploadMEssageUplo
 
             try {
                 setupMessage.await()
-                value = E3KeyUploadMEssageUploadResult.Success(setupMsg.showTransferCodePi)
+                value = E3KeyUploadMessageUploadResult.Success(setupMsg.pendingIntentForGetKey)
             } catch (e: Exception) {
-                value = E3KeyUploadMEssageUploadResult.Failure(e)
+                value = E3KeyUploadMessageUploadResult.Failure(e)
             }
         }
     }
 }
 
-sealed class E3KeyUploadMEssageUploadResult {
-    data class Success(val showTransferCodePi: PendingIntent) : E3KeyUploadMEssageUploadResult()
-    data class Failure(val exception: Exception) : E3KeyUploadMEssageUploadResult()
+sealed class E3KeyUploadMessageUploadResult {
+    data class Success(val pendingIntentForGetKey: PendingIntent) : E3KeyUploadMessageUploadResult()
+    data class Failure(val exception: Exception) : E3KeyUploadMessageUploadResult()
 }

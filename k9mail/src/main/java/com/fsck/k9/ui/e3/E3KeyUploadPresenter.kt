@@ -23,7 +23,7 @@ class E3KeyUploadPresenter internal constructor(
 ) {
 
     private lateinit var account: Account
-    private lateinit var showTransferCodePi: PendingIntent
+    private lateinit var pendingIntentForGetKey: PendingIntent
 
     init {
         viewModel.e3KeyUploadSetupMessageLiveEvent.observe(lifecycleOwner, Observer { msg -> msg?.let { onEventE3KeyUploadSetupMessage(it) } })
@@ -79,15 +79,15 @@ class E3KeyUploadPresenter internal constructor(
         viewModel.e3KeyUploadMessageUploadLiveEvent.sendMessageAsync(transport, setupMsg)
     }
 
-    private fun onLoadedE3KeyUploadMessageUpload(result: E3KeyUploadMEssageUploadResult?) {
+    private fun onLoadedE3KeyUploadMessageUpload(result: E3KeyUploadMessageUploadResult?) {
         when (result) {
             null -> view.sceneBegin()
-            is E3KeyUploadMEssageUploadResult.Success -> {
-                showTransferCodePi = result.showTransferCodePi
+            is E3KeyUploadMessageUploadResult.Success -> {
+                pendingIntentForGetKey = result.pendingIntentForGetKey
                 view.setLoadingStateFinished()
                 view.sceneFinished()
             }
-            is E3KeyUploadMEssageUploadResult.Failure -> {
+            is E3KeyUploadMessageUploadResult.Failure -> {
                 Timber.e(result.exception, "Error sending setup message")
                 view.setLoadingStateSendingFailed()
                 view.sceneSendError()
