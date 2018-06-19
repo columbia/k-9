@@ -53,7 +53,7 @@ class E3KeyUploadPresenter internal constructor(
 
         view.setAddress(account.identities[0].email)
 
-        viewModel.e3KeyUploadSetupMessageLiveEvent.recall()
+        viewModel.e3KeyUploadMessageUploadLiveEvent.recall()
     }
 
     fun onClickHome() {
