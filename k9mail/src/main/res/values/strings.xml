@@ -1322,6 +1322,12 @@ Please submit bug reports, contribute new features and ask questions at
     <string name="e3_key_upload_finish">E3 public key upload complete. Refresh your standalone E3 client to encrypt email to your new E3 public key.</string>
     <string name="e3_key_upload_error_upload">An error occurred while uploading the E3 public key. Please check your network connectivity and outgoing server configuration.</string>
 
+    <string name="e3_key_upload_msg_subject">E3 Public Key (DO NOT DELETE)</string>
+    <string name="e3_key_upload_msg_body">This message contains an E3 public key.
+</string>
+    <string name="e3_key_upload_error_send">An error occurred while sending the message. Please check your network connectivity and outgoing server configuration.</string>
+
+
     <string name="general_settings_title">General settings</string>
 
     <string name="dialog_openkeychain_info_title">No OpenPGP app installed</string>

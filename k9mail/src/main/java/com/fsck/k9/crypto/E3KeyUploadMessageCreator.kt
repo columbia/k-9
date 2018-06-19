@@ -14,8 +14,8 @@ import java.util.*
 class E3KeyUploadMessageCreator(val resources: Resources) {
     fun createE3KeyUploadMessage(data: ByteArray, address: Address): Message {
         try {
-            val subjectText = resources.getString(R.string.ac_transfer_msg_subject)
-            val messageText = resources.getString(R.string.ac_transfer_msg_body)
+            val subjectText = resources.getString(R.string.e3_key_upload_msg_subject)
+            val messageText = resources.getString(R.string.e3_key_upload_msg_body)
 
             val textBodyPart = MimeBodyPart(TextBody(messageText))
             val dataBodyPart = MimeBodyPart(BinaryMemoryBody(data, "7bit"))
