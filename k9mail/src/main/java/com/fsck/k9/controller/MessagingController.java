@@ -1455,12 +1455,13 @@ public class MessagingController {
                         // TODO: E3 Should we re-encrypt already encrypted email to our key?
                         final boolean isEncrypted = MimeUtility.mimeTypeMatches(originalMessage.getMimeType(), "*/pgp")
                                 || MimeUtility.mimeTypeMatches(originalMessage.getMimeType(), "*/pkcs*");
+                        final boolean isE3Key = originalMessage.getHeaderNames().contains(E3Constants.MIME_E3_NAME);
 
                         if (pgpConfigured && !hasPgpKey && !isEncrypted) {
                             Timber.w("PGP is enabled but no PGP key is set! Will not encrypt this plaintext email");
                         }
 
-                        return inE3StandaloneMode && pgpConfigured && supportedMessageType && hasPgpKey && !isEncrypted;
+                        return inE3StandaloneMode && pgpConfigured && supportedMessageType && hasPgpKey && !isEncrypted && !isE3Key;
                     }
                 });
 
