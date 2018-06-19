@@ -41,9 +41,9 @@ class E3KeyUploadActivity : K9Activity() {
         if (item?.itemId == android.R.id.home) {
             presenter.onClickHome()
             return true
-        } else {
-            return super.onOptionsItemSelected(item)
         }
+
+        return super.onOptionsItemSelected(item)
     }
 
     fun setAddress(address: String) {
