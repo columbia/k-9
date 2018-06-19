@@ -28,10 +28,7 @@ class E3KeyUploadPresenter internal constructor(
     init {
         viewModel.e3KeyUploadSetupMessageLiveEvent.observe(lifecycleOwner, Observer { msg -> msg?.let { onEventE3KeyUploadSetupMessage(it) } })
 
-        // Actually send the message now
-        //viewModel.autocryptSetupTransferLiveEvent.observe(lifecycleOwner, Observer { pi -> onLoadedAutocryptSetupTransfer(pi) })
-        // TODO: remove when the rest is implemented
-        view.sceneBegin()
+        viewModel.e3KeyUploadMessageUploadLiveEvent.observe(lifecycleOwner, Observer { pi -> onLoadedE3KeyUploadMessageUpload(pi) })
     }
 
     fun initFromIntent(accountUuid: String?) {
@@ -56,7 +53,7 @@ class E3KeyUploadPresenter internal constructor(
 
         view.setAddress(account.identities[0].email)
 
-        //viewModel.autocryptSetupTransferLiveEvent.recall()
+        viewModel.e3KeyUploadSetupMessageLiveEvent.recall()
     }
 
     fun onClickHome() {
@@ -78,24 +75,23 @@ class E3KeyUploadPresenter internal constructor(
         view.setLoadingStateSending()
         view.sceneGeneratingAndUploading()
 
-        //val transport = transportProvider.getTransport(context, account)
-        //viewModel.autocryptSetupTransferLiveEvent.sendMessageAsync(transport, setupMsg)
+        val transport = transportProvider.getTransport(context, account)
+        viewModel.e3KeyUploadMessageUploadLiveEvent.sendMessageAsync(transport, setupMsg)
     }
-/*
-    private fun onLoadedAutocryptSetupTransfer(result: AutocryptSetupTransferResult?) {
+
+    private fun onLoadedE3KeyUploadMessageUpload(result: E3KeyUploadMEssageUploadResult?) {
         when (result) {
             null -> view.sceneBegin()
-            is AutocryptSetupTransferResult.Success -> {
+            is E3KeyUploadMEssageUploadResult.Success -> {
                 showTransferCodePi = result.showTransferCodePi
                 view.setLoadingStateFinished()
                 view.sceneFinished()
             }
-            is AutocryptSetupTransferResult.Failure -> {
+            is E3KeyUploadMEssageUploadResult.Failure -> {
                 Timber.e(result.exception, "Error sending setup message")
                 view.setLoadingStateSendingFailed()
                 view.sceneSendError()
             }
         }
     }
-    */
 }

@@ -5,7 +5,7 @@ import org.koin.dsl.module.applicationContext
 
 val e3KeyUploadUiModule = applicationContext {
     factory { E3KeyUploadSetupMessageLiveEvent(get()) }
-    //factory { AutocryptSetupTransferLiveEvent() }
+    factory { E3KeyUploadMessageUploadLiveEvent() }
     factory { params ->
         E3KeyUploadPresenter(
                 params["lifecycleOwner"],
@@ -16,5 +16,5 @@ val e3KeyUploadUiModule = applicationContext {
                 get(),
                 params["e3UploadView"])
     }
-    viewModel { E3KeyUploadViewModel(get()) }
+    viewModel { E3KeyUploadViewModel(get(), get()) }
 }
