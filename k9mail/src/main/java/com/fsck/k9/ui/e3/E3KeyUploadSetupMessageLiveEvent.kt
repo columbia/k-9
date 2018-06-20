@@ -12,11 +12,13 @@ import kotlinx.coroutines.experimental.android.UI
 import kotlinx.coroutines.experimental.launch
 import org.jetbrains.anko.coroutines.experimental.bg
 import org.openintents.openpgp.util.OpenPgpApi
+import org.openintents.openpgp.util.OpenPgpUtils
 import java.io.ByteArrayOutputStream
 import java.io.InputStream
 import java.security.MessageDigest
 
 class E3KeyUploadSetupMessageLiveEvent(val messageCreator: E3KeyUploadMessageCreator) : SingleLiveEvent<E3KeyUploadMessage>() {
+
     fun loadE3KeyUploadMessageAsync(openPgpApi: OpenPgpApi, account: Account) {
         launch(UI) {
             val setupMessage = bg {
@@ -29,18 +31,19 @@ class E3KeyUploadSetupMessageLiveEvent(val messageCreator: E3KeyUploadMessageCre
 
     private fun loadE3KeyUploadMessage(openPgpApi: OpenPgpApi, account: Account): E3KeyUploadMessage {
         val address = Address.parse(account.getIdentity(0).email)[0]
-        val keyName = String.format("%s (key ID: %s)", account.name, account.e3Key)
+        val keyName = String.format("%s (key ID: %s)", account.name, OpenPgpUtils.convertKeyIdToHex(account.e3Key))
 
         val intent = Intent(OpenPgpApi.ACTION_GET_KEY)
         intent.putExtra(OpenPgpApi.EXTRA_KEY_ID, account.e3Key)
+        intent.putExtra(OpenPgpApi.EXTRA_REQUEST_ASCII_ARMOR, true)
         val baos = ByteArrayOutputStream()
         val fullKeyResult = openPgpApi.executeApi(intent, null as InputStream?, baos)
-        val keyData = baos.toByteArray()
+
+        val keyBytes = baos.toByteArray()
+        val keyDigest = Hex.encodeHex(digester.digest(keyBytes))
+        val setupMessage = messageCreator.createE3KeyUploadMessage(keyBytes, address, keyName, keyDigest)
+
         val pi: PendingIntent = fullKeyResult.getParcelableExtra(OpenPgpApi.RESULT_INTENT)
-
-        val keyDigest = Hex.encodeHex(digester.digest(keyData))
-
-        val setupMessage = messageCreator.createE3KeyUploadMessage(keyData, address, keyName, keyDigest)
 
         return E3KeyUploadMessage(setupMessage, pi)
     }
