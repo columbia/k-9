@@ -22,7 +22,7 @@ class E3KeyUploadMessageCreator(val resources: Resources) {
             val textBodyPart = MimeBodyPart(TextBody(messageText))
             val dataBodyPart = MimeBodyPart(BinaryMemoryBody(data, "7bit"))
             dataBodyPart.setHeader(MimeHeader.HEADER_CONTENT_TYPE, "application/x-pem-file")
-            dataBodyPart.setHeader(MimeHeader.HEADER_CONTENT_DISPOSITION, "attachment; filename=\"e3_key.pem\"")
+            dataBodyPart.setHeader(MimeHeader.HEADER_CONTENT_DISPOSITION, "attachment; filename=\"e3_key.asc\"")
 
             val messageBody = MimeMultipart.newInstance()
             messageBody.addBodyPart(textBodyPart)
