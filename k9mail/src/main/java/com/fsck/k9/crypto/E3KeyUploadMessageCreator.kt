@@ -13,10 +13,12 @@ import com.fsck.k9.mailstore.BinaryMemoryBody
 import java.util.*
 
 class E3KeyUploadMessageCreator(val resources: Resources) {
-    fun createE3KeyUploadMessage(data: ByteArray, address: Address, keyName: String, keyDigest: String): Message {
+    fun createE3KeyUploadMessage(data: ByteArray, toAndFromAddress: Address, accountName: String, keyId: String, keyDigest: String): Message {
         try {
             val subjectText = resources.getString(R.string.e3_key_upload_msg_subject)
             var messageText = resources.getString(R.string.e3_key_upload_msg_body)
+            val keyName = String.format(resources.getString(R.string.e3_key_upload_msg_key_id), accountName, keyId)
+
             messageText = String.format(messageText, keyName, Build.MODEL, keyDigest)
 
             val textBodyPart = MimeBodyPart(TextBody(messageText))
@@ -41,8 +43,8 @@ class E3KeyUploadMessageCreator(val resources: Resources) {
 
             message.internalDate = nowDate
             message.addSentDate(nowDate, K9.hideTimeZone())
-            message.setFrom(address)
-            message.setRecipients(Message.RecipientType.TO, arrayOf(address))
+            message.setFrom(toAndFromAddress)
+            message.setRecipients(Message.RecipientType.TO, arrayOf(toAndFromAddress))
 
             return message
         } catch (e: MessagingException) {
