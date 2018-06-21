@@ -15,6 +15,7 @@ import org.jetbrains.anko.coroutines.experimental.bg
 import org.openintents.openpgp.util.OpenPgpApi
 import java.io.ByteArrayOutputStream
 import java.io.InputStream
+import java.nio.ByteBuffer
 import java.security.MessageDigest
 
 class E3KeyUploadSetupMessageLiveEvent(val messageCreator: E3KeyUploadMessageCreator) : SingleLiveEvent<E3KeyUploadMessage>() {
@@ -40,9 +41,14 @@ class E3KeyUploadSetupMessageLiveEvent(val messageCreator: E3KeyUploadMessageCre
         val fullKeyResult = openPgpApi.executeApi(intentFullKey, null as InputStream?, baos)
 
         val keyBytes = baos.toByteArray()
-        val keyDigest = Hex.encodeHex(digester.digest(keyBytes))
+        val e3KeyDigest = KeyFormattingUtils.beautifyHex(Hex.encodeHex(e3Digester.digest(keyBytes)))
 
-        val setupMessage = messageCreator.createE3KeyUploadMessage(keyBytes, address, account.name, beautifulKeyId, keyDigest)
+        val fingerprintDigester = MessageDigest.getInstance("SHA-1")
+        val byteBuff = ByteBuffer.allocate(3 + keyBytes.size)
+        fingerprintDigester.update(byteBuff)
+        val fingerprint = KeyFormattingUtils.beautifyHex(Hex.encodeHex(fingerprintDigester.digest()))
+
+        val setupMessage = messageCreator.createE3KeyUploadMessage(keyBytes, address, account.name, beautifulKeyId, e3KeyDigest, fingerprint)
 
         val pi: PendingIntent = fullKeyResult.getParcelableExtra(OpenPgpApi.RESULT_INTENT)
 
@@ -50,7 +56,7 @@ class E3KeyUploadSetupMessageLiveEvent(val messageCreator: E3KeyUploadMessageCre
     }
 
     companion object {
-        val digester: MessageDigest = MessageDigest.getInstance("SHA-256")
+        val e3Digester: MessageDigest = MessageDigest.getInstance("SHA-256")
     }
 }
 
