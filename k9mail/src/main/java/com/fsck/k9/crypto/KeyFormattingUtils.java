@@ -13,7 +13,7 @@ public class KeyFormattingUtils {
      * @param idHex - the key id
      * @return - the beautified form
      */
-    public static String beautifyKeyId(String idHex) {
+    public static String beautifyHex(String idHex) {
         if (idHex.startsWith("0x")) {
             idHex = idHex.substring(2);
         }
@@ -39,7 +39,7 @@ public class KeyFormattingUtils {
      * @return - the beautified form
      */
     public static String beautifyKeyId(long keyId) {
-        return beautifyKeyId(convertKeyIdToHex(keyId));
+        return beautifyHex(convertKeyIdToHex(keyId));
     }
 
     /**

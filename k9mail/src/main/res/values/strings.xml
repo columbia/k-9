@@ -1324,8 +1324,9 @@ Please submit bug reports, contribute new features and ask questions at
     <string name="e3_key_upload_error_upload">An error occurred while uploading the E3 public key. Please check your network connectivity and outgoing server configuration.</string>
 
     <string name="e3_key_upload_msg_subject">E3 Public Key (DO NOT DELETE)</string>
-    <string name="e3_key_upload_msg_body">This message contains an E3 public key.\n\nYou should import the attached E3 public key to your standalone E3 client.\n\nKey Name: %s\nDevice: %s\nDigest: %s</string>
+    <string name="e3_key_upload_msg_body">This message contains an E3 public key.\n\nYou should import the attached E3 public key to your standalone E3 client.\n\nKey Name: %s\nDevice: %s\nE3 Digest: %s</string>
     <string name="e3_key_upload_msg_key_id">%s (Key ID: %s)</string>
+    <string name="e3_key_upload_msg_pgp_fingerprint">\nPGP Fingerprint: %s</string>
     <string name="e3_key_upload_error_send">An error occurred while sending the message. Please check your network connectivity and outgoing server configuration.</string>
 
 
