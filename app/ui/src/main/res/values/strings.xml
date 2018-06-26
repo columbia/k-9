@@ -1245,6 +1245,7 @@ Please submit bug reports, contribute new features and ask questions at
 
     <string name="crypto_msg_title_encrypted_signed_e2e">End-to-End encrypted</string>
     <string name="crypto_msg_encrypted_sign_verified">from verified sender</string>
+    <string name="crypto_msg_encrypted_sign_recipient_verified">using your end-to-end key</string>
 
     <string name="crypto_msg_title_encrypted_signed">Encrypted</string>
     <string name="crypto_msg_encrypted_sign_unknown">from unknown end-to-end key</string>

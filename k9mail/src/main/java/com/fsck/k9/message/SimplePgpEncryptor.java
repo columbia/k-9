@@ -54,9 +54,10 @@ public class SimplePgpEncryptor {
             throw new MessagingException("could not allocate temp file for storage!", e);
         }
 
-        Intent result = openPgpApi.executeApi(pgpApiIntent, dataSource, outputStream);
+        final Intent result = openPgpApi.executeApi(pgpApiIntent, dataSource, outputStream);
+        final int resultCode = result.getIntExtra(OpenPgpApi.RESULT_CODE, OpenPgpApi.RESULT_CODE_ERROR);
 
-        switch (result.getIntExtra(OpenPgpApi.RESULT_CODE, OpenPgpApi.RESULT_CODE_ERROR)) {
+        switch (resultCode) {
             case OpenPgpApi.RESULT_CODE_SUCCESS:
                 MimeMultipart multipartEncrypted = new MimeMultipart(BoundaryGenerator.getInstance().generateBoundary());
                 multipartEncrypted.setSubType("encrypted");
