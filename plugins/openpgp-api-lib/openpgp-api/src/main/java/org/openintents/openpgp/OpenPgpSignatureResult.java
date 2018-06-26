@@ -232,7 +232,7 @@ public class OpenPgpSignatureResult implements Parcelable {
 
     public enum SenderStatusResult {
         // Order is significant here - only add to the end for parcelable compatibility!
-        UNKNOWN, USER_ID_CONFIRMED, USER_ID_UNCONFIRMED, USER_ID_MISSING;
+        UNKNOWN, USER_ID_CONFIRMED, USER_ID_UNCONFIRMED, USER_ID_MISSING, USER_ID_IS_RECIPIENT;
         public static final SenderStatusResult[] VALUES = values();
     }
 }

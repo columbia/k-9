@@ -131,6 +131,12 @@ public enum MessageCryptoDisplayStatus {
             R.string.crypto_msg_title_encrypted_signed,
             R.string.crypto_msg_encrypted_sign_insecure
     ),
+    ENCRYPTED_SIGN_RECIPIENT_VERIFIED (
+            R.attr.openpgp_green,
+            R.drawable.status_lock_dots_3,
+            R.string.crypto_msg_title_encrypted_signed_e2e,
+            R.string.crypto_msg_encrypted_sign_recipient_verified
+    ),
     ENCRYPTED_SIGN_ERROR (
             R.attr.openpgp_grey,
             R.drawable.status_lock_error,
@@ -289,6 +295,8 @@ public enum MessageCryptoDisplayStatus {
                 switch (signatureResult.getSenderStatusResult()) {
                     case USER_ID_CONFIRMED:
                         return ENCRYPTED_SIGN_VERIFIED;
+                    case USER_ID_IS_RECIPIENT:
+                        return ENCRYPTED_SIGN_RECIPIENT_VERIFIED;
                     case USER_ID_UNCONFIRMED:
                         return ENCRYPTED_SIGN_UNVERIFIED;
                     case USER_ID_MISSING:
@@ -361,6 +369,7 @@ public enum MessageCryptoDisplayStatus {
     public boolean hasAssociatedKey() {
         switch (this) {
             case ENCRYPTED_SIGN_VERIFIED:
+            case ENCRYPTED_SIGN_RECIPIENT_VERIFIED:
             case ENCRYPTED_SIGN_UNVERIFIED:
             case ENCRYPTED_SIGN_MISMATCH:
             case ENCRYPTED_SIGN_EXPIRED:
