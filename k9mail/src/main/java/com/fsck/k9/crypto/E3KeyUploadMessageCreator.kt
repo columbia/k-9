@@ -22,7 +22,8 @@ class E3KeyUploadMessageCreator(val resources: Resources) {
             messageText = String.format(messageText, keyName, Build.MODEL, e3KeyDigest)
 
             if (pgpFingerprint != null) {
-                messageText += String.format(resources.getString(R.string.e3_key_upload_msg_pgp_fingerprint), pgpFingerprint)
+                // TODO: E3 fix PGP fingerprint
+                //messageText += String.format(resources.getString(R.string.e3_key_upload_msg_pgp_fingerprint), pgpFingerprint)
             }
 
             val textBodyPart = MimeBodyPart(TextBody(messageText))
