@@ -8,6 +8,7 @@ import com.fsck.k9.crypto.openPgpModule
 import com.fsck.k9.mail.TransportProvider
 import com.fsck.k9.mailstore.StorageManager
 import com.fsck.k9.mailstore.mailStoreModule
+import com.fsck.k9.ui.e3.e3KeyScanUiModule
 import com.fsck.k9.ui.e3.e3KeyUploadUiModule
 import com.fsck.k9.ui.endtoend.endToEndUiModule
 import com.fsck.k9.ui.folders.FolderNameFormatter
@@ -40,7 +41,8 @@ object DI {
             openPgpModule,
             autocryptModule,
             mailStoreModule,
-            e3KeyUploadUiModule
+            e3KeyUploadUiModule,
+            e3KeyScanUiModule
     )
 
     @JvmStatic fun start(application: Application) {

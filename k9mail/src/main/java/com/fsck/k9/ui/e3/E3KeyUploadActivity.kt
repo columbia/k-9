@@ -1,25 +1,16 @@
 package com.fsck.k9.ui.e3
 
-import android.app.PendingIntent
 import android.content.Context
 import android.content.Intent
-import android.content.IntentSender
-import android.os.Build
 import android.os.Bundle
-import android.transition.TransitionInflater
-import android.transition.TransitionManager
 import android.view.MenuItem
 import android.view.View
 import com.fsck.k9.R
-import com.fsck.k9.activity.K9Activity
-import com.fsck.k9.finishWithErrorToast
 import com.fsck.k9.view.StatusIndicator
 import kotlinx.android.synthetic.main.crypto_e3_key_upload.*
-import kotlinx.coroutines.experimental.delay
 import org.koin.android.ext.android.inject
-import timber.log.Timber
 
-class E3KeyUploadActivity : K9Activity() {
+class E3KeyUploadActivity : E3ActionBaseActivity() {
     private val presenter: E3KeyUploadPresenter by inject {
         mapOf("lifecycleOwner" to this, "e3UploadView" to this)
     }
@@ -116,42 +107,8 @@ class E3KeyUploadActivity : K9Activity() {
         e3KeyUploadProgressUploading.setDisplayedChild(StatusIndicator.Status.OK)
     }
 
-    fun finishWithInvalidAccountError() {
-        finishWithErrorToast(R.string.toast_account_not_found)
-    }
-
-    fun finishWithProviderConnectError(providerName: String) {
-        finishWithErrorToast(R.string.toast_openpgp_provider_error, providerName)
-    }
-
-    fun launchUserInteractionPendingIntent(pendingIntent: PendingIntent) {
-        try {
-            startIntentSender(pendingIntent.intentSender, null, 0, 0, 0)
-        } catch (e: IntentSender.SendIntentException) {
-            Timber.e(e)
-        }
-    }
-
-    private fun setupSceneTransition() {
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP) {
-            val transition = TransitionInflater.from(this).inflateTransition(R.transition.transfer_transitions)
-            TransitionManager.beginDelayedTransition(findViewById(android.R.id.content), transition)
-        }
-    }
-
-    fun finishAsCancelled() {
-        setResult(RESULT_CANCELED)
-        finish()
-    }
-
-    suspend fun uxDelay() {
-        // called before logic resumes upon screen transitions, to give some breathing room
-        delay(UX_DELAY_MS)
-    }
-
     companion object {
         private const val EXTRA_ACCOUNT = "account"
-        private const val UX_DELAY_MS = 1200L
 
         fun createIntent(context: Context, accountUuid: String): Intent {
             val intent = Intent(context, E3KeyUploadActivity::class.java)
