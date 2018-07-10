@@ -18,3 +18,21 @@ val e3KeyUploadUiModule = applicationContext {
     }
     viewModel { E3KeyUploadViewModel(get(), get()) }
 }
+
+val e3KeyScanUiModule = applicationContext {
+    /*
+    factory { E3KeyScanSetupMessageLiveEvent(get()) }
+    factory { E3KeyScanMessageUploadLiveEvent() }
+    factory { params ->
+        E3KeyScanPresenter(
+                params["lifecycleOwner"],
+                get(),
+                get(parameters = { params.values }),
+                get(),
+                get(),
+                get(),
+                params["e3ScanView"])
+    }
+    viewModel { E3KeyScanViewModel(get(), get()) }
+    */
+}

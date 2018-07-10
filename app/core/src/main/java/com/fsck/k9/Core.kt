@@ -42,7 +42,8 @@ object Core : KoinComponent {
             htmlModule,
             coreNotificationModule,
             controllerModule,
-            e3KeyUploadUiModule
+            e3KeyUploadUiModule,
+            e3KeyScanUiModule
     )
 
     /**

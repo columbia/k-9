@@ -211,6 +211,12 @@
             />
 
         <activity
+            android:name=".ui.e3.E3KeyScanActivity"
+            android:configChanges="locale"
+            android:label="@string/e3_key_scan_title"
+            />
+
+        <activity
             android:name=".activity.FolderList"
             android:configChanges="locale"
             android:uiOptions="splitActionBarWhenNarrow">
