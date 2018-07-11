@@ -4,7 +4,9 @@ import android.content.Context
 import android.content.Intent
 import android.os.Bundle
 import android.view.MenuItem
+import android.view.View
 import com.fsck.k9.R
+import com.fsck.k9.view.StatusIndicator
 import kotlinx.android.synthetic.main.crypto_e3_key_scan.*
 import org.koin.android.ext.android.inject
 
@@ -21,7 +23,7 @@ class E3KeyScanActivity : E3ActionBaseActivity() {
 
         supportActionBar!!.setDisplayHomeAsUpEnabled(true)
 
-        e3KeyScanButton.setOnClickListener { presenter.onClickUpload() }
+        e3KeyScanButton.setOnClickListener { presenter.onClickScan() }
 
         presenter.initFromIntent(accountUuid)
     }
@@ -37,6 +39,71 @@ class E3KeyScanActivity : E3ActionBaseActivity() {
 
     fun setAddress(address: String) {
         e3KeyScanAddress.text = address
+    }
+
+    fun sceneBegin() {
+        e3KeyScanButton.visibility = View.VISIBLE
+        e3KeyScanMsgInfo.visibility = View.VISIBLE
+
+        e3KeyScanLayoutScanning.visibility = View.GONE
+        e3KeyScanLayoutDownloading.visibility = View.GONE
+        e3KeyScanLayoutFinish.visibility = View.GONE
+        e3KeyScanErrorUpload.visibility = View.GONE
+    }
+
+    fun sceneScanningAndDownloading() {
+        setupSceneTransition()
+
+        e3KeyScanButton.visibility = View.GONE
+        e3KeyScanMsgInfo.visibility = View.GONE
+        e3KeyScanLayoutScanning.visibility = View.VISIBLE
+        e3KeyScanLayoutDownloading.visibility = View.VISIBLE
+        e3KeyScanLayoutFinish.visibility = View.GONE
+        e3KeyScanErrorUpload.visibility = View.GONE
+    }
+
+    fun setLoadingStateScanning() {
+        e3KeyScanProgressScanning.setDisplayedChild(StatusIndicator.Status.PROGRESS)
+        e3KeyScanProgressDownloading.setDisplayedChild(StatusIndicator.Status.IDLE)
+    }
+
+    fun setLoadingStateDownloading() {
+        e3KeyScanProgressScanning.setDisplayedChild(StatusIndicator.Status.OK)
+        e3KeyScanProgressDownloading.setDisplayedChild(StatusIndicator.Status.PROGRESS)
+    }
+
+    fun setLoadingStateFinished() {
+        e3KeyScanProgressScanning.setDisplayedChild(StatusIndicator.Status.OK)
+        e3KeyScanProgressDownloading.setDisplayedChild(StatusIndicator.Status.OK)
+    }
+
+    fun sceneFinished(transition: Boolean = false) {
+        if (transition) {
+            setupSceneTransition()
+        }
+
+        e3KeyScanButton.visibility = View.GONE
+        e3KeyScanMsgInfo.visibility = View.GONE
+        e3KeyScanLayoutScanning.visibility = View.VISIBLE
+        e3KeyScanLayoutDownloading.visibility = View.VISIBLE
+        e3KeyScanLayoutFinish.visibility = View.VISIBLE
+        e3KeyScanErrorUpload.visibility = View.GONE
+    }
+
+    fun setLoadingStateSendingFailed() {
+        e3KeyScanProgressScanning.setDisplayedChild(StatusIndicator.Status.OK)
+        e3KeyScanProgressDownloading.setDisplayedChild(StatusIndicator.Status.ERROR)
+    }
+
+    fun sceneSendError() {
+        setupSceneTransition()
+
+        e3KeyScanButton.visibility = View.GONE
+        e3KeyScanMsgInfo.visibility = View.GONE
+        e3KeyScanLayoutScanning.visibility = View.VISIBLE
+        e3KeyScanLayoutDownloading.visibility = View.VISIBLE
+        e3KeyScanLayoutFinish.visibility = View.GONE
+        e3KeyScanErrorUpload.visibility = View.VISIBLE
     }
 
     companion object {

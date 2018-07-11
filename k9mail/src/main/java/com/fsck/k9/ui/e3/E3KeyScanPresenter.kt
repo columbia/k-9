@@ -2,6 +2,7 @@ package com.fsck.k9.ui.e3
 
 import android.app.PendingIntent
 import android.arch.lifecycle.LifecycleOwner
+import android.arch.lifecycle.Observer
 import android.content.Context
 import com.fsck.k9.Account
 import com.fsck.k9.Preferences
@@ -17,16 +18,15 @@ class E3KeyScanPresenter internal constructor(
         private val openPgpApiManager: OpenPgpApiManager,
         private val transportProvider: TransportProvider,
         private val preferences: Preferences,
-        private val viewModel: E3KeyUploadViewModel,
+        private val viewModel: E3KeyScanViewModel,
         private val view: E3KeyScanActivity
 ) {
     private lateinit var account: Account
     private lateinit var pendingIntentForGetKey: PendingIntent
 
     init {
-        //viewModel.e3KeyUploadSetupMessageLiveEvent.observe(lifecycleOwner, Observer { msg -> msg?.let { onEventE3KeyUploadSetupMessage(it) } })
-
-        //viewModel.e3KeyUploadMessageUploadLiveEvent.observe(lifecycleOwner, Observer { pi -> onLoadedE3KeyUploadMessageUpload(pi) })
+        viewModel.e3KeyScanScanLiveEvent.observe(lifecycleOwner, Observer { msg -> msg?.let { onEventE3KeyScan(it) } })
+        viewModel.e3KeyScanDownloadLiveEvent.observe(lifecycleOwner, Observer { pi -> onLoadedE3KeyScanDownload(pi) })
     }
 
     fun initFromIntent(accountUuid: String?) {
@@ -51,47 +51,45 @@ class E3KeyScanPresenter internal constructor(
 
         view.setAddress(account.identities[0].email)
 
-        viewModel.e3KeyUploadMessageUploadLiveEvent.recall()
+        viewModel.e3KeyScanDownloadLiveEvent.recall()
     }
 
     fun onClickHome() {
         view.finishAsCancelled()
     }
 
-    fun onClickUpload() {
-        //view.sceneGeneratingAndUploading()
+    fun onClickScan() {
+        view.sceneScanningAndDownloading()
 
         launch(UI) {
             view.uxDelay()
-            //view.setLoadingStateGenerating()
+            view.setLoadingStateScanning()
 
-            viewModel.e3KeyUploadSetupMessageLiveEvent.loadE3KeyUploadMessageAsync(openPgpApiManager.openPgpApi, account)
+            viewModel.e3KeyScanScanLiveEvent.scanRemoteE3KeysAsync(openPgpApiManager.openPgpApi, account)
         }
     }
 
-    private fun onEventE3KeyUploadSetupMessage(setupMsg: E3KeyUploadMessage) {
-        //view.setLoadingStateSending()
-        //view.sceneGeneratingAndUploading()
+    private fun onEventE3KeyScan(E3KeyScanResult: E3KeyScanResult) {
+        view.setLoadingStateDownloading()
+        view.sceneScanningAndDownloading()
 
         val transport = transportProvider.getTransport(context, account)
-        viewModel.e3KeyUploadMessageUploadLiveEvent.sendMessageAsync(transport, setupMsg)
+        viewModel.e3KeyScanDownloadLiveEvent.downloadE3KeysAsync(transport, E3KeyScanResult)
     }
 
-    private fun onLoadedE3KeyUploadMessageUpload(result: E3KeyUploadMessageUploadResult?) {
-        /*
+    private fun onLoadedE3KeyScanDownload(result: E3KeyScanDownloadResult?) {
         when (result) {
             null -> view.sceneBegin()
-            is E3KeyUploadMessageUploadResult.Success -> {
-                pendingIntentForGetKey = result.pendingIntentForGetKey
+            is E3KeyScanDownloadResult.Success -> {
+                //pendingIntentForGetKey = result.pendingIntentForGetKey
                 view.setLoadingStateFinished()
                 view.sceneFinished()
             }
-            is E3KeyUploadMessageUploadResult.Failure -> {
-                Timber.e(result.exception, "Error sending setup message")
+            is E3KeyScanDownloadResult.Failure -> {
+                Timber.e(result.exception, "Error downloading E3 public key")
                 view.setLoadingStateSendingFailed()
                 view.sceneSendError()
             }
         }
-        */
     }
 }
