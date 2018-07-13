@@ -20,7 +20,7 @@ val e3KeyUploadUiModule = applicationContext {
 }
 
 val e3KeyScanUiModule = applicationContext {
-    factory { E3KeyScanScanLiveEvent() }
+    factory { E3KeyScanScanLiveEvent(get()) }
     factory { E3KeyScanDownloadLiveEvent() }
     factory { params ->
         E3KeyScanPresenter(
