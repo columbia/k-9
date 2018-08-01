@@ -48,6 +48,7 @@ class E3KeyScanActivity : E3ActionBaseActivity() {
         e3KeyScanLayoutScanning.visibility = View.GONE
         e3KeyScanLayoutDownloading.visibility = View.GONE
         e3KeyScanLayoutFinish.visibility = View.GONE
+        e3KeyScanLayoutFinishNoMessages.visibility = View.GONE
         e3KeyScanErrorUpload.visibility = View.GONE
     }
 
@@ -59,6 +60,7 @@ class E3KeyScanActivity : E3ActionBaseActivity() {
         e3KeyScanLayoutScanning.visibility = View.VISIBLE
         e3KeyScanLayoutDownloading.visibility = View.VISIBLE
         e3KeyScanLayoutFinish.visibility = View.GONE
+        e3KeyScanLayoutFinishNoMessages.visibility = View.GONE
         e3KeyScanErrorUpload.visibility = View.GONE
     }
 
@@ -87,6 +89,21 @@ class E3KeyScanActivity : E3ActionBaseActivity() {
         e3KeyScanLayoutScanning.visibility = View.VISIBLE
         e3KeyScanLayoutDownloading.visibility = View.VISIBLE
         e3KeyScanLayoutFinish.visibility = View.VISIBLE
+        e3KeyScanLayoutFinishNoMessages.visibility = View.GONE
+        e3KeyScanErrorUpload.visibility = View.GONE
+    }
+
+    fun sceneFinishedNoMessages(transition: Boolean = false) {
+        if (transition) {
+            setupSceneTransition()
+        }
+
+        e3KeyScanButton.visibility = View.GONE
+        e3KeyScanMsgInfo.visibility = View.GONE
+        e3KeyScanLayoutScanning.visibility = View.VISIBLE
+        e3KeyScanLayoutDownloading.visibility = View.VISIBLE
+        e3KeyScanLayoutFinish.visibility = View.GONE
+        e3KeyScanLayoutFinishNoMessages.visibility = View.VISIBLE
         e3KeyScanErrorUpload.visibility = View.GONE
     }
 

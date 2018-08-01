@@ -127,6 +127,30 @@
 
     </LinearLayout>
 
+    <LinearLayout
+        android:id="@+id/e3KeyScanLayoutFinishNoMessages"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:orientation="horizontal"
+        android:padding="8dp">
+
+        <com.fsck.k9.view.StatusIndicator
+            android:layout_width="24dp"
+            android:layout_height="24dp"
+            android:layout_gravity="center_vertical"
+            android:layout_margin="8dp"
+            />
+
+        <TextView
+            style="?android:textAppearanceMedium"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_gravity="center_vertical"
+            android:text="@string/e3_key_scan_finish_no_messages"
+            />
+
+    </LinearLayout>
+
     <TextView
         android:id="@+id/e3KeyScanErrorUpload"
         style="?android:textAppearanceMedium"

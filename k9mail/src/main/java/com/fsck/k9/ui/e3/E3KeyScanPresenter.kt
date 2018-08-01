@@ -65,16 +65,16 @@ class E3KeyScanPresenter internal constructor(
             view.uxDelay()
             view.setLoadingStateScanning()
 
-            viewModel.e3KeyScanScanLiveEvent.scanRemoteE3KeysAsync(openPgpApiManager.openPgpApi, account)
+            viewModel.e3KeyScanScanLiveEvent.scanRemoteE3KeysAsync(account)
         }
     }
 
-    private fun onEventE3KeyScan(E3KeyScanResult: E3KeyScanResult) {
+    private fun onEventE3KeyScan(e3KeyScanResult: E3KeyScanResult) {
         view.setLoadingStateDownloading()
         view.sceneScanningAndDownloading()
 
         val transport = transportProvider.getTransport(context, account)
-        viewModel.e3KeyScanDownloadLiveEvent.downloadE3KeysAsync(transport, E3KeyScanResult)
+        viewModel.e3KeyScanDownloadLiveEvent.downloadE3KeysAsync(transport, e3KeyScanResult)
     }
 
     private fun onLoadedE3KeyScanDownload(result: E3KeyScanDownloadResult?) {
@@ -84,6 +84,10 @@ class E3KeyScanPresenter internal constructor(
                 //pendingIntentForGetKey = result.pendingIntentForGetKey
                 view.setLoadingStateFinished()
                 view.sceneFinished()
+            }
+            is E3KeyScanDownloadResult.NoneFound -> {
+                view.setLoadingStateFinished()
+                view.sceneFinishedNoMessages()
             }
             is E3KeyScanDownloadResult.Failure -> {
                 Timber.e(result.exception, "Error downloading E3 public key")

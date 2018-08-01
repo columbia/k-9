@@ -1342,6 +1342,7 @@ Please submit bug reports, contribute new features and ask questions at
     <string name="e3_key_scan_scanning">Scanning server…</string>
     <string name="e3_key_scan_downloading">Downloading new E3 public keys…</string>
     <string name="e3_key_scan_finish">E3 public key download complete.</string>
+    <string name="e3_key_scan_finish_no_messages">No E3 public keys were found.</string>
     <string name="e3_key_scan_error_download">An error occurred while downloading your E3 public keys. Please check your network connectivity and outgoing server configuration.</string>
 
 
