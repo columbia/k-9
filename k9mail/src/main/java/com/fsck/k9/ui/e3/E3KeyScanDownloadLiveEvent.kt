@@ -3,36 +3,33 @@ package com.fsck.k9.ui.e3
 import com.fsck.k9.activity.MessageInfoHolder
 import com.fsck.k9.crypto.E3Constants
 import com.fsck.k9.helper.SingleLiveEvent
-import com.fsck.k9.mail.Transport
 import com.fsck.k9.mailstore.LocalMessage
 import kotlinx.coroutines.experimental.android.UI
 import kotlinx.coroutines.experimental.launch
 import org.jetbrains.anko.coroutines.experimental.bg
 import timber.log.Timber
 
-class E3KeyScanDownloadLiveEvent: SingleLiveEvent<E3KeyScanDownloadResult>() {
+class E3KeyScanDownloadLiveEvent : SingleLiveEvent<E3KeyScanDownloadResult>() {
 
-    fun downloadE3KeysAsync(transport: Transport, e3KeyScanResult: E3KeyScanResult) {
+    fun downloadE3KeysAsync(e3KeyScanResult: E3KeyScanResult) {
         launch(UI) {
             val scanResult = bg {
-                downloadRemote(transport, e3KeyScanResult)
+                downloadRemote(e3KeyScanResult)
             }
 
-            try {
-                val filteredMessages = scanResult.await()
-
-                if (!filteredMessages.isEmpty()) {
-                    value = E3KeyScanDownloadResult.Success("e3KeyScanResult")
+            value = try {
+                if (!scanResult.await().isEmpty()) {
+                    E3KeyScanDownloadResult.Success("e3KeyScanResult")
                 } else {
-                    value = E3KeyScanDownloadResult.NoneFound("no e3 keys were found")
+                    E3KeyScanDownloadResult.NoneFound("no e3 keys were found")
                 }
             } catch (e: Exception) {
-                value = E3KeyScanDownloadResult.Failure(e)
+                E3KeyScanDownloadResult.Failure(e)
             }
         }
     }
 
-    private fun downloadRemote(transport: Transport, e3KeyScanResult: E3KeyScanResult) : List<LocalMessage> {
+    private fun downloadRemote(e3KeyScanResult: E3KeyScanResult): List<LocalMessage> {
         //val address = Address.parse(account.getIdentity(0).email)[0]
         val filtered = mutableListOf<LocalMessage>()
 
