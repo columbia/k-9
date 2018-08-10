@@ -18,8 +18,9 @@ class E3KeyScanDownloadLiveEvent : SingleLiveEvent<E3KeyScanDownloadResult>() {
             }
 
             value = try {
-                if (!scanResult.await().isEmpty()) {
-                    E3KeyScanDownloadResult.Success("e3KeyScanResult")
+                val filteredResult = scanResult.await()
+                if (!filteredResult.isEmpty()) {
+                    E3KeyScanDownloadResult.Success(filteredResult)
                 } else {
                     E3KeyScanDownloadResult.NoneFound("no e3 keys were found")
                 }
@@ -60,7 +61,7 @@ class E3KeyScanDownloadLiveEvent : SingleLiveEvent<E3KeyScanDownloadResult>() {
 }
 
 sealed class E3KeyScanDownloadResult {
-    data class Success(val test: String) : E3KeyScanDownloadResult()
+    data class Success(val resultMessages: List<LocalMessage>) : E3KeyScanDownloadResult()
     data class Failure(val exception: Exception) : E3KeyScanDownloadResult()
     data class NoneFound(val msg: String) : E3KeyScanDownloadResult()
 }
