@@ -233,6 +233,9 @@ public class OpenPgpApi {
      */
     public static final String ACTION_UPDATE_AUTOCRYPT_PEER = "org.openintents.openpgp.action.UPDATE_AUTOCRYPT_PEER";
 
+    public static final String ACTION_ADD_ENCRYPT_ON_RECEIPT_KEY = "org.openintents.openpgp.action.ADD_ENCRYPT_ON_RECEIPT_KEY";
+    public static final String ACTION_CHECK_ENCRYPT_ON_RECEIPT_KEY = "org.openintents.openpgp.action.CHECK_ENCRYPT_ON_RECEIPT_KEY";
+
     /* Intent extras */
     public static final String EXTRA_API_VERSION = "api_version";
 
@@ -280,6 +283,9 @@ public class OpenPgpApi {
 
     // BACKUP
     public static final String EXTRA_BACKUP_SECRET = "backup_secret";
+
+    // ENCRYPT-ON-RECEIPT
+    public static final String EXTRA_ASCII_ARMORED_KEY = "ascii_armored_key";
 
     /* Service Intent returns */
     public static final String RESULT_CODE = "result_code";
