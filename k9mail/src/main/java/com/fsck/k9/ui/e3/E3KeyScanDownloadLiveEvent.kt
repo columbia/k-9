@@ -3,6 +3,7 @@ package com.fsck.k9.ui.e3
 import com.fsck.k9.activity.MessageInfoHolder
 import com.fsck.k9.crypto.E3Constants
 import com.fsck.k9.helper.SingleLiveEvent
+import com.fsck.k9.mail.FetchProfile
 import com.fsck.k9.mailstore.LocalMessage
 import kotlinx.coroutines.experimental.android.UI
 import kotlinx.coroutines.experimental.launch
@@ -49,6 +50,12 @@ class E3KeyScanDownloadLiveEvent : SingleLiveEvent<E3KeyScanDownloadResult>() {
                 Timber.w("E3 key email had no attachments (uid=${msg.uid}, subj=$subj, key_name=$keyName)")
                 continue
             }
+
+            val localMessageList = listOf<LocalMessage>(msg)
+            val fp = FetchProfile()
+            fp.add(FetchProfile.Item.ENVELOPE)
+            fp.add(FetchProfile.Item.BODY)
+            msg.folder.fetch(localMessageList, fp, null)
 
             filtered.add(msg)
         }

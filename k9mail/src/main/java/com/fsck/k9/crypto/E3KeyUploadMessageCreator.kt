@@ -28,7 +28,7 @@ class E3KeyUploadMessageCreator(val resources: Resources) {
 
             val textBodyPart = MimeBodyPart(TextBody(messageText))
             val dataBodyPart = MimeBodyPart(BinaryMemoryBody(data, "7bit"))
-            dataBodyPart.setHeader(MimeHeader.HEADER_CONTENT_TYPE, "application/pgp-keys")
+            dataBodyPart.setHeader(MimeHeader.HEADER_CONTENT_TYPE, E3Constants.CONTENT_TYPE_PGP_KEYS)
             dataBodyPart.setHeader(MimeHeader.HEADER_CONTENT_DISPOSITION, "attachment; filename=\"e3_key.asc\"")
 
             val messageBody = MimeMultipart.newInstance()

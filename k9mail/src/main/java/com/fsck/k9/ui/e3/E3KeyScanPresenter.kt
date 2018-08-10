@@ -4,12 +4,23 @@ import android.app.PendingIntent
 import android.arch.lifecycle.LifecycleOwner
 import android.arch.lifecycle.Observer
 import android.content.Context
+import android.content.Intent
 import com.fsck.k9.Account
 import com.fsck.k9.Preferences
+import com.fsck.k9.crypto.E3Constants
+import com.fsck.k9.mail.BodyPart
+import com.fsck.k9.mail.Multipart
+import com.fsck.k9.mail.internet.MimeHeader
+import com.fsck.k9.mail.internet.MimeMultipart
+import com.fsck.k9.mail.internet.MimeUtility
+import com.fsck.k9.mailstore.LocalMessage
 import kotlinx.coroutines.experimental.android.UI
 import kotlinx.coroutines.experimental.launch
 import org.openintents.openpgp.OpenPgpApiManager
+import org.openintents.openpgp.util.OpenPgpApi
 import timber.log.Timber
+import java.io.ByteArrayOutputStream
+import java.io.InputStream
 
 class E3KeyScanPresenter internal constructor(
         lifecycleOwner: LifecycleOwner,
@@ -75,6 +86,36 @@ class E3KeyScanPresenter internal constructor(
         viewModel.e3KeyScanDownloadLiveEvent.downloadE3KeysAsync(e3KeyScanResult)
     }
 
+    private fun addKeysFromMessagesToKeychain(keyMessages: List<LocalMessage>) {
+        for (keyMsg: LocalMessage in keyMessages) {
+            if (!keyMsg.hasAttachments()) {
+                continue
+            }
+
+            val keyId = keyMsg.getHeader("keyId")
+            val keyPart = MimeUtility.findFirstPartByMimeType(keyMsg, E3Constants.CONTENT_TYPE_PGP_KEYS)
+
+            if (keyPart == null) {
+                Timber.e("Did not find any ${E3Constants.CONTENT_TYPE_PGP_KEYS} attachment in E3 key message: ${keyMsg.messageId} ${keyMsg.preview}")
+                continue
+            }
+
+            val keyBytes = ByteArrayOutputStream()
+            keyPart.body.writeTo(keyBytes)
+
+            val pgpApiIntent = Intent(OpenPgpApi.ACTION_ADD_ENCRYPT_ON_RECEIPT_KEY)
+            pgpApiIntent.putExtra(OpenPgpApi.EXTRA_KEY_ID, keyId)
+            pgpApiIntent.putExtra(OpenPgpApi.EXTRA_ASCII_ARMORED_KEY, keyBytes.toByteArray())
+
+            val result = openPgpApiManager.openPgpApi.executeApi(pgpApiIntent, null as InputStream?, null)
+            val resultCode = result.getIntExtra(OpenPgpApi.RESULT_CODE, OpenPgpApi.RESULT_CODE_ERROR)
+
+            if (resultCode == OpenPgpApi.RESULT_CODE_SUCCESS) {
+                Timber.d("Successfully added E3 public key to OpenKeychain (keyId: $keyId)")
+            }
+        }
+    }
+
     private fun onLoadedE3KeyScanDownload(result: E3KeyScanDownloadResult?) {
         when (result) {
             null -> view.sceneBegin()
@@ -82,6 +123,7 @@ class E3KeyScanPresenter internal constructor(
                 view.setLoadingStateFinished()
                 view.sceneFinished()
                 Timber.d("Got downloaded key results ${result.resultMessages.size}")
+                addKeysFromMessagesToKeychain(result.resultMessages)
             }
             is E3KeyScanDownloadResult.NoneFound -> {
                 view.setLoadingStateFinished()
