@@ -29,7 +29,6 @@ val e3KeyScanUiModule = applicationContext {
                 get(parameters = { params.values }),
                 get(),
                 get(),
-                get(),
                 params["e3ScanView"])
     }
     viewModel { E3KeyScanViewModel(get(), get()) }

@@ -6,7 +6,6 @@ import android.arch.lifecycle.Observer
 import android.content.Context
 import com.fsck.k9.Account
 import com.fsck.k9.Preferences
-import com.fsck.k9.mail.TransportProvider
 import kotlinx.coroutines.experimental.android.UI
 import kotlinx.coroutines.experimental.launch
 import org.openintents.openpgp.OpenPgpApiManager
@@ -16,7 +15,6 @@ class E3KeyScanPresenter internal constructor(
         lifecycleOwner: LifecycleOwner,
         private val context: Context,
         private val openPgpApiManager: OpenPgpApiManager,
-        private val transportProvider: TransportProvider,
         private val preferences: Preferences,
         private val viewModel: E3KeyScanViewModel,
         private val view: E3KeyScanActivity
@@ -81,9 +79,9 @@ class E3KeyScanPresenter internal constructor(
         when (result) {
             null -> view.sceneBegin()
             is E3KeyScanDownloadResult.Success -> {
-                //pendingIntentForGetKey = result.pendingIntentForGetKey
                 view.setLoadingStateFinished()
                 view.sceneFinished()
+                Timber.d("Got downloaded key results ${result.resultMessages.size}")
             }
             is E3KeyScanDownloadResult.NoneFound -> {
                 view.setLoadingStateFinished()
