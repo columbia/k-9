@@ -23,6 +23,8 @@ import org.openintents.openpgp.util.OpenPgpApi.OpenPgpDataSource;
 import java.io.IOException;
 import java.io.OutputStream;
 
+import timber.log.Timber;
+
 public class SimplePgpEncryptor {
     private final Long pgpKeyId;
     private final OpenPgpApi openPgpApi;
@@ -40,7 +42,7 @@ public class SimplePgpEncryptor {
         pgpApiIntent.putExtra(OpenPgpApi.EXTRA_USER_IDS, recipients);
         pgpApiIntent.putExtra(OpenPgpApi.EXTRA_SIGN_KEY_ID, pgpKeyId);
         pgpApiIntent.putExtra(OpenPgpApi.EXTRA_REQUEST_ASCII_ARMOR, true);
-
+        pgpApiIntent.putExtra(OpenPgpApi.EXTRA_REQUEST_ENCRYPT_ON_RECEIPT, true);
 
         MimeBodyPart bodyPart = originalMessage.toBodyPart();
         OpenPgpDataSource dataSource = createOpenPgpDataSourceFromBodyPart(bodyPart);
@@ -71,6 +73,8 @@ public class SimplePgpEncryptor {
                         "multipart/encrypted; boundary=\"%s\";\r\n  protocol=\"application/pgp-encrypted\"",
                         multipartEncrypted.getBoundary());
                 originalMessage.setHeader(MimeHeader.HEADER_CONTENT_TYPE, contentType);
+
+                Timber.d("SimplePgpEncryptor successfully encrypted on receipt");
 
                 return originalMessage;
 
