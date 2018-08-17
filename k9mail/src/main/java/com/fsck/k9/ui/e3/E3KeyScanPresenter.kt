@@ -92,7 +92,6 @@ class E3KeyScanPresenter internal constructor(
                 continue
             }
 
-            val keyId = keyMsg.getHeader("keyId")
             val keyPart = MimeUtility.findFirstPartByMimeType(keyMsg, E3Constants.CONTENT_TYPE_PGP_KEYS)
 
             if (keyPart == null) {
@@ -104,14 +103,15 @@ class E3KeyScanPresenter internal constructor(
             keyPart.body.writeTo(keyBytes)
 
             val pgpApiIntent = Intent(OpenPgpApi.ACTION_ADD_ENCRYPT_ON_RECEIPT_KEY)
-            pgpApiIntent.putExtra(OpenPgpApi.EXTRA_KEY_ID, keyId)
             pgpApiIntent.putExtra(OpenPgpApi.EXTRA_ASCII_ARMORED_KEY, keyBytes.toByteArray())
 
             val result = openPgpApiManager.openPgpApi.executeApi(pgpApiIntent, null as InputStream?, null)
             val resultCode = result.getIntExtra(OpenPgpApi.RESULT_CODE, OpenPgpApi.RESULT_CODE_ERROR)
 
             if (resultCode == OpenPgpApi.RESULT_CODE_SUCCESS) {
-                Timber.d("Successfully added E3 public key to OpenKeychain (keyId: $keyId)")
+                Timber.d("Successfully added E3 public key to OpenKeychain")
+            } else {
+                Timber.d("Failed to add E3 public key to OpeKeychain: $resultCode")
             }
         }
     }
