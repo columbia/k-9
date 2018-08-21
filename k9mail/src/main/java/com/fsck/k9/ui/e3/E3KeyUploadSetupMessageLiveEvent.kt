@@ -2,6 +2,7 @@ package com.fsck.k9.ui.e3
 
 import android.app.PendingIntent
 import android.content.Intent
+import android.graphics.Bitmap
 import com.fsck.k9.Account
 import com.fsck.k9.crypto.E3KeyUploadMessageCreator
 import com.fsck.k9.crypto.KeyFormattingUtils
@@ -41,7 +42,16 @@ class E3KeyUploadSetupMessageLiveEvent(val messageCreator: E3KeyUploadMessageCre
         val e3KeyDigest = KeyFormattingUtils.beautifyHex(Hex.encodeHex(e3Digester.digest(armoredKeyBytes)))
         val beautifiedFingerprint = KeyFormattingUtils.beautifyHex(armoredKey.fingerprint)
 
-        val setupMessage = messageCreator.createE3KeyUploadMessage(armoredKeyBytes, address, account.name, beautifulKeyId, e3KeyDigest, beautifiedFingerprint)
+        val setupMessage = messageCreator.createE3KeyUploadMessage(armoredKeyBytes,
+                address,
+                account.name,
+                beautifulKeyId,
+                e3KeyDigest,
+                beautifiedFingerprint,
+                armoredKey.qrFingerprint
+        )
+
+        armoredKey.qrFingerprint.recycle()
 
         return E3KeyUploadMessage(setupMessage, armoredKey.pendingIntent)
     }
@@ -53,8 +63,12 @@ class E3KeyUploadSetupMessageLiveEvent(val messageCreator: E3KeyUploadMessageCre
         intent.putExtra(OpenPgpApi.EXTRA_REQUEST_FINGERPRINT, fingerprint)
         val baos = ByteArrayOutputStream()
         val result = openPgpApi.executeApi(intent, null as InputStream?, baos)
-        val fingerprintResult = result.getStringExtra(OpenPgpApi.RESULT_FINGERPRINT)
-        return KeyResult(result.getParcelableExtra(OpenPgpApi.RESULT_INTENT), baos, fingerprintResult)
+
+        val resultIntent = result.getParcelableExtra<PendingIntent>(OpenPgpApi.RESULT_INTENT)
+        val fingerprintString = result.getStringExtra(OpenPgpApi.RESULT_FINGERPRINT)
+        val fingerprintBitmap = result.getParcelableExtra<Bitmap>(OpenPgpApi.RESULT_FINGERPRINT_QR)
+
+        return KeyResult(resultIntent, baos, fingerprintString, fingerprintBitmap)
     }
 
     companion object {
@@ -64,4 +78,5 @@ class E3KeyUploadSetupMessageLiveEvent(val messageCreator: E3KeyUploadMessageCre
 
 data class E3KeyUploadMessage(val keyUploadMessage: Message, val pendingIntentForGetKey: PendingIntent)
 
-data class KeyResult(val pendingIntent: PendingIntent, val resultData: ByteArrayOutputStream, @Nullable val fingerprint: String)
+data class KeyResult(val pendingIntent: PendingIntent, val resultData: ByteArrayOutputStream,
+                     @Nullable val fingerprint: String, @Nullable val qrFingerprint: Bitmap)
