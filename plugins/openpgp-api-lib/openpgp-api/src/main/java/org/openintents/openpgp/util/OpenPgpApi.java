@@ -281,6 +281,7 @@ public class OpenPgpApi {
     public static final String EXTRA_REQUEST_FINGERPRINT = "fingerprint";
 
     public static final String RESULT_FINGERPRINT = "result_fingerprint";
+    public static final String RESULT_FINGERPRINT_QR = "result_fingerprint_qr";
 
     // AUTOCRYPT_KEY_TRANSFER
     public static final String ACTION_AUTOCRYPT_KEY_TRANSFER = "autocrypt_key_transfer";
