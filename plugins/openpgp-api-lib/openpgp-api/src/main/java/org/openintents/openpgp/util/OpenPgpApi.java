@@ -209,6 +209,7 @@ public class OpenPgpApi {
      *
      * optional extras:
      * String      EXTRA_REQUEST_ASCII_ARMOR (request that the returned key is encoded in ASCII Armor)
+     * String      EXTRA_REQUEST_FINGERPRINT (request that the key fingerprint is returned as RESULT_FINGERPRINT)
      */
     public static final String ACTION_GET_KEY = "org.openintents.openpgp.action.GET_KEY";
 
@@ -234,7 +235,6 @@ public class OpenPgpApi {
     public static final String ACTION_UPDATE_AUTOCRYPT_PEER = "org.openintents.openpgp.action.UPDATE_AUTOCRYPT_PEER";
 
     public static final String ACTION_ADD_ENCRYPT_ON_RECEIPT_KEY = "org.openintents.openpgp.action.ADD_ENCRYPT_ON_RECEIPT_KEY";
-    public static final String ACTION_CHECK_ENCRYPT_ON_RECEIPT_KEY = "org.openintents.openpgp.action.CHECK_ENCRYPT_ON_RECEIPT_KEY";
 
     /* Intent extras */
     public static final String EXTRA_API_VERSION = "api_version";
@@ -260,6 +260,7 @@ public class OpenPgpApi {
     public static final int AUTOCRYPT_STATUS_DISCOURAGE = 1;
     public static final int AUTOCRYPT_STATUS_AVAILABLE = 2;
     public static final int AUTOCRYPT_STATUS_MUTUAL = 3;
+    public static final String EXTRA_REQUEST_ENCRYPT_ON_RECEIPT = "encrypt_on_receipt";
 
     // optional extras:
     public static final String EXTRA_PASSPHRASE = "passphrase";
@@ -277,6 +278,9 @@ public class OpenPgpApi {
     public static final String EXTRA_MINIMIZE = "minimize";
     public static final String EXTRA_MINIMIZE_USER_ID = "minimize_user_id";
     public static final String RESULT_KEY_IDS = "key_ids";
+    public static final String EXTRA_REQUEST_FINGERPRINT = "fingerprint";
+
+    public static final String RESULT_FINGERPRINT = "result_fingerprint";
 
     // AUTOCRYPT_KEY_TRANSFER
     public static final String ACTION_AUTOCRYPT_KEY_TRANSFER = "autocrypt_key_transfer";
