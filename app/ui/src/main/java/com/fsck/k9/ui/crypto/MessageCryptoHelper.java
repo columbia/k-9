@@ -17,6 +17,7 @@ import android.support.annotation.NonNull;
 import android.support.annotation.Nullable;
 import android.support.annotation.WorkerThread;
 
+import com.fsck.k9.Account;
 import com.fsck.k9.autocrypt.AutocryptOperations;
 import com.fsck.k9.crypto.MessageCryptoStructureDetector;
 import com.fsck.k9.mail.Address;
@@ -62,6 +63,7 @@ public class MessageCryptoHelper {
 
 
     private final Context context;
+    private final Account account;
     private final String openPgpProvider;
     private final Long pgpKeyId;
     private final AutocryptOperations autocryptOperations;
@@ -91,10 +93,11 @@ public class MessageCryptoHelper {
     private OpenPgpApiFactory openPgpApiFactory;
 
 
-    public MessageCryptoHelper(Context context, OpenPgpApiFactory openPgpApiFactory,
-            AutocryptOperations autocryptOperations, @NonNull String openPgpProvider, @Nullable Long pgpKeyId) {
+    public MessageCryptoHelper(Context context, Account account, OpenPgpApiFactory openPgpApiFactory,
+                               AutocryptOperations autocryptOperations, @NonNull String openPgpProvider, @Nullable Long pgpKeyId) {
         this.context = context.getApplicationContext();
 
+        this.account = account;
         this.autocryptOperations = autocryptOperations;
         this.openPgpApiFactory = openPgpApiFactory;
         this.openPgpProvider = openPgpProvider;
@@ -272,6 +275,7 @@ public class MessageCryptoHelper {
             decryptIntent.putExtra(OpenPgpApi.EXTRA_SENDER_ADDRESS, from[0].getAddress());
             // we add this here independently of the autocrypt peer update, to allow picking up signing keys as gossip
             decryptIntent.putExtra(OpenPgpApi.EXTRA_AUTOCRYPT_PEER_ID, from[0].getAddress());
+            decryptIntent.putExtra(OpenPgpApi.EXTRA_ENCRYPT_ON_RECEIPT_ADDRESS, account.getEmail());
         }
         autocryptOperations.addAutocryptPeerUpdateToIntentIfPresent(currentMessage, decryptIntent);
 

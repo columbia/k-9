@@ -295,7 +295,7 @@ public enum MessageCryptoDisplayStatus {
                 switch (signatureResult.getSenderStatusResult()) {
                     case USER_ID_CONFIRMED:
                         return ENCRYPTED_SIGN_VERIFIED;
-                    case USER_ID_IS_RECIPIENT:
+                    case USER_ID_CONFIRMED_EOR:
                         return ENCRYPTED_SIGN_RECIPIENT_VERIFIED;
                     case USER_ID_UNCONFIRMED:
                         return ENCRYPTED_SIGN_UNVERIFIED;

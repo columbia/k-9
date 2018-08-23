@@ -8,6 +8,7 @@ import android.app.PendingIntent;
 import android.content.Context;
 import android.content.Intent;
 
+import com.fsck.k9.Account;
 import com.fsck.k9.RobolectricTest;
 import com.fsck.k9.autocrypt.AutocryptOperations;
 import com.fsck.k9.mail.Address;
@@ -57,19 +58,23 @@ public class MessageCryptoHelperTest extends RobolectricTest {
     private IOpenPgpSinkResultCallback capturedCallback;
     private MessageCryptoCallback messageCryptoCallback;
     private AutocryptOperations autocryptOperations;
+    private Account mockAccount;
+    private Long pgpKeyId;
 
 
     @Before
     public void setUp() throws Exception {
         openPgpApi = mock(OpenPgpApi.class);
         autocryptOperations = mock(AutocryptOperations.class);
+        mockAccount = mock(Account.class);
+        pgpKeyId = 1L;
 
         OpenPgpApiFactory openPgpApiFactory = mock(OpenPgpApiFactory.class);
         when(openPgpApiFactory.createOpenPgpApi(any(Context.class), nullable(IOpenPgpService2.class)))
                 .thenReturn(openPgpApi);
 
-        messageCryptoHelper = new MessageCryptoHelper(RuntimeEnvironment.application, openPgpApiFactory,
-                autocryptOperations, "org.example.dummy");
+        messageCryptoHelper = new MessageCryptoHelper(RuntimeEnvironment.application, mockAccount, openPgpApiFactory,
+                autocryptOperations, "org.example.dummy", pgpKeyId);
         messageCryptoCallback = mock(MessageCryptoCallback.class);
     }
 
