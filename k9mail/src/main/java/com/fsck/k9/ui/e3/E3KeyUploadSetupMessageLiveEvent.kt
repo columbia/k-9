@@ -32,14 +32,14 @@ class E3KeyUploadSetupMessageLiveEvent(val messageCreator: E3KeyUploadMessageCre
     private fun loadE3KeyUploadMessage(openPgpApi: OpenPgpApi, account: Account): E3KeyUploadMessage {
         val beautifulKeyId = KeyFormattingUtils.beautifyKeyId(account.e3Key)
 
+        // TODO: E3 handle multiple PendingIntent
         val armoredKey = requestPgpKey(openPgpApi, account, true, true)
         val armoredKeyBytes = armoredKey.resultData.toByteArray()
-
-        // TODO: E3 handle multiple PendingIntent
         val e3KeyDigest = KeyFormattingUtils.beautifyHex(Hex.encodeHex(e3Digester.digest(armoredKeyBytes)))
 
         val setupMessage = messageCreator.createE3KeyUploadMessage(armoredKeyBytes,
                 account,
+                armoredKey.identity,
                 beautifulKeyId,
                 e3KeyDigest,
                 armoredKey.fingerprint
@@ -61,8 +61,9 @@ class E3KeyUploadSetupMessageLiveEvent(val messageCreator: E3KeyUploadMessageCre
         val resultIntent = result.getParcelableExtra<PendingIntent>(OpenPgpApi.RESULT_INTENT)
         val fingerprintString = result.getStringExtra(OpenPgpApi.RESULT_FINGERPRINT)
         val fingerprintBitmap = result.getParcelableExtra<Bitmap>(OpenPgpApi.RESULT_FINGERPRINT_QR)
+        val identity = result.getStringExtra(OpenPgpApi.RESULT_USER_ID)
 
-        return KeyResult(resultIntent, baos, KeyFingerprint(fingerprintString, fingerprintBitmap))
+        return KeyResult(resultIntent, baos, identity, KeyFingerprint(fingerprintString, fingerprintBitmap))
     }
 
     companion object {
@@ -73,6 +74,6 @@ class E3KeyUploadSetupMessageLiveEvent(val messageCreator: E3KeyUploadMessageCre
 data class E3KeyUploadMessage(val keyUploadMessage: Message, val pendingIntentForGetKey: PendingIntent)
 
 data class KeyResult(val pendingIntent: PendingIntent, val resultData: ByteArrayOutputStream,
-                     val fingerprint: KeyFingerprint)
+                     val identity: String, val fingerprint: KeyFingerprint)
 
 data class KeyFingerprint(val hexString: String?, val qrBitmap: Bitmap?)
