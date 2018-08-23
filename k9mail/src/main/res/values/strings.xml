@@ -1324,6 +1324,7 @@ Please submit bug reports, contribute new features and ask questions at
     <string name="e3_key_upload_destined_for">The email with your E3 public key will be sent to:</string>
     <string name="e3_key_upload_uploading_to">Uploading E3 public key to:</string>
     <string name="e3_key_upload_finish">E3 public key upload complete. Refresh your standalone E3 client to encrypt email to your new E3 public key.</string>
+    <string name="e3_key_scan_completed_instructions">Please open your key chain app and use the QR code scanner to verify your newly added E3 keys!</string>
     <string name="e3_key_upload_error_upload">An error occurred while uploading the E3 public key. Please check your network connectivity and outgoing server configuration.</string>
 
     <string name="e3_key_upload_msg_subject">E3 Public Key (DO NOT DELETE)</string>
