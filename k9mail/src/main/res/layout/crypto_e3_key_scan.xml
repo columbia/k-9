@@ -160,4 +160,13 @@
         tools:visibility="gone"
         />
 
+    <TextView
+        android:id="@+id/e3KeyScanCompletedInstructions"
+        style="?android:textAppearanceMedium"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="@string/e3_key_scan_completed_instructions"
+        tools:visibility="gone"
+        />
+
 </LinearLayout>

@@ -49,6 +49,7 @@ class E3KeyScanActivity : E3ActionBaseActivity() {
         e3KeyScanLayoutDownloading.visibility = View.GONE
         e3KeyScanLayoutFinish.visibility = View.GONE
         e3KeyScanLayoutFinishNoMessages.visibility = View.GONE
+        e3KeyScanCompletedInstructions.visibility = View.GONE
         e3KeyScanErrorUpload.visibility = View.GONE
     }
 
@@ -61,6 +62,7 @@ class E3KeyScanActivity : E3ActionBaseActivity() {
         e3KeyScanLayoutDownloading.visibility = View.VISIBLE
         e3KeyScanLayoutFinish.visibility = View.GONE
         e3KeyScanLayoutFinishNoMessages.visibility = View.GONE
+        e3KeyScanCompletedInstructions.visibility = View.GONE
         e3KeyScanErrorUpload.visibility = View.GONE
     }
 
@@ -90,6 +92,7 @@ class E3KeyScanActivity : E3ActionBaseActivity() {
         e3KeyScanLayoutDownloading.visibility = View.VISIBLE
         e3KeyScanLayoutFinish.visibility = View.VISIBLE
         e3KeyScanLayoutFinishNoMessages.visibility = View.GONE
+        e3KeyScanCompletedInstructions.visibility = View.VISIBLE
         e3KeyScanErrorUpload.visibility = View.GONE
     }
 
@@ -104,6 +107,7 @@ class E3KeyScanActivity : E3ActionBaseActivity() {
         e3KeyScanLayoutDownloading.visibility = View.VISIBLE
         e3KeyScanLayoutFinish.visibility = View.GONE
         e3KeyScanLayoutFinishNoMessages.visibility = View.VISIBLE
+        e3KeyScanCompletedInstructions.visibility = View.GONE
         e3KeyScanErrorUpload.visibility = View.GONE
     }
 
@@ -120,6 +124,8 @@ class E3KeyScanActivity : E3ActionBaseActivity() {
         e3KeyScanLayoutScanning.visibility = View.VISIBLE
         e3KeyScanLayoutDownloading.visibility = View.VISIBLE
         e3KeyScanLayoutFinish.visibility = View.GONE
+        e3KeyScanLayoutFinishNoMessages.visibility = View.GONE
+        e3KeyScanCompletedInstructions.visibility = View.GONE
         e3KeyScanErrorUpload.visibility = View.VISIBLE
     }
 
