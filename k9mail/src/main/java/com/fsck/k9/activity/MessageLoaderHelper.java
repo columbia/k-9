@@ -305,7 +305,7 @@ public class MessageLoaderHelper {
         }
         if (messageCryptoHelper == null || !messageCryptoHelper.isConfiguredForOpenPgpProvider(openPgpProvider)) {
             messageCryptoHelper = new MessageCryptoHelper(
-                    context, new OpenPgpApiFactory(), AutocryptOperations.getInstance(), openPgpProvider, pgpKey);
+                    context, account, new OpenPgpApiFactory(), AutocryptOperations.getInstance(), openPgpProvider, pgpKey);
             retainCryptoHelperFragment.setData(messageCryptoHelper);
         }
         messageCryptoHelper.asyncStartOrResumeProcessingMessage(
