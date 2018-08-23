@@ -7,13 +7,11 @@ import com.fsck.k9.Account
 import com.fsck.k9.crypto.E3KeyUploadMessageCreator
 import com.fsck.k9.crypto.KeyFormattingUtils
 import com.fsck.k9.helper.SingleLiveEvent
-import com.fsck.k9.mail.Address
 import com.fsck.k9.mail.Message
 import com.fsck.k9.mail.filter.Hex
 import kotlinx.coroutines.experimental.android.UI
 import kotlinx.coroutines.experimental.launch
 import org.jetbrains.anko.coroutines.experimental.bg
-import org.jetbrains.annotations.Nullable
 import org.openintents.openpgp.util.OpenPgpApi
 import java.io.ByteArrayOutputStream
 import java.io.InputStream
@@ -32,7 +30,6 @@ class E3KeyUploadSetupMessageLiveEvent(val messageCreator: E3KeyUploadMessageCre
     }
 
     private fun loadE3KeyUploadMessage(openPgpApi: OpenPgpApi, account: Account): E3KeyUploadMessage {
-        val address = Address.parse(account.getIdentity(0).email)[0]
         val beautifulKeyId = KeyFormattingUtils.beautifyKeyId(account.e3Key)
 
         val armoredKey = requestPgpKey(openPgpApi, account, true, true)
@@ -40,18 +37,15 @@ class E3KeyUploadSetupMessageLiveEvent(val messageCreator: E3KeyUploadMessageCre
 
         // TODO: E3 handle multiple PendingIntent
         val e3KeyDigest = KeyFormattingUtils.beautifyHex(Hex.encodeHex(e3Digester.digest(armoredKeyBytes)))
-        val beautifiedFingerprint = KeyFormattingUtils.beautifyHex(armoredKey.fingerprint)
 
         val setupMessage = messageCreator.createE3KeyUploadMessage(armoredKeyBytes,
-                address,
-                account.name,
+                account,
                 beautifulKeyId,
                 e3KeyDigest,
-                beautifiedFingerprint,
-                armoredKey.qrFingerprint
+                armoredKey.fingerprint
         )
 
-        armoredKey.qrFingerprint.recycle()
+        armoredKey.fingerprint.qrBitmap?.recycle()
 
         return E3KeyUploadMessage(setupMessage, armoredKey.pendingIntent)
     }
@@ -68,7 +62,7 @@ class E3KeyUploadSetupMessageLiveEvent(val messageCreator: E3KeyUploadMessageCre
         val fingerprintString = result.getStringExtra(OpenPgpApi.RESULT_FINGERPRINT)
         val fingerprintBitmap = result.getParcelableExtra<Bitmap>(OpenPgpApi.RESULT_FINGERPRINT_QR)
 
-        return KeyResult(resultIntent, baos, fingerprintString, fingerprintBitmap)
+        return KeyResult(resultIntent, baos, KeyFingerprint(fingerprintString, fingerprintBitmap))
     }
 
     companion object {
@@ -79,4 +73,6 @@ class E3KeyUploadSetupMessageLiveEvent(val messageCreator: E3KeyUploadMessageCre
 data class E3KeyUploadMessage(val keyUploadMessage: Message, val pendingIntentForGetKey: PendingIntent)
 
 data class KeyResult(val pendingIntent: PendingIntent, val resultData: ByteArrayOutputStream,
-                     @Nullable val fingerprint: String, @Nullable val qrFingerprint: Bitmap)
+                     val fingerprint: KeyFingerprint)
+
+data class KeyFingerprint(val hexString: String?, val qrBitmap: Bitmap?)

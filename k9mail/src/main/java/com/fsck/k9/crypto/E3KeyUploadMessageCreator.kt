@@ -4,6 +4,7 @@ import android.content.res.Resources
 import android.graphics.Bitmap
 import android.os.Build
 import android.util.Base64
+import com.fsck.k9.Account
 import com.fsck.k9.K9
 import com.fsck.k9.R
 import com.fsck.k9.mail.Address
@@ -12,36 +13,41 @@ import com.fsck.k9.mail.Message
 import com.fsck.k9.mail.MessagingException
 import com.fsck.k9.mail.internet.*
 import com.fsck.k9.mailstore.BinaryMemoryBody
+import com.fsck.k9.ui.e3.KeyFingerprint
 import java.io.ByteArrayOutputStream
 import java.util.*
 
 class E3KeyUploadMessageCreator(val resources: Resources) {
-    fun createE3KeyUploadMessage(data: ByteArray, toAndFromAddress: Address, accountName: String,
-                                 keyId: String, e3KeyDigest: String, pgpFingerprint: String?,
-                                 qrPgpFingerprint: Bitmap?): Message {
+    /**
+     * Caller is responsible for managing the lifetime/memory of [KeyFingerprint.qrBitmap].
+     *
+     * @param pgpKeyData should be an ASCII armored PGP key
+     */
+    fun createE3KeyUploadMessage(pgpKeyData: ByteArray, account: Account,
+                                 keyId: String, e3KeyDigest: String, pgpFingerprint: KeyFingerprint): Message {
         try {
+            val address = Address.parse(account.getIdentity(0).email)[0]
             val subjectText = resources.getString(R.string.e3_key_upload_msg_subject)
             var messageText = resources.getString(R.string.e3_key_upload_msg_body)
-            val keyName = String.format(resources.getString(R.string.e3_key_upload_msg_key_id), accountName, keyId)
+            val keyName = String.format(resources.getString(R.string.e3_key_upload_msg_key_id), account.name, keyId)
 
             messageText = String.format(messageText, keyName, Build.MODEL, e3KeyDigest)
 
-            if (pgpFingerprint != null) {
-                messageText += String.format(resources.getString(R.string.e3_key_upload_msg_pgp_fingerprint), pgpFingerprint)
-            }
+            val beautifiedFingerprint = KeyFormattingUtils.beautifyHex(pgpFingerprint.hexString)
+            messageText += String.format(resources.getString(R.string.e3_key_upload_msg_pgp_fingerprint), beautifiedFingerprint)
 
             val messageBody = MimeMultipart.newInstance()
             val textBodyPart = MimeBodyPart(TextBody(messageText))
-            val keyAttachment = MimeBodyPart(BinaryMemoryBody(data, "7bit"))
+            val keyAttachment = MimeBodyPart(BinaryMemoryBody(pgpKeyData, "7bit"))
             keyAttachment.setHeader(MimeHeader.HEADER_CONTENT_TYPE, E3Constants.CONTENT_TYPE_PGP_KEYS)
             keyAttachment.setHeader(MimeHeader.HEADER_CONTENT_DISPOSITION, "attachment; filename=\"e3_key.asc\"")
 
             messageBody.addBodyPart(textBodyPart)
             messageBody.addBodyPart(keyAttachment)
 
-            if (qrPgpFingerprint != null) {
+            if (pgpFingerprint.qrBitmap != null) {
                 val baos = ByteArrayOutputStream()
-                qrPgpFingerprint.compress(Bitmap.CompressFormat.PNG, 100, baos)
+                pgpFingerprint.qrBitmap.compress(Bitmap.CompressFormat.PNG, 100, baos)
                 val qrData = Base64.encode(baos.toByteArray(), Base64.DEFAULT)
                 val qrKeyAttachment = MimeBodyPart(BinaryMemoryBody(qrData, "base64"))
 
@@ -64,8 +70,8 @@ class E3KeyUploadMessageCreator(val resources: Resources) {
 
             message.internalDate = nowDate
             message.addSentDate(nowDate, K9.hideTimeZone())
-            message.setFrom(toAndFromAddress)
-            message.setRecipients(Message.RecipientType.TO, arrayOf(toAndFromAddress))
+            message.setFrom(address)
+            message.setRecipients(Message.RecipientType.TO, arrayOf(address))
 
             return message
         } catch (e: MessagingException) {
