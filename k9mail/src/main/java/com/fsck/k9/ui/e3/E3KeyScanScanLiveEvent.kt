@@ -10,13 +10,14 @@ import com.fsck.k9.controller.SimpleMessagingListener
 import com.fsck.k9.helper.MessageHelper
 import com.fsck.k9.helper.SingleLiveEvent
 import com.fsck.k9.mail.Address
+import com.fsck.k9.mail.Message
+import com.fsck.k9.mail.MessagingException
 import com.fsck.k9.mailstore.LocalMessage
 import com.fsck.k9.search.LocalSearch
 import com.fsck.k9.search.SearchSpecification.*
 import kotlinx.coroutines.experimental.android.UI
 import kotlinx.coroutines.experimental.launch
 import org.jetbrains.anko.coroutines.experimental.bg
-import org.openintents.openpgp.util.OpenPgpApi
 import timber.log.Timber
 import java.util.*
 import java.util.concurrent.BlockingQueue
@@ -43,11 +44,20 @@ class E3KeyScanScanLiveEvent(private val context: Context) : SingleLiveEvent<E3K
         search.isManualSearch = true
         search.addAccountUuid(account.uuid)
         search.and(SearchCondition(SearchField.SENDER, Attribute.CONTAINS, address.address))
-        //search.or(SearchCondition(SearchField.SUBJECT, Attribute.CONTAINS, "E3"))
+        search.and(SearchCondition(SearchField.SUBJECT, Attribute.CONTAINS, "E3"))
         //search.and(SearchCondition(SearchField.MESSAGE_CONTENTS, Attribute.CONTAINS, "E3"))
 
         val queue = SynchronousQueue<List<MessageInfoHolder>>()
-        val localListener = E3ScanLocalMessageInfoHolderListener(context, MessageHelper.getInstance(context), queue)
+        val msgHelper = MessageHelper.getInstance(context)
+
+        // Search remote first which will add them to the database locally (if user allowed remote search)
+        val folderId = account.inboxFolder
+        val searchString = search.remoteSearchArguments
+        val listener = E3ScanRemoteListener()
+        controller.searchRemoteMessages(account.uuid, folderId, searchString, null, null, listener)
+
+        // Do local search now which should include any remote search results
+        val localListener = E3ScanLocalMessageInfoHolderListener(context, msgHelper, queue)
         controller.searchLocalMessages(search, localListener)
 
         val holders = queue.take()
@@ -62,11 +72,6 @@ class E3KeyScanScanLiveEvent(private val context: Context) : SingleLiveEvent<E3K
         }
 
         return E3KeyScanResult(holders)
-        // In case I want to try remote search
-        //val folder = account.inboxFolder // Apparently this inboxFolder value is the folder ID
-        //val searchString = search.remoteSearchArguments
-        //val listener = E3ScanListener()
-        //controller.searchRemoteMessages(account.uuid, folder, searchString, null, null, listener)
     }
 }
 
@@ -74,8 +79,8 @@ data class E3KeyScanResult(val results: List<MessageInfoHolder>)
 
 class E3ScanLocalMessageInfoHolderListener(private val context: Context,
                                            private val messageHelper: MessageHelper,
-                                           private val queue: BlockingQueue<List<MessageInfoHolder>>) : SimpleMessagingListener() {
-    private val holders = ArrayList<MessageInfoHolder>()
+                                           private val outputQueue: BlockingQueue<List<MessageInfoHolder>>) : SimpleMessagingListener() {
+    private val collectedResults = ArrayList<MessageInfoHolder>()
 
     override fun listLocalMessagesAddMessages(account: Account, folderServerId: String?, messages: List<LocalMessage>) {
         Timber.i("adding discovered message")
@@ -87,13 +92,13 @@ class E3ScanLocalMessageInfoHolderListener(private val context: Context,
             val folderInfoHolder = FolderInfoHolder(context, messageFolder, messageAccount)
             messageHelper.populate(messageInfoHolder, message, folderInfoHolder, messageAccount)
 
-            holders.add(messageInfoHolder)
+            collectedResults.add(messageInfoHolder)
         }
     }
 
     override fun searchStats(stats: AccountStats) {
         try {
-            queue.put(holders)
+            outputQueue.put(collectedResults)
         } catch (e: InterruptedException) {
             Timber.e(e, "Unable to return message list back to caller")
         }
@@ -101,23 +106,20 @@ class E3ScanLocalMessageInfoHolderListener(private val context: Context,
     }
 }
 
-// In case I want to try remote search
-/*
-class E3ScanListener : ActivityListener() {
+class E3ScanRemoteListener : SimpleMessagingListener() {
     override fun remoteSearchFailed(folderServerId: String, err: String) {
         throw MessagingException("Remote search failed for $folderServerId: $err")
     }
 
     override fun remoteSearchStarted(folder: String) {
-        Timber.i("Starting remote search in folder: $folder")
+        Timber.d("Starting remote search in folder: $folder")
     }
 
     override fun remoteSearchFinished(folderServerId: String, numResults: Int, maxResults: Int, extraResults: List<Message>?) {
-        Timber.i("Remote search finished, got $numResults results")
+        Timber.d("Remote search finished, got $numResults results")
     }
 
     override fun remoteSearchServerQueryComplete(folderServerId: String, numResults: Int, maxResults: Int) {
-        Timber.i("Remote search server query complete, got $numResults results")
+        Timber.d("Remote search server query complete, got $numResults results")
     }
 }
-*/
