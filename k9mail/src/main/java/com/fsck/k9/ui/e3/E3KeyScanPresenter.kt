@@ -63,14 +63,14 @@ class E3KeyScanPresenter internal constructor(
         view.finishAsCancelled()
     }
 
-    fun onClickScan(forceEnableRemoteSearch: Boolean) {
+    fun onClickScan(keyScanListener: E3KeyScanListener?) {
         view.sceneScanningAndDownloading()
 
         launch(UI) {
             view.uxDelay()
             view.setLoadingStateScanning()
 
-            viewModel.e3KeyScanScanLiveEvent.scanRemoteE3KeysAsync(account, forceEnableRemoteSearch)
+            viewModel.e3KeyScanScanLiveEvent.scanRemoteE3KeysAsync(account, keyScanListener)
         }
     }
 

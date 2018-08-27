@@ -11,7 +11,6 @@ import com.fsck.k9.helper.MessageHelper
 import com.fsck.k9.helper.SingleLiveEvent
 import com.fsck.k9.mail.Address
 import com.fsck.k9.mail.Message
-import com.fsck.k9.mail.MessagingException
 import com.fsck.k9.mailstore.LocalMessage
 import com.fsck.k9.search.LocalSearch
 import com.fsck.k9.search.SearchSpecification.*
@@ -25,52 +24,55 @@ import java.util.concurrent.SynchronousQueue
 
 class E3KeyScanScanLiveEvent(private val context: Context) : SingleLiveEvent<E3KeyScanResult>() {
 
-    fun scanRemoteE3KeysAsync(account: Account, forceEnableRemoteSearch: Boolean) {
+    fun scanRemoteE3KeysAsync(account: Account, listener: E3KeyScanListener?) {
         launch(UI) {
             val scanResult = bg {
-                scanRemote(account, forceEnableRemoteSearch)
+                scanRemote(account, listener)
             }
 
             value = scanResult.await()
         }
     }
 
-    private fun scanRemote(account: Account, forceEnableRemoteSearch: Boolean): E3KeyScanResult {
-        Timber.d("Got forceEnableRemoteSearch=$forceEnableRemoteSearch")
-        val address = Address.parse(account.getIdentity(0).email)[0]
-        val controller = MessagingController.getInstance(context)
-        val search = LocalSearch()
+    private fun scanRemote(account: Account, keyScanListener: E3KeyScanListener?): E3KeyScanResult {
+        try {
+            val address = Address.parse(account.getIdentity(0).email)[0]
+            val controller = MessagingController.getInstance(context)
+            val search = LocalSearch()
 
-        search.isManualSearch = true
-        search.addAccountUuid(account.uuid)
-        search.and(SearchCondition(SearchField.SENDER, Attribute.CONTAINS, address.address))
-        search.and(SearchCondition(SearchField.SUBJECT, Attribute.CONTAINS, "E3"))
-        //search.and(SearchCondition(SearchField.MESSAGE_CONTENTS, Attribute.CONTAINS, "E3"))
+            search.isManualSearch = true
+            search.addAccountUuid(account.uuid)
+            search.and(SearchCondition(SearchField.SENDER, Attribute.CONTAINS, address.address))
+            search.and(SearchCondition(SearchField.SUBJECT, Attribute.CONTAINS, "E3"))
+            //search.and(SearchCondition(SearchField.MESSAGE_CONTENTS, Attribute.CONTAINS, "E3"))
 
-        val queue = SynchronousQueue<List<MessageInfoHolder>>()
-        val msgHelper = MessageHelper.getInstance(context)
+            val queue = SynchronousQueue<List<MessageInfoHolder>>()
+            val msgHelper = MessageHelper.getInstance(context)
 
-        // Search remote first which will add them to the database locally (if user allowed remote search)
-        val folderId = account.inboxFolder
-        val searchString = search.remoteSearchArguments
-        val listener = E3ScanRemoteListener()
-        controller.searchRemoteMessages(account.uuid, folderId, searchString, null, null, listener)
+            // Search remote first which will add them to the database locally (if user allowed remote search)
+            val folderId = account.inboxFolder
+            val searchString = search.remoteSearchArguments
+            val listener = E3ScanRemoteListener()
+            controller.searchRemoteMessages(account.uuid, folderId, searchString, null, null, listener)
 
-        // Do local search now which should include any remote search results
-        val localListener = E3ScanLocalMessageInfoHolderListener(context, msgHelper, queue)
-        controller.searchLocalMessages(search, localListener)
+            // Do local search now which should include any remote search results
+            val localListener = E3ScanLocalMessageInfoHolderListener(context, msgHelper, queue)
+            controller.searchLocalMessages(search, localListener)
 
-        val holders = queue.take()
+            val holders = queue.take()
 
-        for (holder: MessageInfoHolder in holders) {
-            Timber.i("Found message from ${holder.senderAddress}")
+            for (holder: MessageInfoHolder in holders) {
+                Timber.i("Found message from ${holder.senderAddress}")
+            }
+
+            if (holders.isEmpty()) {
+                Timber.w("Scanned but found no E3 keys in ${address.address}")
+            }
+
+            return E3KeyScanResult(holders)
+        } finally {
+            keyScanListener?.keySearchFinished()
         }
-
-        if (holders.isEmpty()) {
-            Timber.w("Scanned but found no E3 keys in ${address.address}")
-        }
-
-        return E3KeyScanResult(holders)
     }
 }
 
