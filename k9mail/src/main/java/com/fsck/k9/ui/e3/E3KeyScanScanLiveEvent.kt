@@ -25,19 +25,19 @@ import java.util.concurrent.SynchronousQueue
 
 class E3KeyScanScanLiveEvent(private val context: Context) : SingleLiveEvent<E3KeyScanResult>() {
 
-    fun scanRemoteE3KeysAsync(account: Account) {
+    fun scanRemoteE3KeysAsync(account: Account, forceEnableRemoteSearch: Boolean) {
         launch(UI) {
             val scanResult = bg {
-                scanRemote(account)
+                scanRemote(account, forceEnableRemoteSearch)
             }
 
             value = scanResult.await()
         }
     }
 
-    private fun scanRemote(account: Account): E3KeyScanResult {
+    private fun scanRemote(account: Account, forceEnableRemoteSearch: Boolean): E3KeyScanResult {
+        Timber.d("Got forceEnableRemoteSearch=$forceEnableRemoteSearch")
         val address = Address.parse(account.getIdentity(0).email)[0]
-
         val controller = MessagingController.getInstance(context)
         val search = LocalSearch()
 
@@ -65,7 +65,6 @@ class E3KeyScanScanLiveEvent(private val context: Context) : SingleLiveEvent<E3K
         for (holder: MessageInfoHolder in holders) {
             Timber.i("Found message from ${holder.senderAddress}")
         }
-
 
         if (holders.isEmpty()) {
             Timber.w("Scanned but found no E3 keys in ${address.address}")
@@ -108,7 +107,7 @@ class E3ScanLocalMessageInfoHolderListener(private val context: Context,
 
 class E3ScanRemoteListener : SimpleMessagingListener() {
     override fun remoteSearchFailed(folderServerId: String, err: String) {
-        throw MessagingException("Remote search failed for $folderServerId: $err")
+        Timber.e("Remote search failed for $folderServerId: $err")
     }
 
     override fun remoteSearchStarted(folder: String) {
