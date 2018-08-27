@@ -1340,7 +1340,8 @@ Please submit bug reports, contribute new features and ask questions at
     <string name="e3_key_scan_intro">Scanning for your other uploaded E3 public keys allows you to encrypt your email using all of your public keys.</string>
     <string name="e3_key_scan_button">Scan for E3 Public Keys</string>
     <string name="e3_key_scan_location_desc">The following email account will be scanned:</string>
-    <string name="e3_key_scan_scanning">Scanning server…</string>
+    <string name="e3_key_scan_checkbox_remote_search">Temporarily enable remote search</string>
+    <string name="e3_key_scan_scanning">Scanning…</string>
     <string name="e3_key_scan_downloading">Downloading new E3 public keys…</string>
     <string name="e3_key_scan_finish">E3 public key download complete.</string>
     <string name="e3_key_scan_finish_no_messages">No E3 public keys were found.</string>

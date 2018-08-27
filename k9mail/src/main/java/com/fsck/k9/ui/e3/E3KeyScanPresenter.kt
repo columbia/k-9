@@ -8,10 +8,6 @@ import android.content.Intent
 import com.fsck.k9.Account
 import com.fsck.k9.Preferences
 import com.fsck.k9.crypto.E3Constants
-import com.fsck.k9.mail.BodyPart
-import com.fsck.k9.mail.Multipart
-import com.fsck.k9.mail.internet.MimeHeader
-import com.fsck.k9.mail.internet.MimeMultipart
 import com.fsck.k9.mail.internet.MimeUtility
 import com.fsck.k9.mailstore.LocalMessage
 import kotlinx.coroutines.experimental.android.UI
@@ -67,14 +63,14 @@ class E3KeyScanPresenter internal constructor(
         view.finishAsCancelled()
     }
 
-    fun onClickScan() {
+    fun onClickScan(forceEnableRemoteSearch: Boolean) {
         view.sceneScanningAndDownloading()
 
         launch(UI) {
             view.uxDelay()
             view.setLoadingStateScanning()
 
-            viewModel.e3KeyScanScanLiveEvent.scanRemoteE3KeysAsync(account)
+            viewModel.e3KeyScanScanLiveEvent.scanRemoteE3KeysAsync(account, forceEnableRemoteSearch)
         }
     }
 

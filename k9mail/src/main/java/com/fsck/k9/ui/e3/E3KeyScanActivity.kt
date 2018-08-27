@@ -23,7 +23,7 @@ class E3KeyScanActivity : E3ActionBaseActivity() {
 
         supportActionBar!!.setDisplayHomeAsUpEnabled(true)
 
-        e3KeyScanButton.setOnClickListener { presenter.onClickScan() }
+        e3KeyScanButton.setOnClickListener { presenter.onClickScan(e3KeyScanTempEnableRemoteSearchCheckbox.isChecked) }
 
         presenter.initFromIntent(accountUuid)
     }
@@ -43,6 +43,7 @@ class E3KeyScanActivity : E3ActionBaseActivity() {
 
     fun sceneBegin() {
         e3KeyScanButton.visibility = View.VISIBLE
+        e3KeyScanTempEnableRemoteSearchCheckbox.visibility = View.VISIBLE
         e3KeyScanMsgInfo.visibility = View.VISIBLE
 
         e3KeyScanLayoutScanning.visibility = View.GONE
@@ -57,6 +58,7 @@ class E3KeyScanActivity : E3ActionBaseActivity() {
         setupSceneTransition()
 
         e3KeyScanButton.visibility = View.GONE
+        e3KeyScanTempEnableRemoteSearchCheckbox.visibility = View.GONE
         e3KeyScanMsgInfo.visibility = View.GONE
         e3KeyScanLayoutScanning.visibility = View.VISIBLE
         e3KeyScanLayoutDownloading.visibility = View.VISIBLE
@@ -87,6 +89,7 @@ class E3KeyScanActivity : E3ActionBaseActivity() {
         }
 
         e3KeyScanButton.visibility = View.GONE
+        e3KeyScanTempEnableRemoteSearchCheckbox.visibility = View.GONE
         e3KeyScanMsgInfo.visibility = View.GONE
         e3KeyScanLayoutScanning.visibility = View.VISIBLE
         e3KeyScanLayoutDownloading.visibility = View.VISIBLE
@@ -102,6 +105,7 @@ class E3KeyScanActivity : E3ActionBaseActivity() {
         }
 
         e3KeyScanButton.visibility = View.GONE
+        e3KeyScanTempEnableRemoteSearchCheckbox.visibility = View.GONE
         e3KeyScanMsgInfo.visibility = View.GONE
         e3KeyScanLayoutScanning.visibility = View.VISIBLE
         e3KeyScanLayoutDownloading.visibility = View.VISIBLE
@@ -120,6 +124,7 @@ class E3KeyScanActivity : E3ActionBaseActivity() {
         setupSceneTransition()
 
         e3KeyScanButton.visibility = View.GONE
+        e3KeyScanTempEnableRemoteSearchCheckbox.visibility = View.GONE
         e3KeyScanMsgInfo.visibility = View.GONE
         e3KeyScanLayoutScanning.visibility = View.VISIBLE
         e3KeyScanLayoutDownloading.visibility = View.VISIBLE
