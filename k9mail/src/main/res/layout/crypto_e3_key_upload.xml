@@ -17,15 +17,6 @@
         android:layout_marginTop="24dp"
         android:text="@string/e3_key_upload_intro" />
 
-    <Button
-        android:id="@+id/e3KeyUploadButton"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:layout_gravity="center_horizontal"
-        android:layout_marginTop="24dp"
-        android:text="@string/e3_key_upload_button"
-        />
-
     <LinearLayout
         android:id="@+id/e3KeyUploadMsgInfo"
         android:layout_width="wrap_content"
@@ -61,6 +52,15 @@
             />
 
     </LinearLayout>
+
+    <Button
+        android:id="@+id/e3KeyUploadButton"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_gravity="center_horizontal"
+        android:layout_marginTop="24dp"
+        android:text="@string/e3_key_upload_button"
+        />
 
     <LinearLayout
         android:id="@+id/e3KeyUploadLayoutGenerating"

@@ -217,6 +217,12 @@
             />
 
         <activity
+            android:name=".ui.e3.E3UndoActivity"
+            android:configChanges="locale"
+            android:label="@string/e3_undo_title"
+            />
+
+        <activity
             android:name=".activity.FolderList"
             android:configChanges="locale"
             android:uiOptions="splitActionBarWhenNarrow">
