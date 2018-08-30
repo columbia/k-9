@@ -2,7 +2,6 @@ package com.fsck.k9.ui.e3
 
 import android.content.Context
 import android.content.Intent
-import android.content.SharedPreferences
 import android.os.Bundle
 import android.view.MenuItem
 import android.view.View
@@ -10,7 +9,6 @@ import com.fsck.k9.R
 import com.fsck.k9.view.StatusIndicator
 import kotlinx.android.synthetic.main.crypto_e3_key_scan.*
 import org.koin.android.ext.android.inject
-import timber.log.Timber
 
 class E3KeyScanActivity : E3ActionBaseActivity() {
     private val presenter: E3KeyScanPresenter by inject {
@@ -146,13 +144,5 @@ class E3KeyScanActivity : E3ActionBaseActivity() {
             intent.putExtra(EXTRA_ACCOUNT, accountUuid)
             return intent
         }
-    }
-}
-
-class E3KeyScanListener(private val sharedPrefsEditor: SharedPreferences.Editor, private val key: String) {
-    fun keySearchFinished() {
-        Timber.d("Resetting remote search shared preference to false")
-        sharedPrefsEditor.putBoolean(key, false)
-        sharedPrefsEditor.commit()
     }
 }
