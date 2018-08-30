@@ -10,6 +10,7 @@ import com.fsck.k9.mailstore.StorageManager
 import com.fsck.k9.mailstore.mailStoreModule
 import com.fsck.k9.ui.e3.e3KeyScanUiModule
 import com.fsck.k9.ui.e3.e3KeyUploadUiModule
+import com.fsck.k9.ui.e3.e3UndoUiModule
 import com.fsck.k9.ui.endtoend.endToEndUiModule
 import com.fsck.k9.ui.folders.FolderNameFormatter
 import com.fsck.k9.ui.settings.settingsUiModule
@@ -42,7 +43,8 @@ object DI {
             autocryptModule,
             mailStoreModule,
             e3KeyUploadUiModule,
-            e3KeyScanUiModule
+            e3KeyScanUiModule,
+            e3UndoUiModule
     )
 
     @JvmStatic fun start(application: Application) {

@@ -15,6 +15,7 @@ import com.fsck.k9.crypto.OpenPgpApiHelper
 import com.fsck.k9.mailstore.StorageManager
 import com.fsck.k9.ui.e3.E3KeyScanActivity
 import com.fsck.k9.ui.e3.E3KeyUploadActivity
+import com.fsck.k9.ui.e3.E3UndoActivity
 import com.fsck.k9.ui.endtoend.AutocryptKeyTransferActivity
 import com.fsck.k9.ui.settings.onClick
 import com.fsck.k9.ui.settings.oneTimeClickListener
@@ -193,6 +194,7 @@ class AccountSettingsFragment : PreferenceFragmentCompat() {
         configurePgpKey(PREFERENCE_E3_KEY, account, e3Provider)
         configureE3KeyUpload(account)
         configureE3KeyScan(account)
+        configureE3Undo(account)
     }
 
     private fun getOpenPgpProviderName(pgpProvider: String?): String? {
@@ -284,6 +286,13 @@ class AccountSettingsFragment : PreferenceFragmentCompat() {
         }
     }
 
+    private fun configureE3Undo(account: Account) {
+        findPreference(PREFERENCE_E3_UNDO).onClick {
+            val intent = E3UndoActivity.createIntent(requireContext(), account.uuid)
+            startActivity(intent)
+        }
+    }
+
     private fun initializeFolderSettings(account: Account) {
         findPreference(PREFERENCE_FOLDERS)?.let {
             if (!account.remoteStore.isMoveCapable) {
@@ -350,6 +359,7 @@ class AccountSettingsFragment : PreferenceFragmentCompat() {
         private const val PREFERENCE_E3_KEY = "e3_key"
         private const val PREFERENCE_E3_KEY_UPLOAD = "e3_key_upload"
         private const val PREFERENCE_E3_KEY_SCAN = "e3_key_scan"
+        private const val PREFERENCE_E3_UNDO = "e3_undo"
         private const val PREFERENCE_FOLDERS = "folders"
         private const val PREFERENCE_AUTO_EXPAND_FOLDER = "account_setup_auto_expand_folder"
         private const val PREFERENCE_ARCHIVE_FOLDER = "archive_folder"

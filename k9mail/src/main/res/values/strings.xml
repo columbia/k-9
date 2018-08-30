@@ -609,6 +609,8 @@ Please submit bug reports, contribute new features and ask questions at
     <string name="account_settings_e3_crypto_mode_standalone">Standalone: Encrypt on receipt</string>
     <string name="account_settings_e3_crypto_key_scan">Scan for public keys</string>
     <string name="account_settings_e3_crypto_key_scan_summary">Scan the IMAP server for E3 public keys</string>
+    <string name="account_settings_e3_crypto_undo">Undo E3 encryption</string>
+    <string name="account_settings_e3_crypto_undo_summary">Restores all E3 emails to plaintext.</string>
 
     <string name="account_settings_mail_check_frequency_label">Folder poll frequency</string>
 
@@ -1344,6 +1346,11 @@ Please submit bug reports, contribute new features and ask questions at
     <string name="e3_key_scan_finish_no_messages">No E3 public keys were found.</string>
     <string name="e3_key_scan_error_download">An error occurred while downloading your E3 public keys. Please check your network connectivity and outgoing server configuration.</string>
 
+    <string name="e3_undo_title">Undo E3 encryption</string>
+    <string name="e3_undo_intro">Decrypts all E3-encrypted emails, restoring them to their original plaintext emails.
+    \n\nWarning: This may take a while.</string>
+    <string name="e3_undo_button">Undo E3 Encryption</string>
+    <string name="e3_undo_location_desc">The following email account will have E3 encryption removed:</string>
 
     <string name="general_settings_title">General settings</string>
 

@@ -15,10 +15,10 @@
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:layout_marginTop="24dp"
-        android:text="@string/e3_key_scan_intro" />
+        android:text="@string/e3_undo_intro" />
 
     <LinearLayout
-        android:id="@+id/e3KeyScanMsgInfo"
+        android:id="@+id/e3UndoMsgInfo"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:layout_marginTop="24dp"
@@ -28,11 +28,11 @@
             style="?android:textAppearanceMedium"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:text="@string/e3_key_scan_location_desc"
+            android:text="@string/e3_undo_location_desc"
             />
 
         <TextView
-            android:id="@+id/e3KeyScanAddress"
+            android:id="@+id/e3UndoAddress"
             style="?android:textAppearanceMedium"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
@@ -43,22 +43,12 @@
     </LinearLayout>
 
     <Button
-        android:id="@+id/e3KeyScanButton"
+        android:id="@+id/e3UndoButton"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:layout_gravity="center_horizontal"
         android:layout_marginTop="24dp"
-        android:text="@string/e3_key_scan_button"
-        />
-
-    <CheckBox
-        android:id="@+id/e3KeyScanTempEnableRemoteSearchCheckbox"
-        style="?android:textAppearanceMedium"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:layout_gravity="center_vertical"
-        android:text="@string/e3_key_scan_checkbox_remote_search"
-        android:checked="true"
+        android:text="@string/e3_undo_button"
         />
 
     <!-- Start progress indicators -->
