@@ -24,20 +24,28 @@ import java.util.concurrent.SynchronousQueue
 
 class E3KeyScanScanLiveEvent(private val context: Context) : SingleLiveEvent<E3KeyScanResult>() {
 
-    fun scanRemoteE3KeysAsync(account: Account, listener: E3KeyScanListener?) {
+    fun scanRemoteE3KeysAsync(account: Account, tempEnableRemoteSearch: Boolean) {
         launch(UI) {
             val scanResult = bg {
-                scanRemote(account, listener)
+                scanRemote(account, tempEnableRemoteSearch)
             }
 
             value = scanResult.await()
         }
     }
 
-    private fun scanRemote(account: Account, keyScanListener: E3KeyScanListener?): E3KeyScanResult {
+    private fun scanRemote(account: Account, tempEnableRemoteSearch: Boolean): E3KeyScanResult {
+        var flippedRemoteSearch = false
         try {
             val address = Address.parse(account.getIdentity(0).email)[0]
             val controller = MessagingController.getInstance(context)
+
+            if (!account.allowRemoteSearch() && tempEnableRemoteSearch) {
+                Timber.d("Temporarily enabling remote search")
+                account.setAllowRemoteSearch(true)
+                flippedRemoteSearch = true
+            }
+
             val search = LocalSearch()
 
             search.isManualSearch = true
@@ -71,7 +79,10 @@ class E3KeyScanScanLiveEvent(private val context: Context) : SingleLiveEvent<E3K
 
             return E3KeyScanResult(holders)
         } finally {
-            keyScanListener?.keySearchFinished()
+            if (flippedRemoteSearch) {
+                Timber.d("Resetting remote search to false")
+                account.setAllowRemoteSearch(false)
+            }
         }
     }
 }

@@ -4,7 +4,6 @@ import android.content.Context
 import android.content.Intent
 import android.content.SharedPreferences
 import android.os.Bundle
-import android.preference.PreferenceManager
 import android.view.MenuItem
 import android.view.View
 import com.fsck.k9.R
@@ -27,20 +26,7 @@ class E3KeyScanActivity : E3ActionBaseActivity() {
         supportActionBar!!.setDisplayHomeAsUpEnabled(true)
 
         e3KeyScanButton.setOnClickListener {
-            var listener: E3KeyScanListener? = null
-            val sharedPrefKey = "remote_search_enabled"
-            val sharedPrefs = PreferenceManager.getDefaultSharedPreferences(this)
-            val savedRemoteSearchEnabled = sharedPrefs.getBoolean(sharedPrefKey, false)
-
-            if (e3KeyScanTempEnableRemoteSearchCheckbox.isChecked && !savedRemoteSearchEnabled) {
-                val editor = sharedPrefs.edit()
-                editor.putBoolean(sharedPrefKey, true)
-                editor.commit()
-
-                listener = E3KeyScanListener(editor, sharedPrefKey)
-            }
-
-            presenter.onClickScan(listener)
+            presenter.onClickScan(e3KeyScanTempEnableRemoteSearchCheckbox.isChecked)
         }
 
         presenter.initFromIntent(accountUuid)
