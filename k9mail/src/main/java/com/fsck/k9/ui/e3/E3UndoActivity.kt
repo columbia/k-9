@@ -23,9 +23,9 @@ class E3UndoActivity : E3ActionBaseActivity() {
 
         supportActionBar!!.setDisplayHomeAsUpEnabled(true)
 
-        //e3KeyScanButton.setOnClickListener {
-        //    presenter.onClickScan(e3KeyScanTempEnableRemoteSearchCheckbox.isChecked)
-        //}
+        e3UndoButton.setOnClickListener {
+            presenter.onClickUndo()
+        }
 
         presenter.initFromIntent(accountUuid)
     }
@@ -47,40 +47,33 @@ class E3UndoActivity : E3ActionBaseActivity() {
         e3UndoButton.visibility = View.VISIBLE
         e3UndoMsgInfo.visibility = View.VISIBLE
 
-        e3KeyScanLayoutScanning.visibility = View.GONE
-        e3KeyScanLayoutDownloading.visibility = View.GONE
-        e3KeyScanLayoutFinish.visibility = View.GONE
-        e3KeyScanLayoutFinishNoMessages.visibility = View.GONE
-        e3KeyScanCompletedInstructions.visibility = View.GONE
-        e3KeyScanErrorUpload.visibility = View.GONE
+        e3UndoLayoutUndoing.visibility = View.GONE
+        e3UndoLayoutFinish.visibility = View.GONE
+        e3UndoLayoutFinishNoMessages.visibility = View.GONE
+        e3UndoError.visibility = View.GONE
     }
 
-    fun sceneScanningAndDownloading() {
+    fun sceneUndoing() {
         setupSceneTransition()
 
         e3UndoButton.visibility = View.GONE
         e3UndoMsgInfo.visibility = View.GONE
-        e3KeyScanLayoutScanning.visibility = View.VISIBLE
-        e3KeyScanLayoutDownloading.visibility = View.VISIBLE
-        e3KeyScanLayoutFinish.visibility = View.GONE
-        e3KeyScanLayoutFinishNoMessages.visibility = View.GONE
-        e3KeyScanCompletedInstructions.visibility = View.GONE
-        e3KeyScanErrorUpload.visibility = View.GONE
+        e3UndoLayoutUndoing.visibility = View.VISIBLE
+        e3UndoLayoutFinish.visibility = View.GONE
+        e3UndoLayoutFinishNoMessages.visibility = View.GONE
+        e3UndoError.visibility = View.GONE
     }
 
-    fun setLoadingStateScanning() {
-        e3KeyScanProgressScanning.setDisplayedChild(StatusIndicator.Status.PROGRESS)
-        e3KeyScanProgressDownloading.setDisplayedChild(StatusIndicator.Status.IDLE)
+    fun setLoadingStateUndoing() {
+        e3UndoProgressUndoing.setDisplayedChild(StatusIndicator.Status.PROGRESS)
     }
 
     fun setLoadingStateDownloading() {
-        e3KeyScanProgressScanning.setDisplayedChild(StatusIndicator.Status.OK)
-        e3KeyScanProgressDownloading.setDisplayedChild(StatusIndicator.Status.PROGRESS)
+        e3UndoProgressUndoing.setDisplayedChild(StatusIndicator.Status.OK)
     }
 
     fun setLoadingStateFinished() {
-        e3KeyScanProgressScanning.setDisplayedChild(StatusIndicator.Status.OK)
-        e3KeyScanProgressDownloading.setDisplayedChild(StatusIndicator.Status.OK)
+        e3UndoProgressUndoing.setDisplayedChild(StatusIndicator.Status.OK)
     }
 
     fun sceneFinished(transition: Boolean = false) {
@@ -90,12 +83,10 @@ class E3UndoActivity : E3ActionBaseActivity() {
 
         e3UndoButton.visibility = View.GONE
         e3UndoMsgInfo.visibility = View.GONE
-        e3KeyScanLayoutScanning.visibility = View.VISIBLE
-        e3KeyScanLayoutDownloading.visibility = View.VISIBLE
-        e3KeyScanLayoutFinish.visibility = View.VISIBLE
-        e3KeyScanLayoutFinishNoMessages.visibility = View.GONE
-        e3KeyScanCompletedInstructions.visibility = View.VISIBLE
-        e3KeyScanErrorUpload.visibility = View.GONE
+        e3UndoLayoutUndoing.visibility = View.VISIBLE
+        e3UndoLayoutFinish.visibility = View.VISIBLE
+        e3UndoLayoutFinishNoMessages.visibility = View.GONE
+        e3UndoError.visibility = View.GONE
     }
 
     fun sceneFinishedNoMessages(transition: Boolean = false) {
@@ -105,17 +96,14 @@ class E3UndoActivity : E3ActionBaseActivity() {
 
         e3UndoButton.visibility = View.GONE
         e3UndoMsgInfo.visibility = View.GONE
-        e3KeyScanLayoutScanning.visibility = View.VISIBLE
-        e3KeyScanLayoutDownloading.visibility = View.VISIBLE
-        e3KeyScanLayoutFinish.visibility = View.GONE
-        e3KeyScanLayoutFinishNoMessages.visibility = View.VISIBLE
-        e3KeyScanCompletedInstructions.visibility = View.GONE
-        e3KeyScanErrorUpload.visibility = View.GONE
+        e3UndoLayoutUndoing.visibility = View.VISIBLE
+        e3UndoLayoutFinish.visibility = View.GONE
+        e3UndoLayoutFinishNoMessages.visibility = View.VISIBLE
+        e3UndoError.visibility = View.GONE
     }
 
     fun setLoadingStateSendingFailed() {
-        e3KeyScanProgressScanning.setDisplayedChild(StatusIndicator.Status.OK)
-        e3KeyScanProgressDownloading.setDisplayedChild(StatusIndicator.Status.ERROR)
+        e3UndoProgressUndoing.setDisplayedChild(StatusIndicator.Status.OK)
     }
 
     fun sceneSendError() {
@@ -123,12 +111,10 @@ class E3UndoActivity : E3ActionBaseActivity() {
 
         e3UndoButton.visibility = View.GONE
         e3UndoMsgInfo.visibility = View.GONE
-        e3KeyScanLayoutScanning.visibility = View.VISIBLE
-        e3KeyScanLayoutDownloading.visibility = View.VISIBLE
-        e3KeyScanLayoutFinish.visibility = View.GONE
-        e3KeyScanLayoutFinishNoMessages.visibility = View.GONE
-        e3KeyScanCompletedInstructions.visibility = View.GONE
-        e3KeyScanErrorUpload.visibility = View.VISIBLE
+        e3UndoLayoutUndoing.visibility = View.VISIBLE
+        e3UndoLayoutFinish.visibility = View.GONE
+        e3UndoLayoutFinishNoMessages.visibility = View.GONE
+        e3UndoError.visibility = View.VISIBLE
     }
 
     companion object {
