@@ -42,17 +42,7 @@ class E3KeyScanPresenter internal constructor(
 
         account = preferences.getAccount(accountUuid)
 
-        openPgpApiManager.setOpenPgpProvider(account.e3Provider, object : OpenPgpApiManager.OpenPgpApiManagerCallback {
-            override fun onOpenPgpProviderStatusChanged() {
-                if (openPgpApiManager.openPgpProviderState == OpenPgpApiManager.OpenPgpProviderState.UI_REQUIRED) {
-                    view.finishWithProviderConnectError(openPgpApiManager.readableOpenPgpProviderName)
-                }
-            }
-
-            override fun onOpenPgpProviderError(error: OpenPgpApiManager.OpenPgpProviderError) {
-                view.finishWithProviderConnectError(openPgpApiManager.readableOpenPgpProviderName)
-            }
-        })
+        openPgpApiManager.setOpenPgpProvider(account.e3Provider, E3OpenPgpPresenterCallback(openPgpApiManager, view))
 
         view.setAddress(account.identities[0].email)
 
