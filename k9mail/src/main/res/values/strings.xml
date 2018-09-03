@@ -1351,6 +1351,9 @@ Please submit bug reports, contribute new features and ask questions at
     \n\nWarning: This may take a while.</string>
     <string name="e3_undo_button">Undo E3 Encryption</string>
     <string name="e3_undo_location_desc">The following email account will have E3 encryption removed:</string>
+    <string name="e3_undo_undoing">Removing encryption…</string>
+    <string name="e3_undo_finish">E3 undo complete.</string>
+    <string name="e3_undo_finish_no_messages">No E3 encrypted messages were found.</string>
 
     <string name="general_settings_title">General settings</string>
 

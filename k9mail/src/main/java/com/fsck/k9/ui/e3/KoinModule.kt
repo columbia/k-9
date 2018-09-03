@@ -35,16 +35,14 @@ val e3KeyScanUiModule = applicationContext {
 }
 
 val e3UndoUiModule = applicationContext {
-    factory { E3KeyScanScanLiveEvent(get()) }
-    factory { E3KeyScanDownloadLiveEvent() }
+    factory { E3UndoLiveEvent(get()) }
     factory { params ->
         E3UndoPresenter(
                 params["lifecycleOwner"],
-                get(),
                 get(parameters = { params.values }),
                 get(),
                 get(),
                 params["e3UndoView"])
     }
-    viewModel { E3KeyScanViewModel(get(), get()) }
+    viewModel { E3UndoViewModel(get()) }
 }

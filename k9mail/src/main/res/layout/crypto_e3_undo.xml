@@ -54,7 +54,7 @@
     <!-- Start progress indicators -->
 
     <LinearLayout
-        android:id="@+id/e3KeyScanLayoutScanning"
+        android:id="@+id/e3UndoLayoutUndoing"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:layout_marginTop="8dp"
@@ -62,7 +62,7 @@
         android:padding="8dp">
 
         <com.fsck.k9.view.StatusIndicator
-            android:id="@+id/e3KeyScanProgressScanning"
+            android:id="@+id/e3UndoProgressUndoing"
             android:layout_width="24dp"
             android:layout_height="24dp"
             android:layout_gravity="center_vertical"
@@ -74,37 +74,13 @@
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:layout_gravity="center_vertical"
-            android:text="@string/e3_key_scan_scanning"
+            android:text="@string/e3_undo_undoing"
             />
 
     </LinearLayout>
 
     <LinearLayout
-        android:id="@+id/e3KeyScanLayoutDownloading"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:orientation="horizontal"
-        android:padding="8dp">
-
-        <com.fsck.k9.view.StatusIndicator
-            android:id="@+id/e3KeyScanProgressDownloading"
-            android:layout_width="24dp"
-            android:layout_height="24dp"
-            android:layout_gravity="center_vertical"
-            android:layout_margin="8dp"
-            />
-
-
-        <TextView
-            style="?android:textAppearanceMedium"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:text="@string/e3_key_scan_downloading"
-            />
-    </LinearLayout>
-
-    <LinearLayout
-        android:id="@+id/e3KeyScanLayoutFinish"
+        android:id="@+id/e3UndoLayoutFinish"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:orientation="horizontal"
@@ -122,13 +98,13 @@
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:layout_gravity="center_vertical"
-            android:text="@string/e3_key_scan_finish"
+            android:text="@string/e3_undo_finish"
             />
 
     </LinearLayout>
 
     <LinearLayout
-        android:id="@+id/e3KeyScanLayoutFinishNoMessages"
+        android:id="@+id/e3UndoLayoutFinishNoMessages"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:orientation="horizontal"
@@ -146,26 +122,17 @@
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:layout_gravity="center_vertical"
-            android:text="@string/e3_key_scan_finish_no_messages"
+            android:text="@string/e3_undo_finish_no_messages"
             />
 
     </LinearLayout>
 
     <TextView
-        android:id="@+id/e3KeyScanErrorUpload"
+        android:id="@+id/e3UndoError"
         style="?android:textAppearanceMedium"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:text="@string/e3_key_scan_error_download"
-        tools:visibility="gone"
-        />
-
-    <TextView
-        android:id="@+id/e3KeyScanCompletedInstructions"
-        style="?android:textAppearanceMedium"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:text="@string/e3_key_scan_completed_instructions"
         tools:visibility="gone"
         />
 
