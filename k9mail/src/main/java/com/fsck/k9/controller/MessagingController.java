@@ -91,7 +91,7 @@ import com.fsck.k9.mailstore.LocalMessage;
 import com.fsck.k9.mailstore.LocalStore;
 import com.fsck.k9.mailstore.MessageRemovalListener;
 import com.fsck.k9.mailstore.UnavailableStorageException;
-import com.fsck.k9.message.SimplePgpEncryptor;
+import com.fsck.k9.message.SimpleE3PgpEncryptor;
 import com.fsck.k9.notification.NotificationController;
 import com.fsck.k9.search.LocalSearch;
 import com.fsck.k9.search.SearchAccount;
@@ -1336,10 +1336,10 @@ public class MessagingController {
                             @Override
                             public void onBound(IOpenPgpService2 service) {
                                 final OpenPgpApi openPgpApi = new OpenPgpApi(context, service);
-                                final SimplePgpEncryptor encryptor = new SimplePgpEncryptor(openPgpApi, accountCryptoKeyId);
+                                final SimpleE3PgpEncryptor encryptor = new SimpleE3PgpEncryptor(openPgpApi, accountCryptoKeyId);
 
                                 try {
-                                    final MimeMessage encryptedMimeMessage = encryptor.encryptMessage((MimeMessage) originalMessage, accountEmail);
+                                    final MimeMessage encryptedMimeMessage = encryptor.encrypt((MimeMessage) originalMessage, accountEmail);
                                     encryptedMimeMessage.setHeader(E3Constants.MIME_E3_ENCRYPTED_HEADER, accountEmail[0]);
                                     final T encryptedMessage = (T) encryptedMimeMessage;
 
