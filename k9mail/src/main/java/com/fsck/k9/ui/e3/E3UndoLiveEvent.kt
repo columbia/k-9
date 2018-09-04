@@ -9,15 +9,21 @@ import com.fsck.k9.activity.FolderInfoHolder
 import com.fsck.k9.activity.MessageInfoHolder
 import com.fsck.k9.autocrypt.AutocryptOperations
 import com.fsck.k9.controller.MessagingController
+import com.fsck.k9.controller.MessagingControllerCommands.*
 import com.fsck.k9.controller.SimpleMessagingListener
+import com.fsck.k9.controller.UnavailableAccountException
 import com.fsck.k9.crypto.E3Constants
 import com.fsck.k9.helper.MessageHelper
 import com.fsck.k9.helper.SingleLiveEvent
 import com.fsck.k9.mail.Address
 import com.fsck.k9.mail.FetchProfile
+import com.fsck.k9.mail.Flag
 import com.fsck.k9.mail.MessagingException
+import com.fsck.k9.mail.internet.MimeMessage
 import com.fsck.k9.mailstore.CryptoResultAnnotation
+import com.fsck.k9.mailstore.LocalFolder
 import com.fsck.k9.mailstore.LocalMessage
+import com.fsck.k9.mailstore.UnavailableStorageException
 import com.fsck.k9.search.LocalSearch
 import com.fsck.k9.search.SearchSpecification
 import com.fsck.k9.ui.crypto.MessageCryptoAnnotations
@@ -34,6 +40,7 @@ import java.util.concurrent.BlockingQueue
 import java.util.concurrent.SynchronousQueue
 
 class E3UndoLiveEvent(private val context: Context) : SingleLiveEvent<E3UndoResult>() {
+    private val messagingController = MessagingController.getInstance(context)
 
     fun undoE3Async(account: Account) {
         launch(UI) {
@@ -120,6 +127,8 @@ class E3UndoLiveEvent(private val context: Context) : SingleLiveEvent<E3UndoResu
                     val cryptoResultAnnotation = annotations!!.get(message)
                     if (cryptoResultAnnotation.errorType == CryptoResultAnnotation.CryptoError.OPENPGP_OK) {
                         decryptedResults.add(annotations)
+
+                        synchronizeDecrypted(account, message.folder, decryptedMessage, message.uid)
                     } else {
                         Timber.e("Got annotations with non-OK CryptoError: ${cryptoResultAnnotation.errorType}")
                     }
@@ -136,6 +145,80 @@ class E3UndoLiveEvent(private val context: Context) : SingleLiveEvent<E3UndoResu
         }
 
         return decryptedResults
+    }
+
+    private fun synchronizeDecrypted(account: Account,
+                                     localFolder: LocalFolder,
+                                     decryptedMessage: MimeMessage,
+                                     originalUid: String): LocalMessage {
+        try {
+            // Store the decrypted message locally
+            val localMessage = synchronizeMessageLocally(localFolder, decryptedMessage)
+            localMessage.setFlag(Flag.E3, true)
+
+            val localMessageList = listOf(localMessage)
+            val fp = FetchProfile()
+            fp.add(FetchProfile.Item.ENVELOPE)
+            fp.add(FetchProfile.Item.BODY)
+            localFolder.fetch(localMessageList, fp, null)
+
+            val trashFolder = account.trashFolder
+            val folderIsTrash = trashFolder == localFolder.name
+            val uidSingleton = listOf(originalUid)
+
+            if (!folderIsTrash) {
+                // First: Set \Deleted on the original (encrypted) message
+                queueSetFlag(account, localFolder.name, true, Flag.DELETED, uidSingleton)
+
+                // Second: Move original to Gmail's trash folder
+                queueMoveOrCopy(account, localFolder.name, trashFolder, false, uidSingleton)
+            }
+
+            // Third: Append decrypted remotely
+            Timber.d("Pending APPEND: ${localFolder.name}, ${decryptedMessage.uid}")
+            val appendCmd = PendingAppend.create(localFolder.serverId, decryptedMessage.uid)
+            queuePendingCommand(account, appendCmd)
+
+            if (!folderIsTrash) {
+                // Fourth: Queue empty trash (expunge) command
+                val emptyTrashCmd = PendingEmptyTrash.create()
+                queuePendingCommand(account, emptyTrashCmd)
+            }
+
+            // Final: Run all the queued commands
+            messagingController.processPendingCommandsSynchronous(account)
+
+            return localMessage
+        } catch (e: MessagingException) {
+            throw RuntimeException("Failed to replace encrypted email with plaintext email", e)
+        }
+    }
+
+    @Throws(MessagingException::class)
+    private fun synchronizeMessageLocally(localFolder: LocalFolder, message: MimeMessage): LocalMessage {
+        return localFolder.storeSmallMessage(message, Runnable { })
+    }
+
+    private fun queueSetFlag(account: Account, folderServerId: String,
+                             newState: Boolean, flag: Flag, uids: List<String>) {
+        val command = PendingSetFlag.create(folderServerId, newState, flag, uids)
+        queuePendingCommand(account, command)
+        messagingController.processPendingCommandsSynchronous(account)
+    }
+
+    private fun queuePendingCommand(account: Account, command: PendingCommand) {
+        try {
+            val localStore = account.localStore
+            localStore.addPendingCommand(command)
+        } catch (e: Exception) {
+            throw RuntimeException("Unable to enqueue pending command", e)
+        }
+    }
+
+    private fun queueMoveOrCopy(account: Account, srcFolder: String, destFolder: String, isCopy: Boolean,
+                                uids: List<String>) {
+        val command = PendingMoveOrCopy.create(srcFolder, destFolder, isCopy, uids)
+        queuePendingCommand(account, command)
     }
 }
 
