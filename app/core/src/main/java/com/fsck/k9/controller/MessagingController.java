@@ -90,7 +90,7 @@ import com.fsck.k9.mailstore.LocalFolder;
 import com.fsck.k9.mailstore.LocalMessage;
 import com.fsck.k9.mailstore.LocalStore;
 import com.fsck.k9.mailstore.UnavailableStorageException;
-import com.fsck.k9.message.SimplePgpEncryptor;
+import com.fsck.k9.message.SimpleE3PgpEncryptor;
 import com.fsck.k9.notification.NotificationController;
 import com.fsck.k9.power.TracingPowerManager;
 import com.fsck.k9.power.TracingPowerManager.TracingWakeLock;

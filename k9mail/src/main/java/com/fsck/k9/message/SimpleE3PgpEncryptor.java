@@ -25,16 +25,16 @@ import java.io.OutputStream;
 
 import timber.log.Timber;
 
-public class SimplePgpEncryptor {
+public class SimpleE3PgpEncryptor {
     private final Long pgpKeyId;
     private final OpenPgpApi openPgpApi;
 
-    public SimplePgpEncryptor(final OpenPgpApi openPgpApi, final Long pgpKeyId) {
+    public SimpleE3PgpEncryptor(final OpenPgpApi openPgpApi, final Long pgpKeyId) {
         this.openPgpApi = openPgpApi;
         this.pgpKeyId = pgpKeyId;
     }
 
-    public MimeMessage encryptMessage(final MimeMessage originalMessage, final String[] recipients) throws MessagingException {
+    public MimeMessage encrypt(final MimeMessage originalMessage, final String[] recipients) throws MessagingException {
         Intent pgpApiIntent = new Intent(OpenPgpApi.ACTION_SIGN_AND_ENCRYPT);
 
         long[] selfEncryptIds = { pgpKeyId };
@@ -74,7 +74,7 @@ public class SimplePgpEncryptor {
                         multipartEncrypted.getBoundary());
                 originalMessage.setHeader(MimeHeader.HEADER_CONTENT_TYPE, contentType);
 
-                Timber.d("SimplePgpEncryptor successfully encrypted on receipt");
+                Timber.d("SimpleE3PgpEncryptor successfully encrypted on receipt");
 
                 return originalMessage;
 
