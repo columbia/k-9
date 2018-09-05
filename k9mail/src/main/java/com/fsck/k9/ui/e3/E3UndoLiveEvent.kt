@@ -116,11 +116,12 @@ class E3UndoLiveEvent(private val context: Context) : SingleLiveEvent<E3UndoResu
                     val decryptor = SimpleE3PgpDecryptor(openPgpApi, account.e3Key)
 
                     try {
-                        val decryptedMimeMessage = decryptor.decrypt(message as MimeMessage, account.email)
+                        val originalUid = message.uid
+                        val decryptedMessage = decryptor.decrypt(message as MimeMessage, account.email)
 
                         Thread({
-                            Timber.d("Synchronizing decrypted E3 message: ${message.subject}")
-                            synchronizeDecrypted(account, message.folder, decryptedMimeMessage, message.uid)
+                            Timber.d("Synchronizing decrypted E3 message: ${message.subject} (originalUid=$originalUid, decryptedMessageUid=${decryptedMessage.uid}")
+                            synchronizeDecrypted(account, message.folder, decryptedMessage, originalUid)
                         }).start()
                     } catch (e: MessagingException) {
                         Timber.e("Failed to decrypt message: ${message.subject}, likely because E3 encrypted using an unavailable key!", e)
@@ -145,9 +146,8 @@ class E3UndoLiveEvent(private val context: Context) : SingleLiveEvent<E3UndoResu
             // Store the decrypted message locally
             val localMessage = synchronizeMessageLocally(localFolder, decryptedMessage)
             localMessage.setFlag(Flag.E3, false)
-
-            val localMessageList = listOf(localMessage)
-            localFolder.fetch(localMessageList, fetchProfile, null)
+            localFolder.fetch(listOf(localMessage), fetchProfile, null)
+            Timber.d("Synchronized message locally with uid=${localMessage.uid}")
 
             val trashFolder = account.trashFolder
             val folderIsTrash = trashFolder == localFolder.name
@@ -165,6 +165,7 @@ class E3UndoLiveEvent(private val context: Context) : SingleLiveEvent<E3UndoResu
             Timber.d("Pending APPEND: ${localFolder.name}, ${decryptedMessage.uid}")
             val appendCmd = PendingAppend.create(localFolder.serverId, decryptedMessage.uid)
             queuePendingCommand(account, appendCmd)
+            messagingController.processPendingCommandsSynchronous(account)
 
             if (!folderIsTrash) {
                 // Fourth: Queue empty trash (expunge) command
