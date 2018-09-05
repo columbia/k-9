@@ -4,7 +4,6 @@ import android.app.PendingIntent;
 import android.content.Intent;
 import android.support.annotation.NonNull;
 
-import com.fsck.k9.mail.BoundaryGenerator;
 import com.fsck.k9.mail.MessagingException;
 import com.fsck.k9.mail.filter.EOLConvertingOutputStream;
 import com.fsck.k9.mail.internet.BinaryTempFileBody;
@@ -61,7 +60,7 @@ public class SimpleE3PgpEncryptor {
 
         switch (resultCode) {
             case OpenPgpApi.RESULT_CODE_SUCCESS:
-                MimeMultipart multipartEncrypted = new MimeMultipart(BoundaryGenerator.getInstance().generateBoundary());
+                MimeMultipart multipartEncrypted = MimeMultipart.newInstance();
                 multipartEncrypted.setSubType("encrypted");
                 multipartEncrypted.addBodyPart(new MimeBodyPart(new TextBody("Version: 1"), "application/pgp-encrypted"));
 
