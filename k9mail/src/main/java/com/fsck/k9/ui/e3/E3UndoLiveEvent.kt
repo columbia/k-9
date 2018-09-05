@@ -1,13 +1,10 @@
 package com.fsck.k9.ui.e3
 
 import android.content.Context
-import android.content.Intent
-import android.content.IntentSender
 import com.fsck.k9.Account
 import com.fsck.k9.AccountStats
 import com.fsck.k9.activity.FolderInfoHolder
 import com.fsck.k9.activity.MessageInfoHolder
-import com.fsck.k9.autocrypt.AutocryptOperations
 import com.fsck.k9.controller.MessagingController
 import com.fsck.k9.controller.MessagingControllerCommands.*
 import com.fsck.k9.controller.SimpleMessagingListener
@@ -16,18 +13,18 @@ import com.fsck.k9.helper.MessageHelper
 import com.fsck.k9.helper.SingleLiveEvent
 import com.fsck.k9.mail.*
 import com.fsck.k9.mail.internet.*
-import com.fsck.k9.mailstore.CryptoResultAnnotation
 import com.fsck.k9.mailstore.LocalFolder
 import com.fsck.k9.mailstore.LocalMessage
+import com.fsck.k9.message.SimpleE3PgpDecryptor
 import com.fsck.k9.search.LocalSearch
 import com.fsck.k9.search.SearchSpecification
 import com.fsck.k9.ui.crypto.MessageCryptoAnnotations
-import com.fsck.k9.ui.crypto.MessageCryptoCallback
-import com.fsck.k9.ui.crypto.MessageCryptoHelper
-import com.fsck.k9.ui.crypto.OpenPgpApiFactory
 import kotlinx.coroutines.experimental.android.UI
 import kotlinx.coroutines.experimental.launch
 import org.jetbrains.anko.coroutines.experimental.bg
+import org.openintents.openpgp.IOpenPgpService2
+import org.openintents.openpgp.util.OpenPgpApi
+import org.openintents.openpgp.util.OpenPgpServiceConnection
 import timber.log.Timber
 import java.util.*
 import java.util.concurrent.ArrayBlockingQueue
@@ -113,62 +110,31 @@ class E3UndoLiveEvent(private val context: Context) : SingleLiveEvent<E3UndoResu
         val decryptedResults = ArrayBlockingQueue<MessageCryptoAnnotations?>(messageBatch.size)
 
         for (message in messageBatch) {
-            val cryptoHelper = MessageCryptoHelper(context, account, OpenPgpApiFactory(),
-                    AutocryptOperations.getInstance(), e3Provider, account.e3Key)
+            val pgpServiceConnection = OpenPgpServiceConnection(context, e3Provider, object : OpenPgpServiceConnection.OnBound {
+                override fun onBound(service: IOpenPgpService2) {
+                    val openPgpApi = OpenPgpApi(context, service)
+                    val decryptor = SimpleE3PgpDecryptor(openPgpApi, account.e3Key)
 
-            val cryptoCallback = object : MessageCryptoCallback {
-                override fun onCryptoHelperProgress(current: Int, max: Int) {
-                }
+                    try {
+                        val decryptedMimeMessage = decryptor.decrypt(message as MimeMessage, account.email)
 
-                override fun onCryptoOperationsFinished(annotations: MessageCryptoAnnotations?) {
-                    Timber.d("Decrypt E3 message completed: ${message.subject}, $annotations")
-
-                    if (annotations != null ) {
-                        decryptedResults.add(annotations)
-
-                        val cryptoResultAnnotation = annotations.get(message)
-
-                        if (cryptoResultAnnotation.errorType == CryptoResultAnnotation.CryptoError.OPENPGP_OK) {
-                            handleDecryptedMessageInCallback(account, message, cryptoResultAnnotation)
-                        } else {
-                            Timber.w("Got annotations with non-OK CryptoError: ${cryptoResultAnnotation.errorType} (${message.subject})")
-                        }
-                    } else {
-                        Timber.w("Got null MessageCryptoAnnotation when decrypting: uid=${message.uid}")
+                        Thread({
+                            Timber.d("Synchronizing decrypted E3 message: ${message.subject}")
+                            synchronizeDecrypted(account, message.folder, decryptedMimeMessage, message.uid)
+                        }).start()
+                    } catch (e: MessagingException) {
+                        Timber.e("Failed to decrypt message: ${message.subject}, likely because E3 encrypted using an unavailable key!", e)
                     }
                 }
 
-                override fun startPendingIntentForCryptoHelper(si: IntentSender?, requestCode: Int,
-                                                               fillIntent: Intent?, flagsMask: Int,
-                                                               flagValues: Int, extraFlags: Int) {
-                    Timber.d("IntentSender=$si, requestCode=$requestCode, Intent=$fillIntent")
+                override fun onError(e: Exception) {
+                    Timber.e("Got error while binding to OpenPGP service", e)
                 }
-            }
-
-            cryptoHelper.asyncStartOrResumeProcessingMessage(message, cryptoCallback, null, !account.openPgpHideSignOnly)
+            })
+            pgpServiceConnection.bindToService()
         }
 
         return decryptedResults
-    }
-
-    private fun handleDecryptedMessageInCallback(account: Account, message: LocalMessage, annotation: CryptoResultAnnotation) {
-        val originalUid = message.uid
-        val decryptedBodyPart: MimeBodyPart = annotation.replacementData!!
-
-        val multipartDecrypted = MimeMultipart(BoundaryGenerator.getInstance().generateBoundary())
-        multipartDecrypted.setSubType("alternative")
-        multipartDecrypted.addBodyPart(decryptedBodyPart)
-
-        MimeMessageHelper.setBody(message, multipartDecrypted)
-        val contentType = "multipart/alternative; boundary=\"${multipartDecrypted.boundary}\""
-        message.setHeader(MimeHeader.HEADER_CONTENT_TYPE, contentType)
-        message.removeHeader(E3Constants.MIME_E3_ENCRYPTED_HEADER)
-        message.setFlag(Flag.E3, false)
-
-        launch(UI) {
-            synchronizeDecrypted(account, message.folder, message, originalUid)
-        }
-
     }
 
     private fun synchronizeDecrypted(account: Account,
