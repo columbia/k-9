@@ -12,6 +12,13 @@ import timber.log.Timber
 
 class E3KeyScanDownloadLiveEvent : SingleLiveEvent<E3KeyScanDownloadResult>() {
 
+    private val fetchProfile = FetchProfile()
+
+    init {
+        fetchProfile.add(FetchProfile.Item.ENVELOPE)
+        fetchProfile.add(FetchProfile.Item.BODY)
+    }
+
     fun downloadE3KeysAsync(e3KeyScanResult: E3KeyScanResult) {
         launch(UI) {
             val scanResult = bg {
@@ -32,7 +39,6 @@ class E3KeyScanDownloadLiveEvent : SingleLiveEvent<E3KeyScanDownloadResult>() {
     }
 
     private fun downloadRemote(e3KeyScanResult: E3KeyScanResult): List<LocalMessage> {
-        //val address = Address.parse(account.getIdentity(0).email)[0]
         val filtered = mutableListOf<LocalMessage>()
 
         for (holder: MessageInfoHolder in e3KeyScanResult.results) {
@@ -52,10 +58,8 @@ class E3KeyScanDownloadLiveEvent : SingleLiveEvent<E3KeyScanDownloadResult>() {
             }
 
             val localMessageList = listOf<LocalMessage>(msg)
-            val fp = FetchProfile()
-            fp.add(FetchProfile.Item.ENVELOPE)
-            fp.add(FetchProfile.Item.BODY)
-            msg.folder.fetch(localMessageList, fp, null)
+
+            msg.folder.fetch(localMessageList, fetchProfile, null)
 
             filtered.add(msg)
         }
