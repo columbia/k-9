@@ -64,8 +64,10 @@ public class SimpleE3PgpEncryptor {
                 MimeMultipart multipartEncrypted = new MimeMultipart(BoundaryGenerator.getInstance().generateBoundary());
                 multipartEncrypted.setSubType("encrypted");
                 multipartEncrypted.addBodyPart(new MimeBodyPart(new TextBody("Version: 1"), "application/pgp-encrypted"));
+
                 MimeBodyPart encryptedPart = new MimeBodyPart(pgpResultTempBody, "application/octet-stream; name=\"encrypted.asc\"");
                 encryptedPart.addHeader(MimeHeader.HEADER_CONTENT_DISPOSITION, "inline; filename=\"encrypted.asc\"");
+
                 multipartEncrypted.addBodyPart(encryptedPart);
                 MimeMessageHelper.setBody(originalMessage, multipartEncrypted);
 
@@ -74,7 +76,7 @@ public class SimpleE3PgpEncryptor {
                         multipartEncrypted.getBoundary());
                 originalMessage.setHeader(MimeHeader.HEADER_CONTENT_TYPE, contentType);
 
-                Timber.d("SimpleE3PgpEncryptor successfully encrypted on receipt");
+                Timber.d("SimpleE3PgpEncryptor successfully encrypted");
 
                 return originalMessage;
 
