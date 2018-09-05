@@ -1,7 +1,6 @@
 package com.fsck.k9.message;
 
 import android.app.PendingIntent;
-import android.content.Context;
 import android.content.Intent;
 import android.support.annotation.NonNull;
 
@@ -9,7 +8,6 @@ import com.fsck.k9.crypto.E3Constants;
 import com.fsck.k9.mail.Address;
 import com.fsck.k9.mail.Body;
 import com.fsck.k9.mail.BodyPart;
-import com.fsck.k9.mail.BoundaryGenerator;
 import com.fsck.k9.mail.Flag;
 import com.fsck.k9.mail.MessagingException;
 import com.fsck.k9.mail.Multipart;
@@ -40,7 +38,7 @@ public class SimpleE3PgpDecryptor {
         this.pgpKeyId = pgpKeyId;
     }
 
-    public MimeMessage decrypt(final MimeMessage encryptedMessage, final String accountEmail) throws MessagingException {
+    public MimeMessage decrypt(final MimeMessage encryptedMessage, final String accountEmail) throws MessagingException, IOException {
         Intent pgpApiIntent = buildDecryptIntent(encryptedMessage, accountEmail);
 
         MimeBodyPart bodyPart = encryptedMessage.toBodyPart();
@@ -60,18 +58,12 @@ public class SimpleE3PgpDecryptor {
 
         switch (resultCode) {
             case OpenPgpApi.RESULT_CODE_SUCCESS:
-                MimeMultipart multipartDecrypted = new MimeMultipart(BoundaryGenerator.getInstance().generateBoundary());
-                multipartDecrypted.setSubType("alternative");
+                MimeMessage decryptedMessage = MimeMessage.parseMimeMessage(pgpResultTempBody.getInputStream(), true);
+                Body decryptedBody = decryptedMessage.getBody();
 
-                MimeBodyPart decryptedPart = new MimeBodyPart(pgpResultTempBody); // Content-type?
-                //decryptedPart.addHeader(MimeHeader.HEADER_CONTENT_DISPOSITION, "inline; filename=\"encrypted.asc\"");
+                MimeMessageHelper.setBody(encryptedMessage, decryptedBody);
 
-                multipartDecrypted.addBodyPart(decryptedPart);
-                MimeMessageHelper.setBody(encryptedMessage, multipartDecrypted);
-
-                String contentType = String.format("multipart/alternative; boundary=\"%s\"",
-                        multipartDecrypted.getBoundary());
-                encryptedMessage.setHeader(MimeHeader.HEADER_CONTENT_TYPE, contentType);
+                encryptedMessage.setHeader(MimeHeader.HEADER_CONTENT_TYPE, decryptedMessage.getContentType());
                 encryptedMessage.removeHeader(E3Constants.MIME_E3_ENCRYPTED_HEADER);
                 encryptedMessage.setFlag(Flag.E3, false);
 
