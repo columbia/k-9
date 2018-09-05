@@ -11,19 +11,14 @@ import com.fsck.k9.autocrypt.AutocryptOperations
 import com.fsck.k9.controller.MessagingController
 import com.fsck.k9.controller.MessagingControllerCommands.*
 import com.fsck.k9.controller.SimpleMessagingListener
-import com.fsck.k9.controller.UnavailableAccountException
 import com.fsck.k9.crypto.E3Constants
 import com.fsck.k9.helper.MessageHelper
 import com.fsck.k9.helper.SingleLiveEvent
-import com.fsck.k9.mail.Address
-import com.fsck.k9.mail.FetchProfile
-import com.fsck.k9.mail.Flag
-import com.fsck.k9.mail.MessagingException
-import com.fsck.k9.mail.internet.MimeMessage
+import com.fsck.k9.mail.*
+import com.fsck.k9.mail.internet.*
 import com.fsck.k9.mailstore.CryptoResultAnnotation
 import com.fsck.k9.mailstore.LocalFolder
 import com.fsck.k9.mailstore.LocalMessage
-import com.fsck.k9.mailstore.UnavailableStorageException
 import com.fsck.k9.search.LocalSearch
 import com.fsck.k9.search.SearchSpecification
 import com.fsck.k9.ui.crypto.MessageCryptoAnnotations
@@ -41,6 +36,12 @@ import java.util.concurrent.SynchronousQueue
 
 class E3UndoLiveEvent(private val context: Context) : SingleLiveEvent<E3UndoResult>() {
     private val messagingController = MessagingController.getInstance(context)
+    private val fetchProfile = FetchProfile()
+
+    init {
+        fetchProfile.add(FetchProfile.Item.ENVELOPE)
+        fetchProfile.add(FetchProfile.Item.BODY)
+    }
 
     fun undoE3Async(account: Account) {
         launch(UI) {
@@ -88,9 +89,6 @@ class E3UndoLiveEvent(private val context: Context) : SingleLiveEvent<E3UndoResu
 
     private fun decryptInBatches(account: Account, messageHolders: List<MessageInfoHolder>, batchSize: Int = 10): List<String> {
         val decryptedUids = ArrayList<String>()
-        val fp = FetchProfile()
-        fp.add(FetchProfile.Item.ENVELOPE)
-        fp.add(FetchProfile.Item.BODY)
 
         // Convert input List of MessageInfoHolder to batches of List of LocalMessage that are E3 encrypted
         val chunkedMessages = messageHolders.filter { it -> it.message.headerNames.contains(E3Constants.MIME_E3_ENCRYPTED_HEADER) }
@@ -103,7 +101,7 @@ class E3UndoLiveEvent(private val context: Context) : SingleLiveEvent<E3UndoResu
 
             val folder = batch[0].folder
 
-            folder.fetch(batch, fp, null)
+            folder.fetch(batch, fetchProfile, null)
             decryptBatch(account, batch)
         }
 
@@ -124,13 +122,19 @@ class E3UndoLiveEvent(private val context: Context) : SingleLiveEvent<E3UndoResu
 
                 override fun onCryptoOperationsFinished(annotations: MessageCryptoAnnotations?) {
                     Timber.d("Decrypt E3 message completed: ${message.subject}, $annotations")
-                    val cryptoResultAnnotation = annotations!!.get(message)
-                    if (cryptoResultAnnotation.errorType == CryptoResultAnnotation.CryptoError.OPENPGP_OK) {
+
+                    if (annotations != null ) {
                         decryptedResults.add(annotations)
 
-                        synchronizeDecrypted(account, message.folder, decryptedMessage, message.uid)
+                        val cryptoResultAnnotation = annotations.get(message)
+
+                        if (cryptoResultAnnotation.errorType == CryptoResultAnnotation.CryptoError.OPENPGP_OK) {
+                            handleDecryptedMessageInCallback(account, message, cryptoResultAnnotation)
+                        } else {
+                            Timber.w("Got annotations with non-OK CryptoError: ${cryptoResultAnnotation.errorType} (${message.subject})")
+                        }
                     } else {
-                        Timber.e("Got annotations with non-OK CryptoError: ${cryptoResultAnnotation.errorType}")
+                        Timber.w("Got null MessageCryptoAnnotation when decrypting: uid=${message.uid}")
                     }
                 }
 
@@ -147,6 +151,26 @@ class E3UndoLiveEvent(private val context: Context) : SingleLiveEvent<E3UndoResu
         return decryptedResults
     }
 
+    private fun handleDecryptedMessageInCallback(account: Account, message: LocalMessage, annotation: CryptoResultAnnotation) {
+        val originalUid = message.uid
+        val decryptedBodyPart: MimeBodyPart = annotation.replacementData!!
+
+        val multipartDecrypted = MimeMultipart(BoundaryGenerator.getInstance().generateBoundary())
+        multipartDecrypted.setSubType("alternative")
+        multipartDecrypted.addBodyPart(decryptedBodyPart)
+
+        MimeMessageHelper.setBody(message, multipartDecrypted)
+        val contentType = "multipart/alternative; boundary=\"${multipartDecrypted.boundary}\""
+        message.setHeader(MimeHeader.HEADER_CONTENT_TYPE, contentType)
+        message.removeHeader(E3Constants.MIME_E3_ENCRYPTED_HEADER)
+        message.setFlag(Flag.E3, false)
+
+        launch(UI) {
+            synchronizeDecrypted(account, message.folder, message, originalUid)
+        }
+
+    }
+
     private fun synchronizeDecrypted(account: Account,
                                      localFolder: LocalFolder,
                                      decryptedMessage: MimeMessage,
@@ -154,13 +178,10 @@ class E3UndoLiveEvent(private val context: Context) : SingleLiveEvent<E3UndoResu
         try {
             // Store the decrypted message locally
             val localMessage = synchronizeMessageLocally(localFolder, decryptedMessage)
-            localMessage.setFlag(Flag.E3, true)
+            localMessage.setFlag(Flag.E3, false)
 
             val localMessageList = listOf(localMessage)
-            val fp = FetchProfile()
-            fp.add(FetchProfile.Item.ENVELOPE)
-            fp.add(FetchProfile.Item.BODY)
-            localFolder.fetch(localMessageList, fp, null)
+            localFolder.fetch(localMessageList, fetchProfile, null)
 
             val trashFolder = account.trashFolder
             val folderIsTrash = trashFolder == localFolder.name
