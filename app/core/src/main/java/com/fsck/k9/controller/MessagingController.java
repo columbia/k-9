@@ -43,17 +43,10 @@ import com.fsck.k9.DI;
 import com.fsck.k9.K9;
 import com.fsck.k9.K9.Intents;
 import com.fsck.k9.Preferences;
-<<<<<<< HEAD:app/core/src/main/java/com/fsck/k9/controller/MessagingController.java
 import com.fsck.k9.backend.BackendManager;
 import com.fsck.k9.backend.api.Backend;
 import com.fsck.k9.backend.api.SyncConfig;
 import com.fsck.k9.backend.api.SyncListener;
-=======
-import com.fsck.k9.R;
-import com.fsck.k9.activity.ActivityListener;
-import com.fsck.k9.activity.MessageReference;
-import com.fsck.k9.activity.setup.AccountSetupCheckSettings.CheckDirection;
->>>>>>> Untested: implement PGP encryption on receipt:k9mail/src/main/java/com/fsck/k9/controller/MessagingController.java
 import com.fsck.k9.cache.EmailProviderCache;
 import com.fsck.k9.controller.MessagingControllerCommands.PendingAppend;
 import com.fsck.k9.controller.MessagingControllerCommands.PendingCommand;
@@ -63,11 +56,6 @@ import com.fsck.k9.controller.MessagingControllerCommands.PendingMarkAllAsRead;
 import com.fsck.k9.controller.MessagingControllerCommands.PendingMoveOrCopy;
 import com.fsck.k9.controller.MessagingControllerCommands.PendingSetFlag;
 import com.fsck.k9.controller.ProgressBodyFactory.ProgressListener;
-<<<<<<< HEAD:app/core/src/main/java/com/fsck/k9/controller/MessagingController.java
-=======
-import com.fsck.k9.controller.imap.ImapMessageStore;
-import com.fsck.k9.crypto.E3Constants;
->>>>>>> Workaround for E3 flag by adding X-E3-ENCRYPTED header:k9mail/src/main/java/com/fsck/k9/controller/MessagingController.java
 import com.fsck.k9.helper.Contacts;
 import com.fsck.k9.mail.Address;
 import com.fsck.k9.mail.AuthenticationFailedException;
@@ -84,38 +72,20 @@ import com.fsck.k9.mail.Part;
 import com.fsck.k9.mail.PushReceiver;
 import com.fsck.k9.mail.Pusher;
 import com.fsck.k9.mail.internet.MessageExtractor;
-import com.fsck.k9.mail.internet.MimeMessage;
 import com.fsck.k9.mail.internet.MimeUtility;
 import com.fsck.k9.mailstore.LocalFolder;
 import com.fsck.k9.mailstore.LocalMessage;
 import com.fsck.k9.mailstore.LocalStore;
 import com.fsck.k9.mailstore.UnavailableStorageException;
-import com.fsck.k9.message.SimpleE3PgpEncryptor;
 import com.fsck.k9.notification.NotificationController;
 import com.fsck.k9.power.TracingPowerManager;
 import com.fsck.k9.power.TracingPowerManager.TracingWakeLock;
 import com.fsck.k9.search.LocalSearch;
 import com.fsck.k9.search.SearchAccount;
 import com.fsck.k9.search.SearchSpecification;
-<<<<<<< HEAD:app/core/src/main/java/com/fsck/k9/controller/MessagingController.java
-<<<<<<< HEAD:app/core/src/main/java/com/fsck/k9/controller/MessagingController.java
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-=======
 
-<<<<<<< HEAD:app/core/src/main/java/com/fsck/k9/controller/MessagingController.java
-import org.openintents.openpgp.util.OpenPgpApi;
-import org.openintents.openpgp.util.OpenPgpServiceConnection;
-
->>>>>>> Untested: implement PGP encryption on receipt:k9mail/src/main/java/com/fsck/k9/controller/MessagingController.java
-=======
->>>>>>> WIP: Tried to convert SimplePgpEncryptor to Activity (DO NOT DEPLOY):k9mail/src/main/java/com/fsck/k9/controller/MessagingController.java
-=======
-
-import org.openintents.openpgp.util.OpenPgpApi;
-import org.openintents.openpgp.util.OpenPgpServiceConnection;
-
->>>>>>> Remove the Activity stuff from SimplePGPEncryptor:k9mail/src/main/java/com/fsck/k9/controller/MessagingController.java
 import timber.log.Timber;
 
 import static com.fsck.k9.K9.MAX_SEND_ATTEMPTS;
