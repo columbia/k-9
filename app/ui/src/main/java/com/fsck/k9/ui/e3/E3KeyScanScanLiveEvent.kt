@@ -3,14 +3,10 @@ package com.fsck.k9.ui.e3
 import android.content.Context
 import com.fsck.k9.Account
 import com.fsck.k9.AccountStats
-import com.fsck.k9.activity.FolderInfoHolder
-import com.fsck.k9.activity.MessageInfoHolder
 import com.fsck.k9.controller.MessagingController
 import com.fsck.k9.controller.SimpleMessagingListener
-import com.fsck.k9.helper.MessageHelper
 import com.fsck.k9.helper.SingleLiveEvent
 import com.fsck.k9.mail.Address
-import com.fsck.k9.mail.Message
 import com.fsck.k9.mailstore.LocalMessage
 import com.fsck.k9.search.LocalSearch
 import com.fsck.k9.search.SearchSpecification.*
@@ -54,8 +50,7 @@ class E3KeyScanScanLiveEvent(private val context: Context) : SingleLiveEvent<E3K
             search.and(SearchCondition(SearchField.SUBJECT, Attribute.CONTAINS, "E3"))
             //search.and(SearchCondition(SearchField.MESSAGE_CONTENTS, Attribute.CONTAINS, "E3"))
 
-            val queue = SynchronousQueue<List<MessageInfoHolder>>()
-            val msgHelper = MessageHelper.getInstance(context)
+            val queue = SynchronousQueue<List<LocalMessage>>()
 
             // Search remote first which will add them to the database locally (if user allowed remote search)
             val folderId = account.inboxFolder
@@ -64,13 +59,13 @@ class E3KeyScanScanLiveEvent(private val context: Context) : SingleLiveEvent<E3K
             controller.searchRemoteMessages(account.uuid, folderId, searchString, null, null, listener)
 
             // Do local search now which should include any remote search results
-            val localListener = E3ScanLocalMessageInfoHolderListener(context, msgHelper, queue)
+            val localListener = E3ScanLocalMessageInfoHolderListener(queue)
             controller.searchLocalMessages(search, localListener)
 
             val holders = queue.take()
 
-            for (holder: MessageInfoHolder in holders) {
-                Timber.i("Found message from ${holder.senderAddress}")
+            for (holder: LocalMessage in holders) {
+                Timber.i("Found message from ${holder.from[0]}")
             }
 
             if (holders.isEmpty()) {
@@ -87,25 +82,16 @@ class E3KeyScanScanLiveEvent(private val context: Context) : SingleLiveEvent<E3K
     }
 }
 
-data class E3KeyScanResult(val results: List<MessageInfoHolder>)
+data class E3KeyScanResult(val results: List<LocalMessage>)
 
-class E3ScanLocalMessageInfoHolderListener(private val context: Context,
-                                           private val messageHelper: MessageHelper,
-                                           private val outputQueue: BlockingQueue<List<MessageInfoHolder>>) : SimpleMessagingListener() {
-    private val collectedResults = ArrayList<MessageInfoHolder>()
+class E3ScanLocalMessageInfoHolderListener(
+        private val outputQueue: BlockingQueue<List<LocalMessage>>
+) : SimpleMessagingListener() {
+    private val collectedResults = ArrayList<LocalMessage>()
 
     override fun listLocalMessagesAddMessages(account: Account, folderServerId: String?, messages: List<LocalMessage>) {
         Timber.i("adding discovered message")
-        for (message in messages) {
-            val messageInfoHolder = MessageInfoHolder()
-            val messageFolder = message.folder
-            val messageAccount = message.account
-
-            val folderInfoHolder = FolderInfoHolder(context, messageFolder, messageAccount)
-            messageHelper.populate(messageInfoHolder, message, folderInfoHolder, messageAccount)
-
-            collectedResults.add(messageInfoHolder)
-        }
+        collectedResults.addAll(messages)
     }
 
     override fun searchStats(stats: AccountStats) {
@@ -125,10 +111,6 @@ class E3ScanRemoteListener : SimpleMessagingListener() {
 
     override fun remoteSearchStarted(folder: String) {
         Timber.d("Starting remote search in folder: $folder")
-    }
-
-    override fun remoteSearchFinished(folderServerId: String, numResults: Int, maxResults: Int, extraResults: List<Message>?) {
-        Timber.d("Remote search finished, got $numResults results")
     }
 
     override fun remoteSearchServerQueryComplete(folderServerId: String, numResults: Int, maxResults: Int) {

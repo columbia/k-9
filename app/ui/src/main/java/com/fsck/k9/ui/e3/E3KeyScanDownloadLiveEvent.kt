@@ -1,6 +1,5 @@
 package com.fsck.k9.ui.e3
 
-import com.fsck.k9.activity.MessageInfoHolder
 import com.fsck.k9.crypto.E3Constants
 import com.fsck.k9.helper.SingleLiveEvent
 import com.fsck.k9.mail.FetchProfile
@@ -41,12 +40,11 @@ class E3KeyScanDownloadLiveEvent : SingleLiveEvent<E3KeyScanDownloadResult>() {
     private fun downloadRemote(e3KeyScanResult: E3KeyScanResult): List<LocalMessage> {
         val filtered = mutableListOf<LocalMessage>()
 
-        for (holder: MessageInfoHolder in e3KeyScanResult.results) {
-            if (!holder.message.headerNames.contains(E3Constants.MIME_E3_NAME)) {
+        for (msg: LocalMessage in e3KeyScanResult.results) {
+            if (!msg.headerNames.contains(E3Constants.MIME_E3_NAME)) {
                 continue
             }
 
-            val msg = holder.message
             val subj = msg.subject
             val keyName = msg.getHeader(E3Constants.MIME_E3_NAME)[0]
 

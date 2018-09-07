@@ -1,16 +1,10 @@
-package com.fsck.k9.message;
+package com.fsck.k9.crypto;
 
 import android.app.PendingIntent;
 import android.content.Intent;
 import android.support.annotation.NonNull;
 
-import com.fsck.k9.crypto.E3Constants;
-import com.fsck.k9.mail.Address;
-import com.fsck.k9.mail.Body;
-import com.fsck.k9.mail.BodyPart;
-import com.fsck.k9.mail.Flag;
 import com.fsck.k9.mail.MessagingException;
-import com.fsck.k9.mail.Multipart;
 import com.fsck.k9.mail.filter.EOLConvertingOutputStream;
 import com.fsck.k9.mail.internet.BinaryTempFileBody;
 import com.fsck.k9.mail.internet.MimeBodyPart;
@@ -18,6 +12,7 @@ import com.fsck.k9.mail.internet.MimeHeader;
 import com.fsck.k9.mail.internet.MimeMessage;
 import com.fsck.k9.mail.internet.MimeMessageHelper;
 import com.fsck.k9.mail.internet.MimeMultipart;
+import com.fsck.k9.mail.internet.TextBody;
 
 import org.apache.james.mime4j.util.MimeUtil;
 import org.openintents.openpgp.OpenPgpError;
@@ -29,20 +24,28 @@ import java.io.OutputStream;
 
 import timber.log.Timber;
 
-public class SimpleE3PgpDecryptor {
+public class SimpleE3PgpEncryptor {
     private final Long pgpKeyId;
     private final OpenPgpApi openPgpApi;
 
-    public SimpleE3PgpDecryptor(final OpenPgpApi openPgpApi, final Long pgpKeyId) {
+    public SimpleE3PgpEncryptor(final OpenPgpApi openPgpApi, final Long pgpKeyId) {
         this.openPgpApi = openPgpApi;
         this.pgpKeyId = pgpKeyId;
     }
 
-    public MimeMessage decrypt(final MimeMessage encryptedMessage, final String accountEmail) throws MessagingException, IOException {
-        Intent pgpApiIntent = buildDecryptIntent(encryptedMessage, accountEmail);
+    public MimeMessage encrypt(final MimeMessage originalMessage, final String[] recipients) throws MessagingException {
+        Intent pgpApiIntent = new Intent(OpenPgpApi.ACTION_SIGN_AND_ENCRYPT);
 
-        MimeBodyPart bodyPart = encryptedMessage.toBodyPart();
+        long[] selfEncryptIds = { pgpKeyId };
+        pgpApiIntent.putExtra(OpenPgpApi.EXTRA_KEY_IDS, selfEncryptIds);
+        pgpApiIntent.putExtra(OpenPgpApi.EXTRA_USER_IDS, recipients);
+        pgpApiIntent.putExtra(OpenPgpApi.EXTRA_SIGN_KEY_ID, pgpKeyId);
+        pgpApiIntent.putExtra(OpenPgpApi.EXTRA_REQUEST_ASCII_ARMOR, true);
+        pgpApiIntent.putExtra(OpenPgpApi.EXTRA_REQUEST_ENCRYPT_ON_RECEIPT, true);
+
+        MimeBodyPart bodyPart = originalMessage.toBodyPart();
         OpenPgpDataSource dataSource = createOpenPgpDataSourceFromBodyPart(bodyPart);
+
         BinaryTempFileBody pgpResultTempBody = null;
         OutputStream outputStream = null;
         try {
@@ -53,23 +56,28 @@ public class SimpleE3PgpDecryptor {
         }
 
         final Intent result = openPgpApi.executeApi(pgpApiIntent, dataSource, outputStream);
-
         final int resultCode = result.getIntExtra(OpenPgpApi.RESULT_CODE, OpenPgpApi.RESULT_CODE_ERROR);
 
         switch (resultCode) {
             case OpenPgpApi.RESULT_CODE_SUCCESS:
-                MimeMessage decryptedMessage = MimeMessage.parseMimeMessage(pgpResultTempBody.getInputStream(), true);
-                Body decryptedBody = decryptedMessage.getBody();
+                MimeMultipart multipartEncrypted = MimeMultipart.newInstance();
+                multipartEncrypted.setSubType("encrypted");
+                multipartEncrypted.addBodyPart(new MimeBodyPart(new TextBody("Version: 1"), "application/pgp-encrypted"));
 
-                MimeMessageHelper.setBody(encryptedMessage, decryptedBody);
+                MimeBodyPart encryptedPart = new MimeBodyPart(pgpResultTempBody, "application/octet-stream; name=\"encrypted.asc\"");
+                encryptedPart.addHeader(MimeHeader.HEADER_CONTENT_DISPOSITION, "inline; filename=\"encrypted.asc\"");
 
-                encryptedMessage.setHeader(MimeHeader.HEADER_CONTENT_TYPE, decryptedMessage.getContentType());
-                encryptedMessage.removeHeader(E3Constants.MIME_E3_ENCRYPTED_HEADER);
-                encryptedMessage.setFlag(Flag.E3, false);
+                multipartEncrypted.addBodyPart(encryptedPart);
+                MimeMessageHelper.setBody(originalMessage, multipartEncrypted);
 
-                Timber.d("SimpleE3PgpDecryptor successfully decrypted");
+                String contentType = String.format(
+                        "multipart/encrypted; boundary=\"%s\";\r\n  protocol=\"application/pgp-encrypted\"",
+                        multipartEncrypted.getBoundary());
+                originalMessage.setHeader(MimeHeader.HEADER_CONTENT_TYPE, contentType);
 
-                return encryptedMessage;
+                Timber.d("SimpleE3PgpEncryptor successfully encrypted");
+
+                return originalMessage;
 
             case OpenPgpApi.RESULT_CODE_USER_INTERACTION_REQUIRED:
                 PendingIntent returnedPendingIntent = result.getParcelableExtra(OpenPgpApi.RESULT_INTENT);
@@ -91,36 +99,15 @@ public class SimpleE3PgpDecryptor {
         throw new IllegalStateException("unreachable code segment reached");
     }
 
-    private Intent buildDecryptIntent(MimeMessage encryptedMessage, String accountEmail) {
-        Intent pgpApiIntent = new Intent(OpenPgpApi.ACTION_DECRYPT_VERIFY);
-
-        Address[] from = encryptedMessage.getFrom();
-        if (from.length > 0) {
-            pgpApiIntent.putExtra(OpenPgpApi.EXTRA_SENDER_ADDRESS, from[0].getAddress());
-            pgpApiIntent.putExtra(OpenPgpApi.EXTRA_ENCRYPT_ON_RECEIPT_ADDRESS, accountEmail);
-        }
-
-        pgpApiIntent.putExtra(OpenPgpApi.EXTRA_SUPPORT_OVERRIDE_CRYPTO_WARNING, true);
-
-        if (encryptedMessage.isSet(Flag.E3)) {
-            pgpApiIntent.putExtra(OpenPgpApi.EXTRA_KEY_ID, pgpKeyId);
-        }
-
-        return pgpApiIntent;
-    }
-
     @NonNull
     private OpenPgpDataSource createOpenPgpDataSourceFromBodyPart(final MimeBodyPart bodyPart) {
         return new OpenPgpDataSource() {
             @Override
             public void writeTo(OutputStream os) throws IOException {
                 try {
-                    Multipart multipartEncryptedMultipart = (Multipart) bodyPart.getBody();
-                    BodyPart encryptionPayloadPart = multipartEncryptedMultipart.getBodyPart(1);
-                    Body encryptionPayloadBody = encryptionPayloadPart.getBody();
-                    encryptionPayloadBody.writeTo(os);
+                    bodyPart.writeTo(os);
                 } catch (MessagingException e) {
-                    Timber.e(e, "MessagingException while writing message to crypto provider");
+                    throw new IOException(e);
                 }
             }
         };

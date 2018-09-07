@@ -5,7 +5,6 @@ import android.content.IntentSender
 import android.os.Build
 import android.transition.TransitionInflater
 import android.transition.TransitionManager
-import com.fsck.k9.R
 import com.fsck.k9.activity.K9Activity
 import com.fsck.k9.finishWithErrorToast
 import kotlinx.coroutines.experimental.delay

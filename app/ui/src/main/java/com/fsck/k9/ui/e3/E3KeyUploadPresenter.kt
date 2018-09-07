@@ -6,7 +6,6 @@ import android.arch.lifecycle.Observer
 import android.content.Context
 import com.fsck.k9.Account
 import com.fsck.k9.Preferences
-import com.fsck.k9.mail.TransportProvider
 import kotlinx.coroutines.experimental.android.UI
 import kotlinx.coroutines.experimental.launch
 import org.openintents.openpgp.OpenPgpApiManager
@@ -16,7 +15,6 @@ class E3KeyUploadPresenter internal constructor(
         lifecycleOwner: LifecycleOwner,
         private val context: Context,
         private val openPgpApiManager: OpenPgpApiManager,
-        private val transportProvider: TransportProvider,
         private val preferences: Preferences,
         private val viewModel: E3KeyUploadViewModel,
         private val view: E3KeyUploadActivity
@@ -65,8 +63,7 @@ class E3KeyUploadPresenter internal constructor(
         view.setLoadingStateSending()
         view.sceneGeneratingAndUploading()
 
-        val transport = transportProvider.getTransport(context, account)
-        viewModel.e3KeyUploadMessageUploadLiveEvent.sendMessageAsync(transport, setupMsg)
+        viewModel.e3KeyUploadMessageUploadLiveEvent.sendMessageAsync(account, setupMsg)
     }
 
     private fun onLoadedE3KeyUploadMessageUpload(result: E3KeyUploadMessageUploadResult?) {

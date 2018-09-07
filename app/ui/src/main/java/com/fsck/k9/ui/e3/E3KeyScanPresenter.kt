@@ -68,7 +68,6 @@ class E3KeyScanPresenter internal constructor(
         view.setLoadingStateDownloading()
         view.sceneScanningAndDownloading()
 
-        //val transport = transportProvider.getTransport(context, account)
         viewModel.e3KeyScanDownloadLiveEvent.downloadE3KeysAsync(e3KeyScanResult)
     }
 
