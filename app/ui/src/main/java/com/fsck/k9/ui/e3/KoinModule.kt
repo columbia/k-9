@@ -16,6 +16,7 @@ val e3KeyUploadUiModule = applicationContext {
                 params["e3UploadView"])
     }
     viewModel { E3KeyUploadViewModel(get(), get()) }
+    bean { E3KeyUploadMessageCreator(get()) }
 }
 
 val e3KeyScanUiModule = applicationContext {
