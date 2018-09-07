@@ -5,5 +5,4 @@ import org.openintents.openpgp.OpenPgpApiManager
 
 val openPgpModule = applicationContext {
     factory { params -> OpenPgpApiManager(get(), params["lifecycleOwner"]) }
-    bean { E3KeyUploadMessageCreator(get()) }
 }

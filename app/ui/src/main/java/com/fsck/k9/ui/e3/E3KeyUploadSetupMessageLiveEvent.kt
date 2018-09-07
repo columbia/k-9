@@ -4,7 +4,6 @@ import android.app.PendingIntent
 import android.content.Intent
 import android.graphics.Bitmap
 import com.fsck.k9.Account
-import com.fsck.k9.crypto.E3KeyUploadMessageCreator
 import com.fsck.k9.crypto.KeyFormattingUtils
 import com.fsck.k9.helper.SingleLiveEvent
 import com.fsck.k9.mail.Message
@@ -17,7 +16,7 @@ import java.io.ByteArrayOutputStream
 import java.io.InputStream
 import java.security.MessageDigest
 
-class E3KeyUploadSetupMessageLiveEvent(val messageCreator: E3KeyUploadMessageCreator) : SingleLiveEvent<E3KeyUploadMessage>() {
+class E3KeyUploadSetupMessageLiveEvent(private val messageCreator: E3KeyUploadMessageCreator) : SingleLiveEvent<E3KeyUploadMessage>() {
 
     fun loadE3KeyUploadMessageAsync(openPgpApi: OpenPgpApi, account: Account) {
         launch(UI) {

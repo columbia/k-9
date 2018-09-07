@@ -1,4 +1,4 @@
-package com.fsck.k9.crypto
+package com.fsck.k9.ui.e3
 
 import android.content.res.Resources
 import android.graphics.Bitmap
@@ -6,14 +6,15 @@ import android.os.Build
 import android.util.Base64
 import com.fsck.k9.Account
 import com.fsck.k9.K9
-import com.fsck.k9.R
+import com.fsck.k9.crypto.E3Constants
+import com.fsck.k9.crypto.KeyFormattingUtils
 import com.fsck.k9.mail.Address
 import com.fsck.k9.mail.Flag
 import com.fsck.k9.mail.Message
 import com.fsck.k9.mail.MessagingException
 import com.fsck.k9.mail.internet.*
 import com.fsck.k9.mailstore.BinaryMemoryBody
-import com.fsck.k9.ui.e3.KeyFingerprint
+import com.fsck.k9.ui.R
 import java.io.ByteArrayOutputStream
 import java.util.*
 

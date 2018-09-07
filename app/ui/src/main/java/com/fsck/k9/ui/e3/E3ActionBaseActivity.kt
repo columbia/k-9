@@ -7,6 +7,7 @@ import android.transition.TransitionInflater
 import android.transition.TransitionManager
 import com.fsck.k9.activity.K9Activity
 import com.fsck.k9.finishWithErrorToast
+import com.fsck.k9.ui.R
 import kotlinx.coroutines.experimental.delay
 import timber.log.Timber
 

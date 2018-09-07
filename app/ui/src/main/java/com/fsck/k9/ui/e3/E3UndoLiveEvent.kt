@@ -3,22 +3,20 @@ package com.fsck.k9.ui.e3
 import android.content.Context
 import com.fsck.k9.Account
 import com.fsck.k9.AccountStats
-import com.fsck.k9.activity.FolderInfoHolder
-import com.fsck.k9.activity.MessageInfoHolder
 import com.fsck.k9.controller.MessagingController
 import com.fsck.k9.controller.MessagingControllerCommands.*
 import com.fsck.k9.controller.SimpleMessagingListener
 import com.fsck.k9.crypto.E3Constants
+import com.fsck.k9.crypto.SimpleE3PgpDecryptor
 import com.fsck.k9.helper.MessageHelper
 import com.fsck.k9.helper.SingleLiveEvent
 import com.fsck.k9.mail.*
 import com.fsck.k9.mail.internet.*
 import com.fsck.k9.mailstore.LocalFolder
 import com.fsck.k9.mailstore.LocalMessage
-import com.fsck.k9.message.SimpleE3PgpDecryptor
+import com.fsck.k9.mailstore.MessageCryptoAnnotations
 import com.fsck.k9.search.LocalSearch
 import com.fsck.k9.search.SearchSpecification
-import com.fsck.k9.ui.crypto.MessageCryptoAnnotations
 import kotlinx.coroutines.experimental.android.UI
 import kotlinx.coroutines.experimental.launch
 import org.jetbrains.anko.coroutines.experimental.bg
@@ -68,13 +66,13 @@ class E3UndoLiveEvent(private val context: Context) : SingleLiveEvent<E3UndoResu
         search.addAccountUuid(account.uuid)
         search.and(SearchSpecification.SearchCondition(SearchSpecification.SearchField.FLAG, SearchSpecification.Attribute.CONTAINS, "E3"))
 
-        val queue = SynchronousQueue<List<MessageInfoHolder>>()
+        val queue = SynchronousQueue<List<LocalMessage>>()
         val msgHelper = MessageHelper.getInstance(context)
 
         val localListener = E3UndoLocalMessageInfoHolderListener(context, msgHelper, queue)
         controller.searchLocalMessages(search, localListener)
 
-        val holders: List<MessageInfoHolder> = queue.take()
+        val holders: List<LocalMessage> = queue.take()
 
         if (holders.isEmpty()) {
             Timber.w("Found no E3 messages in ${address.address}")
@@ -84,12 +82,12 @@ class E3UndoLiveEvent(private val context: Context) : SingleLiveEvent<E3UndoResu
         return decryptInBatches(account, holders)
     }
 
-    private fun decryptInBatches(account: Account, messageHolders: List<MessageInfoHolder>, batchSize: Int = 10): List<String> {
+    private fun decryptInBatches(account: Account, messageHolders: List<LocalMessage>, batchSize: Int = 10): List<String> {
         val decryptedUids = ArrayList<String>()
 
-        // Convert input List of MessageInfoHolder to batches of List of LocalMessage that are E3 encrypted
-        val chunkedMessages = messageHolders.filter { it -> it.message.headerNames.contains(E3Constants.MIME_E3_ENCRYPTED_HEADER) }
-                .chunked(batchSize) { it.map { it.message } }
+        // Convert input to batches of List of LocalMessage that are E3 encrypted
+        val chunkedMessages = messageHolders.filter { it -> it.headerNames.contains(E3Constants.MIME_E3_ENCRYPTED_HEADER) }
+                .chunked(batchSize)
 
         for (batch: List<LocalMessage> in chunkedMessages) {
             if (batch.isEmpty()) {
@@ -218,21 +216,12 @@ sealed class E3UndoResult {
 
 class E3UndoLocalMessageInfoHolderListener(private val context: Context,
                                            private val messageHelper: MessageHelper,
-                                           private val outputQueue: BlockingQueue<List<MessageInfoHolder>>) : SimpleMessagingListener() {
-    private val collectedResults = java.util.ArrayList<MessageInfoHolder>()
+                                           private val outputQueue: BlockingQueue<List<LocalMessage>>) : SimpleMessagingListener() {
+    private val collectedResults = java.util.ArrayList<LocalMessage>()
 
     override fun listLocalMessagesAddMessages(account: Account, folderServerId: String?, messages: List<LocalMessage>) {
         Timber.i("adding discovered message")
-        for (message in messages) {
-            val messageInfoHolder = MessageInfoHolder()
-            val messageFolder = message.folder
-            val messageAccount = message.account
-
-            val folderInfoHolder = FolderInfoHolder(context, messageFolder, messageAccount)
-            messageHelper.populate(messageInfoHolder, message, folderInfoHolder, messageAccount)
-
-            collectedResults.add(messageInfoHolder)
-        }
+        collectedResults.addAll(messages)
     }
 
     override fun searchStats(stats: AccountStats) {
