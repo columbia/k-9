@@ -14,6 +14,7 @@ import com.fsck.k9.mail.Message
 import com.fsck.k9.mail.MessagingException
 import com.fsck.k9.mail.internet.*
 import com.fsck.k9.mailstore.BinaryMemoryBody
+import com.fsck.k9.message.html.HtmlConverter
 import com.fsck.k9.ui.R
 import java.io.ByteArrayOutputStream
 import java.util.*
@@ -30,22 +31,24 @@ class E3KeyUploadMessageCreator(val resources: Resources) {
         try {
             val address = Address.parse(account.getIdentity(0).email)[0]
             val subjectText = resources.getString(R.string.e3_key_upload_msg_subject)
-            var messageText = resources.getString(R.string.e3_key_upload_msg_body)
-            val keyName = String.format(resources.getString(R.string.e3_key_upload_msg_user_id), keyUserIdentity, keyId)
-
-            messageText = String.format(messageText, verificationPhrase, keyName, Build.MODEL, e3KeyDigest)
-
             val beautifiedFingerprint = KeyFormattingUtils.beautifyHex(pgpFingerprint.hexString)
-            messageText += String.format(resources.getString(R.string.e3_key_upload_msg_pgp_fingerprint), beautifiedFingerprint)
+            val keyName = String.format(resources.getString(R.string.e3_key_upload_msg_user_id), keyUserIdentity, keyId)
+            var plainText = String.format(resources.getString(R.string.e3_key_upload_msg_body), verificationPhrase, keyName, Build.MODEL, e3KeyDigest)
+            plainText += String.format(resources.getString(R.string.e3_key_upload_msg_pgp_fingerprint), beautifiedFingerprint)
+            val htmlText = HtmlConverter.textToHtml(plainText)
 
             val messageBody = MimeMultipart.newInstance()
-            val textBodyPart = MimeBodyPart(TextBody(messageText))
-            val keyAttachment = MimeBodyPart(BinaryMemoryBody(pgpKeyData, "7bit"))
-            keyAttachment.setHeader(MimeHeader.HEADER_CONTENT_TYPE, E3Constants.CONTENT_TYPE_PGP_KEYS)
-            keyAttachment.setHeader(MimeHeader.HEADER_CONTENT_DISPOSITION, "attachment; filename=\"e3_key.asc\"")
+            val plainBodyPart = MimeBodyPart(TextBody(plainText), "text/plain")
+            val htmlBodyPart = MimeBodyPart(TextBody(htmlText), "text/html")
+            val keyAttachment: MimeBodyPart = createKeyAttachment(pgpKeyData)
 
-            messageBody.addBodyPart(textBodyPart)
-            messageBody.addBodyPart(keyAttachment)
+            messageBody.setSubType("alternative")
+            messageBody.addBodyPart(plainBodyPart)
+            messageBody.addBodyPart(htmlBodyPart)
+
+            val messageWrapper = MimeMultipart.newInstance()
+            messageWrapper.addBodyPart(MimeBodyPart(messageBody))
+            messageWrapper.addBodyPart(keyAttachment)
 
             if (pgpFingerprint.qrBitmap != null) {
                 val baos = ByteArrayOutputStream()
@@ -56,11 +59,11 @@ class E3KeyUploadMessageCreator(val resources: Resources) {
                 qrKeyAttachment.setHeader(MimeHeader.HEADER_CONTENT_TYPE, "image/png")
                 qrKeyAttachment.setHeader(MimeHeader.HEADER_CONTENT_DISPOSITION, "attachment; filename=\"e3_key_qr_code.png\"")
 
-                messageBody.addBodyPart(qrKeyAttachment)
+                messageWrapper.addBodyPart(qrKeyAttachment)
             }
 
             val message = MimeMessage()
-            MimeMessageHelper.setBody(message, messageBody)
+            MimeMessageHelper.setBody(message, messageWrapper)
 
             val nowDate = Date()
 
@@ -79,6 +82,12 @@ class E3KeyUploadMessageCreator(val resources: Resources) {
         } catch (e: MessagingException) {
             throw AssertionError(e)
         }
+    }
 
+    private fun createKeyAttachment(pgpKeyData: ByteArray): MimeBodyPart {
+        val keyAttachment = MimeBodyPart(BinaryMemoryBody(pgpKeyData, "7bit"))
+        keyAttachment.setHeader(MimeHeader.HEADER_CONTENT_TYPE, E3Constants.CONTENT_TYPE_PGP_KEYS)
+        keyAttachment.setHeader(MimeHeader.HEADER_CONTENT_DISPOSITION, "attachment; filename=\"e3_key.asc\"")
+        return keyAttachment
     }
 }
