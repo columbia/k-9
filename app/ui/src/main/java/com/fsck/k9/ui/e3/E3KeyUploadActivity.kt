@@ -55,6 +55,7 @@ class E3KeyUploadActivity : E3ActionBaseActivity() {
         e3KeyUploadLayoutFinish.visibility = View.GONE
         e3KeyUploadLayoutVerification.visibility = View.GONE
         e3KeyUploadLayoutVerificationPhrase.visibility = View.GONE
+        e3KeyUploadLayoutVerificationInstructions.visibility = View.GONE
         e3KeyUploadErrorUpload.visibility = View.GONE
     }
 
@@ -68,6 +69,7 @@ class E3KeyUploadActivity : E3ActionBaseActivity() {
         e3KeyUploadLayoutFinish.visibility = View.GONE
         e3KeyUploadLayoutVerification.visibility = View.GONE
         e3KeyUploadLayoutVerificationPhrase.visibility = View.GONE
+        e3KeyUploadLayoutVerificationInstructions.visibility = View.GONE
         e3KeyUploadErrorUpload.visibility = View.GONE
     }
 
@@ -80,6 +82,7 @@ class E3KeyUploadActivity : E3ActionBaseActivity() {
         e3KeyUploadLayoutUploading.visibility = View.VISIBLE
         e3KeyUploadLayoutFinish.visibility = View.GONE
         e3KeyUploadLayoutVerification.visibility = View.GONE
+        e3KeyUploadLayoutVerificationInstructions.visibility = View.GONE
         e3KeyUploadLayoutVerificationPhrase.visibility = View.GONE
         e3KeyUploadErrorUpload.visibility = View.VISIBLE
     }
@@ -98,6 +101,7 @@ class E3KeyUploadActivity : E3ActionBaseActivity() {
 
         e3KeyUploadLayoutVerification.visibility = View.VISIBLE
         e3KeyUploadLayoutVerificationPhrase.visibility = View.VISIBLE
+        e3KeyUploadLayoutVerificationInstructions.visibility = View.VISIBLE
     }
 
     fun setLoadingStateGenerating() {

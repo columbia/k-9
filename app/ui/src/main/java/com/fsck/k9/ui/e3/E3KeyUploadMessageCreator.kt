@@ -32,9 +32,8 @@ class E3KeyUploadMessageCreator(val resources: Resources) {
             val subjectText = resources.getString(R.string.e3_key_upload_msg_subject)
             val beautifiedFingerprint = KeyFormattingUtils.beautifyHex(pgpFingerprint.hexString)
             val keyName = String.format(resources.getString(R.string.e3_key_upload_msg_user_id), keyUserIdentity, keyId)
-            var plainText = String.format(resources.getString(R.string.e3_key_upload_msg_body), verificationPhrase, keyName, Build.MODEL, e3KeyDigest)
-            val htmlText = String.format(resources.getString(R.string.e3_key_upload_msg_body_html), verificationPhrase, keyName, Build.MODEL, e3KeyDigest)
-            plainText += String.format(resources.getString(R.string.e3_key_upload_msg_pgp_fingerprint), beautifiedFingerprint)
+            val plainText = String.format(resources.getString(R.string.e3_key_upload_msg_body), verificationPhrase, keyName, Build.MODEL, beautifiedFingerprint, e3KeyDigest)
+            val htmlText = String.format(resources.getString(R.string.e3_key_upload_msg_body_html), verificationPhrase, keyName, Build.MODEL, beautifiedFingerprint, e3KeyDigest)
 
             val messageBody = MimeMultipart.newInstance()
             val plainBodyPart = MimeBodyPart(TextBody(plainText), "text/plain")
