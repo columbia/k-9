@@ -14,7 +14,6 @@ import com.fsck.k9.mail.Message
 import com.fsck.k9.mail.MessagingException
 import com.fsck.k9.mail.internet.*
 import com.fsck.k9.mailstore.BinaryMemoryBody
-import com.fsck.k9.message.html.HtmlConverter
 import com.fsck.k9.ui.R
 import java.io.ByteArrayOutputStream
 import java.util.*
@@ -34,8 +33,8 @@ class E3KeyUploadMessageCreator(val resources: Resources) {
             val beautifiedFingerprint = KeyFormattingUtils.beautifyHex(pgpFingerprint.hexString)
             val keyName = String.format(resources.getString(R.string.e3_key_upload_msg_user_id), keyUserIdentity, keyId)
             var plainText = String.format(resources.getString(R.string.e3_key_upload_msg_body), verificationPhrase, keyName, Build.MODEL, e3KeyDigest)
+            val htmlText = String.format(resources.getString(R.string.e3_key_upload_msg_body_html), verificationPhrase, keyName, Build.MODEL, e3KeyDigest)
             plainText += String.format(resources.getString(R.string.e3_key_upload_msg_pgp_fingerprint), beautifiedFingerprint)
-            val htmlText = HtmlConverter.textToHtml(plainText)
 
             val messageBody = MimeMultipart.newInstance()
             val plainBodyPart = MimeBodyPart(TextBody(plainText), "text/plain")

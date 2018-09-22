@@ -1323,7 +1323,7 @@ Please submit bug reports, contribute new features and ask questions at
     <string name="dialog_e3_mode_title">E3 mode</string>
     <string name="dialog_e3_mode_learn_more"><a href="">Learn more about E3 modes</a>.</string>
     <string name="e3_key_upload_title">Upload E3 public key</string>
-    <string name="e3_key_upload_intro">Uploading your E3 public key allows your selected standalone E3 client to discover it.</string>
+    <string name="e3_key_upload_intro">Upload your E3 public key to your mailbox.</string>
     <string name="e3_key_upload_button">Upload E3 Public Key</string>
     <string name="e3_key_upload_generating">Generating email message…</string>
     <string name="e3_key_upload_destined_for">The email with your E3 public key will be sent to:</string>
@@ -1334,7 +1334,31 @@ Please submit bug reports, contribute new features and ask questions at
     <string name="e3_key_upload_error_upload">An error occurred while uploading the E3 public key. Please check your network connectivity and outgoing server configuration.</string>
 
     <string name="e3_key_upload_msg_subject">E3 Public Key (DO NOT DELETE)</string>
-    <string name="e3_key_upload_msg_body">This message contains an E3 public key.\n\nYou should import the attached E3 public key to your standalone E3 client.\n\nVerification Phrase: %s\n\nIdentity: %s\nDevice: %s\nE3 Digest: %s</string>
+    <string name="e3_key_upload_msg_body">This message contains an E3 public key. Import and verify the attached E3 public key in your standalone E3 client. Your verification phrase is:\n\n%s\n\n\n-----ADVANCED-----\nIdentity: %s\nDevice: %s\nE3 Digest: %s</string>
+    <string name="e3_key_upload_msg_body_html"><![CDATA[
+    <html dir="auto">
+        <head>
+            <meta name="viewport" content="width=device-width"/>
+            <style>
+                .largebold {
+                    font-size: 2em;
+                    font-weight: bold;
+                }
+            </style>
+        </head>
+        <body>
+        This message contains an E3 public key. Import and verify the attached E3 public key in your standalone E3 client. Your verification phrase is:
+        <br/><br/>
+        <span class="largebold">%s</span>
+        <br/><br/><br/>
+        -----ADVANCED-----<br/>
+        Identity: %s<br/>
+        Device: %s<br/>
+        E3 Digest: %s
+        </body>
+    </html>
+]]>
+    </string>
     <string name="e3_key_upload_msg_user_id">%s (Key ID: %s)</string>
     <string name="e3_key_upload_msg_pgp_fingerprint">\nPGP Fingerprint: %s</string>
     <string name="e3_key_upload_error_send">An error occurred while sending the message. Please check your network connectivity and outgoing server configuration.</string>
