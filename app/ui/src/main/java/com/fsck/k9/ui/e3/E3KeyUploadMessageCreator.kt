@@ -25,14 +25,15 @@ class E3KeyUploadMessageCreator(val resources: Resources) {
      * @param pgpKeyData should be an ASCII armored PGP key
      */
     fun createE3KeyUploadMessage(pgpKeyData: ByteArray, account: Account, keyUserIdentity: String,
-                                 keyId: String, e3KeyDigest: String, pgpFingerprint: KeyFingerprint): Message {
+                                 keyId: String, e3KeyDigest: String, pgpFingerprint: KeyFingerprint,
+                                 verificationPhrase: String): Message {
         try {
             val address = Address.parse(account.getIdentity(0).email)[0]
             val subjectText = resources.getString(R.string.e3_key_upload_msg_subject)
             var messageText = resources.getString(R.string.e3_key_upload_msg_body)
             val keyName = String.format(resources.getString(R.string.e3_key_upload_msg_user_id), keyUserIdentity, keyId)
 
-            messageText = String.format(messageText, keyName, Build.MODEL, e3KeyDigest)
+            messageText = String.format(messageText, verificationPhrase, keyName, Build.MODEL, e3KeyDigest)
 
             val beautifiedFingerprint = KeyFormattingUtils.beautifyHex(pgpFingerprint.hexString)
             messageText += String.format(resources.getString(R.string.e3_key_upload_msg_pgp_fingerprint), beautifiedFingerprint)

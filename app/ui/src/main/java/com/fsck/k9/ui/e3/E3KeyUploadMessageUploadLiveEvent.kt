@@ -24,7 +24,7 @@ class E3KeyUploadMessageUploadLiveEvent(
 
             try {
                 setupMessage.await()
-                value = E3KeyUploadMessageUploadResult.Success(setupMsg.pendingIntentForGetKey)
+                value = E3KeyUploadMessageUploadResult.Success(setupMsg.pendingIntentForGetKey, setupMsg)
             } catch (e: Exception) {
                 value = E3KeyUploadMessageUploadResult.Failure(e)
             }
@@ -33,6 +33,7 @@ class E3KeyUploadMessageUploadLiveEvent(
 }
 
 sealed class E3KeyUploadMessageUploadResult {
-    data class Success(val pendingIntentForGetKey: PendingIntent) : E3KeyUploadMessageUploadResult()
+    data class Success(val pendingIntentForGetKey: PendingIntent,
+                       val sentMessage: E3KeyUploadMessage) : E3KeyUploadMessageUploadResult()
     data class Failure(val exception: Exception) : E3KeyUploadMessageUploadResult()
 }

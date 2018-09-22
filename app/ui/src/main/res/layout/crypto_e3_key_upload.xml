@@ -150,6 +150,40 @@
             android:layout_gravity="center_vertical"
             android:text="@string/e3_key_upload_finish"
             />
+    </LinearLayout>
+
+    <LinearLayout
+        android:id="@+id/e3KeyUploadLayoutVerification"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:orientation="horizontal"
+        android:padding="8dp">
+
+        <TextView
+            style="?android:textAppearanceMedium"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="@string/e3_key_upload_verification"
+            />
+    </LinearLayout>
+
+    <LinearLayout
+        android:id="@+id/e3KeyUploadLayoutVerificationPhrase"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:orientation="horizontal"
+        android:padding="8dp">
+
+        <TextView
+            android:id="@+id/e3KeyVerificationPhrase"
+            style="?android:textAppearanceLarge"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_gravity="center_vertical"
+            android:gravity="center_horizontal"
+            app:fontFamily="monospace"
+            tools:text=""
+            />
 
     </LinearLayout>
 

@@ -6,6 +6,8 @@ import android.arch.lifecycle.Observer
 import android.content.Context
 import com.fsck.k9.Account
 import com.fsck.k9.Preferences
+import kotlinx.android.synthetic.main.crypto_e3_key_upload.*
+import kotlinx.android.synthetic.main.text_list_item.view.*
 import kotlinx.coroutines.experimental.android.UI
 import kotlinx.coroutines.experimental.launch
 import org.openintents.openpgp.OpenPgpApiManager
@@ -73,9 +75,13 @@ class E3KeyUploadPresenter internal constructor(
                 pendingIntentForGetKey = result.pendingIntentForGetKey
                 view.setLoadingStateFinished()
                 view.sceneFinished()
+
+                val verificationPhrase = result.sentMessage.verificationPhrase
+                account.e3KeyVerificationPhrase = verificationPhrase
+                view.setVerification(verificationPhrase)
             }
             is E3KeyUploadMessageUploadResult.Failure -> {
-                Timber.e(result.exception, "Error sending setup message")
+                Timber.e(result.exception, "Error uploading E3 key")
                 view.setLoadingStateSendingFailed()
                 view.sceneSendError()
             }

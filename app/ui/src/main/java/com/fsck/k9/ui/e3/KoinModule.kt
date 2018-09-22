@@ -4,7 +4,7 @@ import org.koin.android.architecture.ext.viewModel
 import org.koin.dsl.module.applicationContext
 
 val e3KeyUploadUiModule = applicationContext {
-    factory { E3KeyUploadSetupMessageLiveEvent(get()) }
+    factory { E3KeyUploadSetupMessageLiveEvent(get(), get()) }
     factory { E3KeyUploadMessageUploadLiveEvent(get()) }
     factory { params ->
         E3KeyUploadPresenter(

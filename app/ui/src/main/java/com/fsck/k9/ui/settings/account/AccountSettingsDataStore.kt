@@ -144,6 +144,7 @@ class AccountSettingsDataStore(
             "local_storage_provider" -> account.localStorageProviderId
             "account_ringtone" -> account.notificationSetting.ringtone
             "e3_mode_enum" -> account.e3Mode.name
+            "e3_key_verification_phrase" -> account.e3KeyVerificationPhrase
             else -> defValue
         }
     }
@@ -204,6 +205,7 @@ class AccountSettingsDataStore(
                 ringtone = value
             }
             "e3_mode_enum" -> account.e3Mode = Account.E3Mode.valueOf(value)
+            "e3_key_verification_phrase" -> account.e3KeyVerificationPhrase = value
             else -> return
         }
 

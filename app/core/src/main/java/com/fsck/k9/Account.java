@@ -213,6 +213,7 @@ public class Account implements BaseAccount, StoreConfig {
     private E3Mode e3Mode;
     private String e3Provider;
     private long e3Key;
+    private String e3KeyVerificationPhrase;
     private boolean markMessageAsReadOnView;
     private boolean alwaysShowCcBcc;
     private boolean allowRemoteSearch;
@@ -308,6 +309,7 @@ public class Account implements BaseAccount, StoreConfig {
         openPgpKey = NO_OPENPGP_KEY;
         e3Key = NO_OPENPGP_KEY;
         e3Mode = E3Mode.PASSIVE;
+        e3KeyVerificationPhrase = "";
         allowRemoteSearch = false;
         remoteSearchFullText = false;
         remoteSearchNumResults = DEFAULT_REMOTE_SEARCH_NUM_RESULTS;
@@ -448,6 +450,7 @@ public class Account implements BaseAccount, StoreConfig {
         e3Mode = getEnumStringPref(storage, accountUuid + ".e3ModeEnum", E3Mode.PASSIVE);
         e3Provider = storage.getString(accountUuid + ".e3Provider", "");
         e3Key = storage.getLong(accountUuid + ".e3Key", NO_OPENPGP_KEY);
+        e3KeyVerificationPhrase = storage.getString(accountUuid + ".e3KeyVerificationPhrase", "");
 
         allowRemoteSearch = storage.getBoolean(accountUuid + ".allowRemoteSearch", false);
         remoteSearchFullText = storage.getBoolean(accountUuid + ".remoteSearchFullText", false);
@@ -717,6 +720,7 @@ public class Account implements BaseAccount, StoreConfig {
         editor.putLong(accountUuid + ".cryptoKey", openPgpKey);
         editor.putLong(accountUuid + ".e3Key", e3Key);
         editor.putString(accountUuid + ".e3ModeEnum", e3Mode.name());
+        editor.putString(accountUuid + ".e3KeyVerificationPhrase", e3KeyVerificationPhrase);
         editor.putBoolean(accountUuid + ".openPgpHideSignOnly", openPgpHideSignOnly);
         editor.putBoolean(accountUuid + ".openPgpEncryptSubject", openPgpEncryptSubject);
         editor.putString(accountUuid + ".openPgpProvider", openPgpProvider);
@@ -1527,6 +1531,14 @@ public class Account implements BaseAccount, StoreConfig {
 
     public synchronized void setE3Mode(E3Mode e3Mode) {
         this.e3Mode = e3Mode;
+    }
+
+    public String getE3KeyVerificationPhrase() {
+        return e3KeyVerificationPhrase;
+    }
+
+    public void setE3KeyVerificationPhrase(String e3KeyVerificationPhrase) {
+        this.e3KeyVerificationPhrase = e3KeyVerificationPhrase;
     }
 
     public boolean hasOpenPgpKey() {

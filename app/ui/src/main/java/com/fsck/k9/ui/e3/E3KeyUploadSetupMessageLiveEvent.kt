@@ -1,6 +1,7 @@
 package com.fsck.k9.ui.e3
 
 import android.app.PendingIntent
+import android.content.Context
 import android.content.Intent
 import android.graphics.Bitmap
 import com.fsck.k9.Account
@@ -8,6 +9,7 @@ import com.fsck.k9.crypto.KeyFormattingUtils
 import com.fsck.k9.helper.SingleLiveEvent
 import com.fsck.k9.mail.Message
 import com.fsck.k9.mail.filter.Hex
+import com.fsck.k9.ui.crypto.PgpWordList
 import kotlinx.coroutines.experimental.android.UI
 import kotlinx.coroutines.experimental.launch
 import org.jetbrains.anko.coroutines.experimental.bg
@@ -16,7 +18,9 @@ import java.io.ByteArrayOutputStream
 import java.io.InputStream
 import java.security.MessageDigest
 
-class E3KeyUploadSetupMessageLiveEvent(private val messageCreator: E3KeyUploadMessageCreator) : SingleLiveEvent<E3KeyUploadMessage>() {
+class E3KeyUploadSetupMessageLiveEvent(private val context: Context, private val messageCreator: E3KeyUploadMessageCreator) : SingleLiveEvent<E3KeyUploadMessage>() {
+
+    private val wordList: PgpWordList = PgpWordList(context)
 
     fun loadE3KeyUploadMessageAsync(openPgpApi: OpenPgpApi, account: Account) {
         launch(UI) {
@@ -35,18 +39,20 @@ class E3KeyUploadSetupMessageLiveEvent(private val messageCreator: E3KeyUploadMe
         val armoredKey = requestPgpKey(openPgpApi, account, true, true)
         val armoredKeyBytes = armoredKey.resultData.toByteArray()
         val e3KeyDigest = KeyFormattingUtils.beautifyHex(Hex.encodeHex(e3Digester.digest(armoredKeyBytes)))
+        val randomWords = wordList.getRandomWords(3).joinToString(" ")
 
         val setupMessage = messageCreator.createE3KeyUploadMessage(armoredKeyBytes,
                 account,
                 armoredKey.identity,
                 beautifulKeyId,
                 e3KeyDigest,
-                armoredKey.fingerprint
+                armoredKey.fingerprint,
+                randomWords
         )
 
         armoredKey.fingerprint.qrBitmap?.recycle()
 
-        return E3KeyUploadMessage(setupMessage, armoredKey.pendingIntent)
+        return E3KeyUploadMessage(setupMessage, armoredKey.pendingIntent, randomWords)
     }
 
     private fun requestPgpKey(openPgpApi: OpenPgpApi, account: Account, armored: Boolean, fingerprint: Boolean): KeyResult {
@@ -70,7 +76,8 @@ class E3KeyUploadSetupMessageLiveEvent(private val messageCreator: E3KeyUploadMe
     }
 }
 
-data class E3KeyUploadMessage(val keyUploadMessage: Message, val pendingIntentForGetKey: PendingIntent)
+data class E3KeyUploadMessage(val keyUploadMessage: Message, val pendingIntentForGetKey: PendingIntent,
+                              val verificationPhrase: String)
 
 data class KeyResult(val pendingIntent: PendingIntent, val resultData: ByteArrayOutputStream,
                      val identity: String, val fingerprint: KeyFingerprint)
