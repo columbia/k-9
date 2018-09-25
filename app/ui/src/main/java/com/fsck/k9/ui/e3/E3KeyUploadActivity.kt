@@ -2,6 +2,7 @@ package com.fsck.k9.ui.e3
 
 import android.content.Context
 import android.content.Intent
+import android.graphics.Bitmap
 import android.os.Bundle
 import android.view.MenuItem
 import android.view.View
@@ -42,11 +43,18 @@ class E3KeyUploadActivity : E3ActionBaseActivity() {
         e3KeyUploadAddress2.text = address
     }
 
+    fun setQrcode(qrBitmap: Bitmap?) {
+        if (qrBitmap != null) {
+            e3KeyQrCode.setImageBitmap(qrBitmap)
+        }
+    }
+
     fun setVerification(verificationPhrase: String) {
         e3KeyVerificationPhrase.text = verificationPhrase
     }
 
     fun sceneBegin() {
+        e3KeyUploadHeader.visibility = View.VISIBLE
         e3KeyUploadButton.visibility = View.VISIBLE
         e3KeyUploadMsgInfo.visibility = View.VISIBLE
 
@@ -56,12 +64,17 @@ class E3KeyUploadActivity : E3ActionBaseActivity() {
         e3KeyUploadLayoutVerification.visibility = View.GONE
         e3KeyUploadLayoutVerificationPhrase.visibility = View.GONE
         e3KeyUploadLayoutVerificationInstructions.visibility = View.GONE
+
+        e3KeyUploadLayoutQrCodeInstructions.visibility = View.GONE
+        e3KeyUploadLayoutQrCode.visibility = View.GONE
+
         e3KeyUploadErrorUpload.visibility = View.GONE
     }
 
     fun sceneGeneratingAndUploading() {
         setupSceneTransition()
 
+        e3KeyUploadHeader.visibility = View.GONE
         e3KeyUploadButton.visibility = View.GONE
         e3KeyUploadMsgInfo.visibility = View.GONE
         e3KeyUploadLayoutGenerating.visibility = View.VISIBLE
@@ -70,12 +83,17 @@ class E3KeyUploadActivity : E3ActionBaseActivity() {
         e3KeyUploadLayoutVerification.visibility = View.GONE
         e3KeyUploadLayoutVerificationPhrase.visibility = View.GONE
         e3KeyUploadLayoutVerificationInstructions.visibility = View.GONE
+
+        e3KeyUploadLayoutQrCodeInstructions.visibility = View.GONE
+        e3KeyUploadLayoutQrCode.visibility = View.GONE
+
         e3KeyUploadErrorUpload.visibility = View.GONE
     }
 
     fun sceneSendError() {
         setupSceneTransition()
 
+        e3KeyUploadHeader.visibility = View.GONE
         e3KeyUploadButton.visibility = View.GONE
         e3KeyUploadMsgInfo.visibility = View.GONE
         e3KeyUploadLayoutGenerating.visibility = View.VISIBLE
@@ -84,6 +102,10 @@ class E3KeyUploadActivity : E3ActionBaseActivity() {
         e3KeyUploadLayoutVerification.visibility = View.GONE
         e3KeyUploadLayoutVerificationInstructions.visibility = View.GONE
         e3KeyUploadLayoutVerificationPhrase.visibility = View.GONE
+
+        e3KeyUploadLayoutQrCodeInstructions.visibility = View.GONE
+        e3KeyUploadLayoutQrCode.visibility = View.GONE
+
         e3KeyUploadErrorUpload.visibility = View.VISIBLE
     }
 
@@ -92,16 +114,21 @@ class E3KeyUploadActivity : E3ActionBaseActivity() {
             setupSceneTransition()
         }
 
+        e3KeyUploadHeader.visibility = View.GONE
         e3KeyUploadButton.visibility = View.GONE
         e3KeyUploadMsgInfo.visibility = View.GONE
-        e3KeyUploadLayoutGenerating.visibility = View.VISIBLE
-        e3KeyUploadLayoutUploading.visibility = View.VISIBLE
+        e3KeyUploadLayoutGenerating.visibility = View.GONE
+        e3KeyUploadLayoutUploading.visibility = View.GONE
         e3KeyUploadLayoutFinish.visibility = View.VISIBLE
+
         e3KeyUploadErrorUpload.visibility = View.GONE
 
         e3KeyUploadLayoutVerification.visibility = View.VISIBLE
         e3KeyUploadLayoutVerificationPhrase.visibility = View.VISIBLE
         e3KeyUploadLayoutVerificationInstructions.visibility = View.VISIBLE
+
+        e3KeyUploadLayoutQrCodeInstructions.visibility = View.VISIBLE
+        e3KeyUploadLayoutQrCode.visibility = View.VISIBLE
     }
 
     fun setLoadingStateGenerating() {

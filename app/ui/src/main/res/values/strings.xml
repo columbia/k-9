@@ -1330,7 +1330,9 @@ Please submit bug reports, contribute new features and ask questions at
     <string name="e3_key_upload_uploading_to">Uploading E3 public key to:</string>
     <string name="e3_key_upload_finish">E3 public key upload complete.</string>
     <string name="e3_key_upload_verification">Verification Phrase:</string>
-    <string name="e3_key_upload_verification_instructions">You should ONLY accept and verify an E3 key in your mailbox with the above verification phrase.</string>
+    <string name="e3_key_upload_qr_code_desc">Key fingerprint QR code</string>
+    <string name="e3_key_upload_qr_code_instructions">Scan this QR code in your E3 standalone client:</string>
+    <string name="e3_key_upload_verification_instructions">If you cannot scan the QR code, only verify keys obtained from emails with the EXACT verification phrase!</string>
     <string name="e3_key_scan_completed_instructions">Please open your key chain app and use the QR code scanner to verify your newly added E3 keys!</string>
     <string name="e3_key_upload_error_upload">An error occurred while uploading the E3 public key. Please check your network connectivity and outgoing server configuration.</string>
 

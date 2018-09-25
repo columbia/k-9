@@ -79,6 +79,10 @@ class E3KeyUploadPresenter internal constructor(
                 val verificationPhrase = result.sentMessage.verificationPhrase
                 account.e3KeyVerificationPhrase = verificationPhrase
                 view.setVerification(verificationPhrase)
+
+                val keyFingerprint = result.sentMessage.keyResult.fingerprint
+
+                view.setQrcode(keyFingerprint.qrBitmap)
             }
             is E3KeyUploadMessageUploadResult.Failure -> {
                 Timber.e(result.exception, "Error uploading E3 key")

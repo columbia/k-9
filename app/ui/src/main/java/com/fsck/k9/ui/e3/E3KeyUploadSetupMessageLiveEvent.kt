@@ -50,9 +50,9 @@ class E3KeyUploadSetupMessageLiveEvent(private val context: Context, private val
                 randomWords
         )
 
-        armoredKey.fingerprint.qrBitmap?.recycle()
+        //armoredKey.fingerprint.qrBitmap?.recycle()
 
-        return E3KeyUploadMessage(setupMessage, armoredKey.pendingIntent, randomWords)
+        return E3KeyUploadMessage(setupMessage, armoredKey.pendingIntent, randomWords, armoredKey)
     }
 
     private fun requestPgpKey(openPgpApi: OpenPgpApi, account: Account, armored: Boolean, fingerprint: Boolean): KeyResult {
@@ -77,7 +77,8 @@ class E3KeyUploadSetupMessageLiveEvent(private val context: Context, private val
 }
 
 data class E3KeyUploadMessage(val keyUploadMessage: Message, val pendingIntentForGetKey: PendingIntent,
-                              val verificationPhrase: String)
+                              val verificationPhrase: String,
+                              val keyResult: KeyResult)
 
 data class KeyResult(val pendingIntent: PendingIntent, val resultData: ByteArrayOutputStream,
                      val identity: String, val fingerprint: KeyFingerprint)
