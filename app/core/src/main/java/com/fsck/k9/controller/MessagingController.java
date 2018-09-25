@@ -38,6 +38,7 @@ import com.fsck.k9.Account.Expunge;
 import com.fsck.k9.AccountStats;
 import com.fsck.k9.CoreResourceProvider;
 import com.fsck.k9.backend.api.E3SyncConfig;
+import com.fsck.k9.backend.api.SyncUpdatedListener;
 import com.fsck.k9.controller.ControllerExtension.ControllerInternals;
 import com.fsck.k9.core.BuildConfig;
 import com.fsck.k9.DI;
@@ -2242,6 +2243,10 @@ public class MessagingController {
             }
 
             unsuppressMessages(account, messages);
+
+            for (MessagingListener l : getListeners(listener)) {
+                l.messageDeletedBackend(account, folder);
+            }
         } catch (UnavailableStorageException e) {
             Timber.i("Failed to delete message because storage is not available - trying again later.");
             throw new UnavailableAccountException(e);
@@ -2819,56 +2824,44 @@ public class MessagingController {
 
     public void replaceWithEncrypted(final Account account,
                                      final LocalFolder localFolder,
+                                     final Message originalMessage,
                                      final MimeMessage encryptedMessage,
-                                     final String originalUid) {
+                                     final String originalUid,
+                                     final SyncUpdatedListener listener) {
         putBackground("Synchronize encrypted-on-receipt email and update listeners", null, new Runnable() {
             @Override
             public void run() {
-                try {
-                    // Store the encrypted message locally
-                    final LocalMessage localMessage = synchronizeMessageLocally(encryptedMessage);
-                    localMessage.setFlag(Flag.E3, true);
+                MessageReference messageReference = new MessageReference(
+                        account.getUuid(), account.getDraftsFolder(), originalUid, null);
 
-                    final List<LocalMessage> localMessageList = Collections.singletonList(localMessage);
-                    final FetchProfile fp = new FetchProfile();
-                    fp.add(FetchProfile.Item.ENVELOPE);
-                    fp.add(FetchProfile.Item.BODY);
-                    localFolder.fetch(localMessageList, fp, null);
+                Timber.d("E3: About to deleteMessage");
+                deleteMessage(messageReference, new SimpleMessagingListener() {
+                    @Override
+                    public void messageDeletedBackend(Account account, String folderServerId) {
+                        try {
+                            Timber.d("E3: Entered messageDeletedBackend");
+                            final LocalMessage localMessage = synchronizeMessageLocally(encryptedMessage);
+                            localMessage.setFlag(Flag.E3, true);
 
-                    final String trashFolder = account.getTrashFolder();
-                    final boolean folderIsTrash = trashFolder.equals(localFolder.getName());
-                    final List<String> uidSingleton = Collections.singletonList(originalUid);
+                            final List<LocalMessage> localMessageList = Collections.singletonList(localMessage);
+                            final FetchProfile fp = new FetchProfile();
+                            fp.add(FetchProfile.Item.ENVELOPE);
+                            fp.add(FetchProfile.Item.BODY);
+                            localFolder.fetch(localMessageList, fp, null);
 
-                    if (!folderIsTrash) {
-                        // First: Set \Deleted and \E3_DONE on the original message
-                        queueSetFlag(account, localFolder.getName(), true,
-                                Flag.DELETED, uidSingleton);
-                        queueSetFlag(account, localFolder.getName(), true,
-                                Flag.E3_DONE, uidSingleton);
+                            Timber.d(String.format("Pending APPEND: %s,%s", localFolder.getName(), encryptedMessage.getUid()));
+                            final PendingCommand appendCmd = PendingAppend.create(localFolder.getServerId(), encryptedMessage.getUid());
+                            queuePendingCommand(account, appendCmd);
 
-                        // Second: Move original to Gmail's trash folder
-                        queueMoveOrCopy(account, localFolder.getName(), trashFolder, false, uidSingleton);
+                            processPendingCommandsSynchronous(account);
+
+                            Timber.d("E3: messageDeletedBackend about to updateWithNewMessage");
+                            listener.updateWithNewMessage(localMessage);
+                        }  catch (final MessagingException e) {
+                            throw new RuntimeException("Failed to append encrypted version", e);
+                        }
                     }
-
-                    if (!folderIsTrash) {
-                        // Fourth: Queue empty trash (expunge) command
-                        final PendingCommand emptyTrashCmd = PendingEmptyTrash.create();
-                        queuePendingCommand(account, emptyTrashCmd);
-                    }
-
-                    processPendingCommandsSynchronous(account);
-
-                    // Third: Append encrypted remotely
-                    Timber.d(String.format("Pending APPEND: %s,%s", localFolder.getName(), encryptedMessage.getUid()));
-                    final PendingCommand appendCmd = PendingAppend.create(localFolder.getServerId(), encryptedMessage.getUid());
-                    queuePendingCommand(account, appendCmd);
-
-
-                    // Final: Run all the queued commands
-                    processPendingCommandsSynchronous(account);
-                } catch (final MessagingException e) {
-                    throw new RuntimeException("Failed to replace plaintext email with encrypted email", e);
-                }
+                });
             }
 
             private LocalMessage synchronizeMessageLocally(final MimeMessage encryptedMessage) throws MessagingException {

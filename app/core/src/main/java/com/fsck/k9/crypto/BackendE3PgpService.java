@@ -65,8 +65,7 @@ public class BackendE3PgpService implements EncryptSyncListener<Message> {
                             final MimeMessage encryptedMimeMessage = encryptor.encrypt((MimeMessage) message, accountEmail);
                             encryptedMimeMessage.setHeader(E3Constants.MIME_E3_ENCRYPTED_HEADER, accountEmail[0]);
 
-                            MessagingController.getInstance(context).replaceWithEncrypted(account, localFolder, encryptedMimeMessage, message.getUid());
-                            listener.updateWithNewMessage(encryptedMimeMessage);
+                            MessagingController.getInstance(context).replaceWithEncrypted(account, localFolder, message, encryptedMimeMessage, message.getUid(), listener);
                         } catch (MessagingException e) {
                             throw new RuntimeException("Failed to encrypt on receipt!", e);
                         }
