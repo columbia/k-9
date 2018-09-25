@@ -15,6 +15,10 @@ dependencies {
     api project(":mail:protocols:imap")
     api project(":mail:protocols:smtp")
 
+    // TODO: E3 Remove and refactor ImapSync's E3 code
+    implementation project(':plugins:openpgp-api-lib:openpgp-api')
+    implementation project(":app:core")
+
     implementation "com.jakewharton.timber:timber:${versions.timber}"
 
     testImplementation project(":mail:testing")

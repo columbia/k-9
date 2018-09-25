@@ -37,6 +37,7 @@ import com.fsck.k9.Account.DeletePolicy;
 import com.fsck.k9.Account.Expunge;
 import com.fsck.k9.AccountStats;
 import com.fsck.k9.CoreResourceProvider;
+import com.fsck.k9.backend.api.E3SyncConfig;
 import com.fsck.k9.controller.ControllerExtension.ControllerInternals;
 import com.fsck.k9.core.BuildConfig;
 import com.fsck.k9.DI;
@@ -56,6 +57,7 @@ import com.fsck.k9.controller.MessagingControllerCommands.PendingMarkAllAsRead;
 import com.fsck.k9.controller.MessagingControllerCommands.PendingMoveOrCopy;
 import com.fsck.k9.controller.MessagingControllerCommands.PendingSetFlag;
 import com.fsck.k9.controller.ProgressBodyFactory.ProgressListener;
+import com.fsck.k9.crypto.BackendE3PgpService;
 import com.fsck.k9.helper.Contacts;
 import com.fsck.k9.mail.Address;
 import com.fsck.k9.mail.AuthenticationFailedException;
@@ -72,6 +74,7 @@ import com.fsck.k9.mail.Part;
 import com.fsck.k9.mail.PushReceiver;
 import com.fsck.k9.mail.Pusher;
 import com.fsck.k9.mail.internet.MessageExtractor;
+import com.fsck.k9.mail.internet.MimeMessage;
 import com.fsck.k9.mail.internet.MimeUtility;
 import com.fsck.k9.mailstore.LocalFolder;
 import com.fsck.k9.mailstore.LocalMessage;
@@ -730,7 +733,23 @@ public class MessagingController {
                     account.syncRemoteDeletions(),
                     account.getMaximumAutoDownloadMessageSize(),
                     K9.DEFAULT_VISIBLE_LIMIT,
-                    SYNC_FLAGS);
+                    SYNC_FLAGS,
+                    createE3Syncconfig(account)
+                );
+    }
+
+    private E3SyncConfig createE3Syncconfig(Account account) {
+        final String email = account.getIdentity(0).getEmail();
+        final String cryptoProvider = account.getE3Provider();
+        final Long keyId = account.getE3Key() == Account.NO_OPENPGP_KEY ? null : account.getE3Key();
+
+        return new E3SyncConfig(
+                email,
+                cryptoProvider,
+                account.getE3Mode().toBackendE3ModeSyncConfig(),
+                keyId,
+                new BackendE3PgpService(context, account, cryptoProvider, keyId)
+        );
     }
 
     private void updateFolderStatus(Account account, String folderServerId, String status) {
@@ -2796,6 +2815,71 @@ public class MessagingController {
         }
 
         return id;
+    }
+
+    public void replaceWithEncrypted(final Account account,
+                                     final LocalFolder localFolder,
+                                     final MimeMessage encryptedMessage,
+                                     final String originalUid) {
+        putBackground("Synchronize encrypted-on-receipt email and update listeners", null, new Runnable() {
+            @Override
+            public void run() {
+                try {
+                    // Store the encrypted message locally
+                    final LocalMessage localMessage = synchronizeMessageLocally(encryptedMessage);
+                    localMessage.setFlag(Flag.E3, true);
+
+                    final List<LocalMessage> localMessageList = Collections.singletonList(localMessage);
+                    final FetchProfile fp = new FetchProfile();
+                    fp.add(FetchProfile.Item.ENVELOPE);
+                    fp.add(FetchProfile.Item.BODY);
+                    localFolder.fetch(localMessageList, fp, null);
+
+                    final String trashFolder = account.getTrashFolder();
+                    final boolean folderIsTrash = trashFolder.equals(localFolder.getName());
+                    final List<String> uidSingleton = Collections.singletonList(originalUid);
+
+                    if (!folderIsTrash) {
+                        // First: Set \Deleted and \E3_DONE on the original message
+                        queueSetFlag(account, localFolder.getName(), true,
+                                Flag.DELETED, uidSingleton);
+                        queueSetFlag(account, localFolder.getName(), true,
+                                Flag.E3_DONE, uidSingleton);
+
+                        // Second: Move original to Gmail's trash folder
+                        queueMoveOrCopy(account, localFolder.getName(), trashFolder, false, uidSingleton);
+                    }
+
+                    if (!folderIsTrash) {
+                        // Fourth: Queue empty trash (expunge) command
+                        final PendingCommand emptyTrashCmd = PendingEmptyTrash.create();
+                        queuePendingCommand(account, emptyTrashCmd);
+                    }
+
+                    processPendingCommandsSynchronous(account);
+
+                    // Third: Append encrypted remotely
+                    Timber.d(String.format("Pending APPEND: %s,%s", localFolder.getName(), encryptedMessage.getUid()));
+                    final PendingCommand appendCmd = PendingAppend.create(localFolder.getServerId(), encryptedMessage.getUid());
+                    queuePendingCommand(account, appendCmd);
+
+
+                    // Final: Run all the queued commands
+                    processPendingCommandsSynchronous(account);
+                } catch (final MessagingException e) {
+                    throw new RuntimeException("Failed to replace plaintext email with encrypted email", e);
+                }
+            }
+
+            private LocalMessage synchronizeMessageLocally(final MimeMessage encryptedMessage) throws MessagingException {
+                localFolder.appendMessages(Collections.singletonList(encryptedMessage));
+
+                final LocalMessage localMessage = localFolder.getMessage(encryptedMessage.getUid());
+                localMessage.setFlag(Flag.X_DOWNLOADED_FULL, true);
+
+                return localMessage;
+            }
+        });
     }
 
     private boolean modeMismatch(Account.FolderMode aMode, Folder.FolderClass fMode) {

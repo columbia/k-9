@@ -15,10 +15,16 @@ import java.util.concurrent.atomic.AtomicInteger;
 import com.fsck.k9.backend.api.BackendFolder;
 import com.fsck.k9.backend.api.BackendFolder.MoreMessages;
 import com.fsck.k9.backend.api.BackendStorage;
+import com.fsck.k9.backend.api.E3SyncConfig;
+import com.fsck.k9.backend.api.E3SyncConfig.E3ModeBackend;
+import com.fsck.k9.backend.api.EncryptSyncListener;
 import com.fsck.k9.backend.api.MessageRemovalListener;
 import com.fsck.k9.backend.api.SyncConfig;
 import com.fsck.k9.backend.api.SyncConfig.ExpungePolicy;
 import com.fsck.k9.backend.api.SyncListener;
+import com.fsck.k9.backend.api.SyncUpdatedListener;
+import com.fsck.k9.crypto.E3Constants;
+import com.fsck.k9.crypto.SimpleE3PgpEncryptor;
 import com.fsck.k9.helper.ExceptionHelper;
 import com.fsck.k9.mail.AuthenticationFailedException;
 import com.fsck.k9.mail.BodyFactory;
@@ -31,8 +37,18 @@ import com.fsck.k9.mail.MessageRetrievalListener;
 import com.fsck.k9.mail.MessagingException;
 import com.fsck.k9.mail.Part;
 import com.fsck.k9.mail.internet.MessageExtractor;
+import com.fsck.k9.mail.internet.MimeMessage;
+import com.fsck.k9.mail.internet.MimeUtility;
 import com.fsck.k9.mail.store.imap.ImapFolder;
 import com.fsck.k9.mail.store.imap.ImapStore;
+import com.fsck.k9.mailstore.LocalMessage;
+
+import org.jetbrains.annotations.NotNull;
+import org.openintents.openpgp.IOpenPgpService2;
+import org.openintents.openpgp.util.OpenPgpApi;
+import org.openintents.openpgp.util.OpenPgpServiceConnection;
+import org.openintents.openpgp.util.OpenPgpServiceConnection.OnBound;
+
 import timber.log.Timber;
 
 
@@ -498,8 +514,11 @@ class ImapSync {
                                 return;
                             }
 
+                            // TODO: E3 update the check so it's not just "small v. large" for E3?
                             if (syncConfig.getMaximumAutoDownloadMessageSize() > 0 &&
-                                    message.getSize() > syncConfig.getMaximumAutoDownloadMessageSize()) {
+                                    message.getSize() > syncConfig.getMaximumAutoDownloadMessageSize() &&
+                                    !syncConfig.getE3SyncConfig().isE3ProviderConfigured()
+                                    ) {
                                 largeMessages.add(message);
                             } else {
                                 smallMessages.add(message);
@@ -522,7 +541,7 @@ class ImapSync {
     }
 
     private <T extends Message> void downloadSmallMessages(
-            SyncConfig syncConfig,
+            final SyncConfig syncConfig,
             final Folder<T> remoteFolder,
             final BackendFolder backendFolder,
             List<T> smallMessages,
@@ -549,26 +568,21 @@ class ImapSync {
                                 return;
                             }
 
-                            // Store the updated message locally
-                            backendFolder.saveCompleteMessage(message);
-                            progress.incrementAndGet();
+                            if (shouldEncrypt(message, syncConfig.getE3SyncConfig())) {
+                                final EncryptSyncListener<Message> e3Listener = syncConfig.getE3SyncConfig().getEncryptSyncListener();
+                                final SyncUpdatedListener syncUpdatedListener = new SyncUpdatedListener() {
+                                    @Override
+                                    public void updateWithNewMessage(@NotNull Message updatedMessage) {
+                                        updateListeners(updatedMessage);
+                                    }
+                                };
 
-
-                            // Increment the number of "new messages" if the newly downloaded message is
-                            // not marked as read.
-                            if (!message.isSet(Flag.SEEN)) {
-                                newMessages.incrementAndGet();
+                                e3Listener.asyncEncryptSync(message, syncUpdatedListener);
+                            } else {
+                                storeLocally(message);
+                                updateListeners(message);
                             }
 
-                            String messageServerId = message.getUid();
-                            Timber.v("About to notify listeners that we got a new small message %s:%s:%s",
-                                    accountName, folder, messageServerId);
-
-                            // Update the listener with what we've found
-                            listener.syncProgress(folder, progress.get(), todo);
-
-                            boolean isOldMessage = isOldMessage(messageServerId, lastUid);
-                            listener.syncNewMessage(folder, messageServerId, isOldMessage);
                         } catch (Exception e) {
                             Timber.e(e, "SYNC: fetch small messages");
                         }
@@ -580,6 +594,49 @@ class ImapSync {
 
                     @Override
                     public void messagesFinished(int total) {
+                    }
+
+                    private void storeLocally(final T message) {
+                        // Store the updated message locally
+                        backendFolder.saveCompleteMessage(message);
+                        progress.incrementAndGet();
+                    }
+
+                    private boolean shouldEncrypt(final T originalMessage, final E3SyncConfig e3SyncConfig) {
+                        final boolean inE3StandaloneMode = e3SyncConfig.getE3Mode() == E3ModeBackend.STANDALONE;
+                        final boolean pgpConfigured = e3SyncConfig.isE3ProviderConfigured();
+                        final boolean supportedMessageType = originalMessage instanceof MimeMessage;
+                        final boolean hasPgpKey = e3SyncConfig.getE3KeyId() != null;
+
+                        // TODO: E3 Should we re-encrypt already encrypted email to our key?
+                        final boolean isEncrypted = MimeUtility.mimeTypeMatches(originalMessage.getMimeType(), "*/pgp")
+                                || MimeUtility.mimeTypeMatches(originalMessage.getMimeType(), "*/pkcs*");
+                        final boolean isE3Key = originalMessage.getHeaderNames().contains(E3SyncConfig.getMIME_E3_NAME());
+
+                        if (pgpConfigured && !hasPgpKey && !isEncrypted) {
+                            Timber.w("PGP is enabled but no PGP key is set! Will not encrypt this plaintext email");
+                        }
+
+                        return inE3StandaloneMode && pgpConfigured && supportedMessageType && hasPgpKey && !isEncrypted && !isE3Key;
+                    }
+
+                    private void updateListeners(Message message) {
+                        // Increment the number of "new messages" if the newly downloaded message is
+                        // not marked as read.
+                        if (!message.isSet(Flag.SEEN)) {
+                            newMessages.incrementAndGet();
+                        }
+
+                        String messageServerId = message.getUid();
+                        Timber.v("About to notify listeners that we got a new small message %s:%s:%s",
+                                accountName, folder, messageServerId);
+
+                        // Update the listener with what we've found
+                        listener.syncProgress(folder, progress.get(), todo);
+
+                        boolean isOldMessage = isOldMessage(messageServerId, lastUid);
+                        listener.syncNewMessage(folder, messageServerId, isOldMessage);
+
                     }
                 });
 

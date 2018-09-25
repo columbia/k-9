@@ -20,6 +20,7 @@ import android.net.Uri;
 import android.support.annotation.Nullable;
 import android.text.TextUtils;
 
+import com.fsck.k9.backend.api.E3SyncConfig.E3ModeBackend;
 import com.fsck.k9.backend.api.SyncConfig.ExpungePolicy;
 import com.fsck.k9.helper.Utility;
 import com.fsck.k9.mail.Address;
@@ -265,7 +266,16 @@ public class Account implements BaseAccount, StoreConfig {
     }
 
     public enum E3Mode {
-        STANDALONE, PASSIVE
+        STANDALONE, PASSIVE;
+
+        public E3ModeBackend toBackendE3ModeSyncConfig() {
+            switch (this) {
+                case STANDALONE: return E3ModeBackend.STANDALONE;
+                case PASSIVE: return E3ModeBackend.PASSIVE;
+            }
+
+            throw new AssertionError("Unhandled case: " + this.name());
+        }
     }
 
     protected Account(Context context, CoreResourceProvider resourceProvider) {
