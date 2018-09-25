@@ -609,8 +609,10 @@ class ImapSync {
                         final boolean hasPgpKey = e3SyncConfig.getE3KeyId() != null;
 
                         // TODO: E3 Should we re-encrypt already encrypted email to our key?
-                        final boolean isEncrypted = MimeUtility.mimeTypeMatches(originalMessage.getMimeType(), "*/pgp")
-                                || MimeUtility.mimeTypeMatches(originalMessage.getMimeType(), "*/pkcs*");
+                        final String mimeType = originalMessage.getMimeType();
+                        final boolean isEncrypted = MimeUtility.mimeTypeMatches(mimeType, "*pgp*")
+                                || MimeUtility.mimeTypeMatches(mimeType, "*pkcs*")
+                                || MimeUtility.mimeTypeMatches(mimeType, "*/encrypted*");
                         final boolean isE3Key = originalMessage.getHeaderNames().contains(E3SyncConfig.getMIME_E3_NAME());
 
                         if (pgpConfigured && !hasPgpKey && !isEncrypted) {

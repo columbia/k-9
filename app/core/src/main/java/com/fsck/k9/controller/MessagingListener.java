@@ -55,7 +55,6 @@ public interface MessagingListener {
     void systemStatusChanged();
 
     void messageDeleted(Account account, String folderServerId, String messageServerId);
-    void messageDeletedBackend(Account account, String folderServerId);
     void messageUidChanged(Account account, String folderServerId, String oldUid, String newUid);
 
     void setPushActive(Account account, String folderServerId, boolean enabled);

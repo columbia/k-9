@@ -2243,10 +2243,6 @@ public class MessagingController {
             }
 
             unsuppressMessages(account, messages);
-
-            for (MessagingListener l : getListeners(listener)) {
-                l.messageDeletedBackend(account, folder);
-            }
         } catch (UnavailableStorageException e) {
             Timber.i("Failed to delete message because storage is not available - trying again later.");
             throw new UnavailableAccountException(e);
@@ -2826,42 +2822,42 @@ public class MessagingController {
                                      final LocalFolder localFolder,
                                      final Message originalMessage,
                                      final MimeMessage encryptedMessage,
-                                     final String originalUid,
                                      final SyncUpdatedListener listener) {
         putBackground("Synchronize encrypted-on-receipt email and update listeners", null, new Runnable() {
             @Override
             public void run() {
-                MessageReference messageReference = new MessageReference(
-                        account.getUuid(), account.getDraftsFolder(), originalUid, null);
+                final String srcFolder = originalMessage.getFolder().getName();
+                final String trashFolder = account.getTrashFolder();
+                Backend backend = getBackend(account);
 
-                Timber.d("E3: About to deleteMessage");
-                deleteMessage(messageReference, new SimpleMessagingListener() {
-                    @Override
-                    public void messageDeletedBackend(Account account, String folderServerId) {
-                        try {
-                            Timber.d("E3: Entered messageDeletedBackend");
-                            final LocalMessage localMessage = synchronizeMessageLocally(encryptedMessage);
-                            localMessage.setFlag(Flag.E3, true);
+                final LocalMessage localMessage;
+                try {
+                    localMessage = synchronizeMessageLocally(encryptedMessage);
+                    localMessage.setFlag(Flag.E3, true);
+                    listener.updateWithNewMessage(localMessage);
+                } catch (MessagingException e) {
+                    throw new RuntimeException("Failed to store encrypted version locally", e);
+                }
 
-                            final List<LocalMessage> localMessageList = Collections.singletonList(localMessage);
-                            final FetchProfile fp = new FetchProfile();
-                            fp.add(FetchProfile.Item.ENVELOPE);
-                            fp.add(FetchProfile.Item.BODY);
-                            localFolder.fetch(localMessageList, fp, null);
+                try {
+                    final List<LocalMessage> localMessageList = Collections.singletonList(localMessage);
+                    final FetchProfile fp = new FetchProfile();
+                    fp.add(FetchProfile.Item.ENVELOPE);
+                    fp.add(FetchProfile.Item.BODY);
+                    localFolder.fetch(localMessageList, fp, null);
+                    backend.uploadMessage(srcFolder, localMessage);
+                }  catch (final MessagingException e) {
+                    throw new RuntimeException("Failed to append encrypted version", e);
+                }
 
-                            Timber.d(String.format("Pending APPEND: %s,%s", localFolder.getName(), encryptedMessage.getUid()));
-                            final PendingCommand appendCmd = PendingAppend.create(localFolder.getServerId(), encryptedMessage.getUid());
-                            queuePendingCommand(account, appendCmd);
-
-                            processPendingCommandsSynchronous(account);
-
-                            Timber.d("E3: messageDeletedBackend about to updateWithNewMessage");
-                            listener.updateWithNewMessage(localMessage);
-                        }  catch (final MessagingException e) {
-                            throw new RuntimeException("Failed to append encrypted version", e);
-                        }
-                    }
-                });
+                try {
+                    final List<String> uid = Collections.singletonList(originalMessage.getUid());
+                    backend.moveMessages(srcFolder, trashFolder, uid);
+                    Timber.i("replaceWithEncrypted expunging folder %s:%s", account.getDescription(), srcFolder);
+                    backend.expungeMessages(srcFolder, uid);
+                } catch (MessagingException e) {
+                    throw new RuntimeException("Failed to delete remote plaintext email", e);
+                }
             }
 
             private LocalMessage synchronizeMessageLocally(final MimeMessage encryptedMessage) throws MessagingException {
