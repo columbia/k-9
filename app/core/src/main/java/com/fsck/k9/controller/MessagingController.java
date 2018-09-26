@@ -2858,6 +2858,9 @@ public class MessagingController {
                 } catch (MessagingException e) {
                     throw new RuntimeException("Failed to delete remote plaintext email", e);
                 }
+
+                Timber.i("replaceWithEncrypted syncing folder %s:%s", account.getDescription(), srcFolder);
+                syncFolder(account, srcFolder, null, null, backend);
             }
 
             private LocalMessage synchronizeMessageLocally(final MimeMessage encryptedMessage) throws MessagingException {
