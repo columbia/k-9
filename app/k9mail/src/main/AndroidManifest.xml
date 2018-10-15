@@ -217,7 +217,7 @@
             />
 
         <activity
-            android:name=".ui.e3.upload.E3UndoActivity"
+            android:name=".ui.e3.undo.E3UndoActivity"
             android:configChanges="locale"
             android:label="@string/e3_undo_title"
             />

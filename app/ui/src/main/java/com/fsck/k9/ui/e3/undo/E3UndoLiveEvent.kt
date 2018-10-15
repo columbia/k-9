@@ -1,4 +1,4 @@
-package com.fsck.k9.ui.e3.upload
+package com.fsck.k9.ui.e3.undo
 
 import android.content.Context
 import com.fsck.k9.Account

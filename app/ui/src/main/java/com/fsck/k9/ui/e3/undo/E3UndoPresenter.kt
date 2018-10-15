@@ -1,4 +1,4 @@
-package com.fsck.k9.ui.e3.upload
+package com.fsck.k9.ui.e3.undo
 
 import android.app.PendingIntent
 import android.arch.lifecycle.LifecycleOwner
