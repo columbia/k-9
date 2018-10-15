@@ -1,4 +1,4 @@
-package com.fsck.k9.ui.e3
+package com.fsck.k9.ui.e3.upload
 
 import android.content.Context
 import android.content.Intent
@@ -6,6 +6,7 @@ import android.os.Bundle
 import android.view.MenuItem
 import android.view.View
 import com.fsck.k9.ui.R
+import com.fsck.k9.ui.e3.E3ActionBaseActivity
 import com.fsck.k9.view.StatusIndicator
 import kotlinx.android.synthetic.main.crypto_e3_undo.*
 import org.koin.android.ext.android.inject

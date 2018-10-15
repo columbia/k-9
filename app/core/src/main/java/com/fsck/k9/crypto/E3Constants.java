@@ -6,6 +6,7 @@ public final class E3Constants {
     public static final String MIME_E3_ENCRYPTED_HEADER = "X-E3-ENCRYPTED";
     public static final String MIME_E3_DIGEST = "X-E3-DIGEST";
     public static final String MIME_E3_NAME = "X-E3-NAME";
+    public static final String MIME_E3_VERIFICATION = "X-E3-VERIFICATION";
 
     public static final String CONTENT_TYPE_PGP_KEYS = "application/pgp-keys";
 }

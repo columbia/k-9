@@ -1,4 +1,4 @@
-package com.fsck.k9.ui.e3
+package com.fsck.k9.ui.e3.upload
 
 import android.content.res.Resources
 import android.graphics.Bitmap
@@ -70,6 +70,7 @@ class E3KeyUploadMessageCreator(val resources: Resources) {
 
             message.setHeader(E3Constants.MIME_E3_NAME, keyName)
             message.setHeader(E3Constants.MIME_E3_DIGEST, e3KeyDigest)
+            message.setHeader(E3Constants.MIME_E3_VERIFICATION, verificationPhrase)
 
             message.internalDate = nowDate
             message.addSentDate(nowDate, K9.hideTimeZone())

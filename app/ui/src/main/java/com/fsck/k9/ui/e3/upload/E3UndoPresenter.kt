@@ -1,10 +1,11 @@
-package com.fsck.k9.ui.e3
+package com.fsck.k9.ui.e3.upload
 
 import android.app.PendingIntent
 import android.arch.lifecycle.LifecycleOwner
 import android.arch.lifecycle.Observer
 import com.fsck.k9.Account
 import com.fsck.k9.Preferences
+import com.fsck.k9.ui.e3.E3OpenPgpPresenterCallback
 import kotlinx.coroutines.experimental.android.UI
 import kotlinx.coroutines.experimental.launch
 import org.openintents.openpgp.OpenPgpApiManager

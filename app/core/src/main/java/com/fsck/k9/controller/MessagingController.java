@@ -2852,9 +2852,16 @@ public class MessagingController {
 
                 try {
                     final List<String> uid = Collections.singletonList(originalMessage.getUid());
-                    backend.moveMessages(srcFolder, trashFolder, uid);
-                    Timber.i("replaceWithEncrypted expunging folder %s:%s", account.getDescription(), srcFolder);
-                    backend.expungeMessages(srcFolder, uid);
+                    final Map<String, String> newUids = backend.moveMessages(srcFolder, trashFolder, uid);
+
+                    if (newUids != null) {
+                        for (String k : newUids.keySet()) {
+                            final String newUid = newUids.get(k);
+                            backend.setFlag(trashFolder, Collections.singletonList(newUid), Flag.DELETED, true);
+                        }
+                    }
+                    Timber.i("replaceWithEncrypted expunging folder %s:%s", account.getDescription(), account.getTrashFolder());
+                    backend.expungeMessages(account.getTrashFolder(), uid);
                 } catch (MessagingException e) {
                     throw new RuntimeException("Failed to delete remote plaintext email", e);
                 }

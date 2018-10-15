@@ -1,10 +1,9 @@
-package com.fsck.k9.ui.e3
+package com.fsck.k9.ui.e3.upload
 
 import android.app.PendingIntent
 import com.fsck.k9.Account
 import com.fsck.k9.controller.MessagingController
 import com.fsck.k9.helper.SingleLiveEvent
-import com.fsck.k9.mail.Transport
 import kotlinx.coroutines.experimental.android.UI
 import kotlinx.coroutines.experimental.delay
 import kotlinx.coroutines.experimental.launch

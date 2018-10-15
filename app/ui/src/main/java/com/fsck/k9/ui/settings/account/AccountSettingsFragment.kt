@@ -14,9 +14,9 @@ import com.fsck.k9.activity.setup.AccountSetupOutgoing
 import com.fsck.k9.controller.MessagingController
 import com.fsck.k9.crypto.OpenPgpApiHelper
 import com.fsck.k9.mailstore.StorageManager
-import com.fsck.k9.ui.e3.E3KeyScanActivity
-import com.fsck.k9.ui.e3.E3KeyUploadActivity
-import com.fsck.k9.ui.e3.E3UndoActivity
+import com.fsck.k9.ui.e3.scan.E3KeyScanActivity
+import com.fsck.k9.ui.e3.upload.E3KeyUploadActivity
+import com.fsck.k9.ui.e3.upload.E3UndoActivity
 import com.fsck.k9.ui.endtoend.AutocryptKeyTransferActivity
 import com.fsck.k9.ui.settings.onClick
 import com.fsck.k9.ui.settings.oneTimeClickListener

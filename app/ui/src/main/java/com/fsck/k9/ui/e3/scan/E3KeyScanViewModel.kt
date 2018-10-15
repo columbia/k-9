@@ -1,4 +1,4 @@
-package com.fsck.k9.ui.e3
+package com.fsck.k9.ui.e3.scan
 
 import android.arch.lifecycle.ViewModel
 

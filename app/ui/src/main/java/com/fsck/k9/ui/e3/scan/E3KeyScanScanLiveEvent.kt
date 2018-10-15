@@ -1,4 +1,4 @@
-package com.fsck.k9.ui.e3
+package com.fsck.k9.ui.e3.scan
 
 import android.content.Context
 import com.fsck.k9.Account
