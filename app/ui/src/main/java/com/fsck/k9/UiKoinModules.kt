@@ -5,6 +5,7 @@ import com.fsck.k9.contacts.contactsModule
 import com.fsck.k9.fragment.fragmentModule
 import com.fsck.k9.ui.e3.e3KeyScanUiModule
 import com.fsck.k9.ui.e3.e3KeyUploadUiModule
+import com.fsck.k9.ui.e3.e3KeyVerifyUiModule
 import com.fsck.k9.ui.e3.e3UndoUiModule
 import com.fsck.k9.ui.endtoend.endToEndUiModule
 import com.fsck.k9.ui.settings.settingsUiModule
@@ -19,5 +20,6 @@ val uiModules = listOf(
         contactsModule,
         e3KeyUploadUiModule,
         e3KeyScanUiModule,
+        e3KeyVerifyUiModule,
         e3UndoUiModule
 )

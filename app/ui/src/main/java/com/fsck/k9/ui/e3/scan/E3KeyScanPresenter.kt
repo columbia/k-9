@@ -1,34 +1,25 @@
 package com.fsck.k9.ui.e3.scan
 
-import android.app.PendingIntent
 import android.arch.lifecycle.LifecycleOwner
 import android.arch.lifecycle.Observer
-import android.content.Context
-import android.content.Intent
 import com.fsck.k9.Account
 import com.fsck.k9.Preferences
 import com.fsck.k9.crypto.E3Constants
-import com.fsck.k9.mail.internet.MimeUtility
 import com.fsck.k9.mailstore.LocalMessage
-import com.fsck.k9.ui.e3.E3OpenPgpPresenterCallback
 import kotlinx.coroutines.experimental.android.UI
 import kotlinx.coroutines.experimental.launch
-import org.openintents.openpgp.OpenPgpApiManager
-import org.openintents.openpgp.util.OpenPgpApi
 import timber.log.Timber
-import java.io.ByteArrayOutputStream
-import java.io.InputStream
+import java.util.*
+import java.util.concurrent.ConcurrentLinkedQueue
 
 class E3KeyScanPresenter internal constructor(
         lifecycleOwner: LifecycleOwner,
-        private val context: Context,
-        private val openPgpApiManager: OpenPgpApiManager,
         private val preferences: Preferences,
         private val viewModel: E3KeyScanViewModel,
         private val view: E3KeyScanActivity
 ) {
     private lateinit var account: Account
-    private lateinit var pendingIntentForGetKey: PendingIntent
+    private lateinit var pendingKeysToVerify: Queue<LocalMessage>
 
     init {
         viewModel.e3KeyScanScanLiveEvent.observe(lifecycleOwner, Observer { msg -> msg?.let { onEventE3KeyScan(it) } })
@@ -42,8 +33,7 @@ class E3KeyScanPresenter internal constructor(
         }
 
         account = preferences.getAccount(accountUuid)
-
-        openPgpApiManager.setOpenPgpProvider(account.e3Provider, E3OpenPgpPresenterCallback(openPgpApiManager, view))
+        pendingKeysToVerify = ConcurrentLinkedQueue<LocalMessage>()
 
         view.setAddress(account.identities[0].email)
 
@@ -72,34 +62,18 @@ class E3KeyScanPresenter internal constructor(
         viewModel.e3KeyScanDownloadLiveEvent.downloadE3KeysAsync(e3KeyScanResult)
     }
 
-    private fun addKeysFromMessagesToKeychain(keyMessages: List<LocalMessage>) {
-        for (keyMsg: LocalMessage in keyMessages) {
-            if (!keyMsg.hasAttachments()) {
-                continue
-            }
+    fun verifyNextKey() {
+        if (anyKeysToVerify()) {
+            val keyToVerify = pendingKeysToVerify.poll()
+            val uid = keyToVerify.uid
+            val phrase = keyToVerify.getHeader(E3Constants.MIME_E3_VERIFICATION)[0]
 
-            val keyPart = MimeUtility.findFirstPartByMimeType(keyMsg, E3Constants.CONTENT_TYPE_PGP_KEYS)
-
-            if (keyPart == null) {
-                Timber.e("Did not find any ${E3Constants.CONTENT_TYPE_PGP_KEYS} attachment in E3 key message: ${keyMsg.messageId} ${keyMsg.preview}")
-                continue
-            }
-
-            val keyBytes = ByteArrayOutputStream()
-            keyPart.body.writeTo(keyBytes)
-
-            val pgpApiIntent = Intent(OpenPgpApi.ACTION_ADD_ENCRYPT_ON_RECEIPT_KEY)
-            pgpApiIntent.putExtra(OpenPgpApi.EXTRA_ASCII_ARMORED_KEY, keyBytes.toByteArray())
-
-            val result = openPgpApiManager.openPgpApi.executeApi(pgpApiIntent, null as InputStream?, null)
-            val resultCode = result.getIntExtra(OpenPgpApi.RESULT_CODE, OpenPgpApi.RESULT_CODE_ERROR)
-
-            if (resultCode == OpenPgpApi.RESULT_CODE_SUCCESS) {
-                Timber.d("Successfully added E3 public key to OpenKeychain")
-            } else {
-                Timber.d("Failed to add E3 public key to OpeKeychain: $resultCode")
-            }
+            view.startVerifyKeyActivity(account.uuid, uid, phrase)
         }
+    }
+
+    fun anyKeysToVerify(): Boolean {
+        return pendingKeysToVerify.isNotEmpty()
     }
 
     private fun onLoadedE3KeyScanDownload(result: E3KeyScanDownloadResult?) {
@@ -109,7 +83,15 @@ class E3KeyScanPresenter internal constructor(
                 view.setLoadingStateFinished()
                 view.sceneFinished()
                 Timber.d("Got downloaded key results ${result.resultMessages.size}")
-                addKeysFromMessagesToKeychain(result.resultMessages)
+                //addKeysFromMessagesToKeychain(result.resultMessages)
+
+                for (keyMsg in result.resultMessages) {
+                    if (keyMsg.headerNames.contains(E3Constants.MIME_E3_VERIFICATION)) {
+                        pendingKeysToVerify.add(keyMsg)
+                    }
+                }
+
+                verifyNextKey()
             }
             is E3KeyScanDownloadResult.NoneFound -> {
                 view.setLoadingStateFinished()

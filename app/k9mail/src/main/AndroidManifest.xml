@@ -217,6 +217,12 @@
             />
 
         <activity
+            android:name=".ui.e3.verify.E3KeyVerificationActivity"
+            android:configChanges="locale"
+            android:label="@string/e3_key_verify_title"
+            />
+
+        <activity
             android:name=".ui.e3.undo.E3UndoActivity"
             android:configChanges="locale"
             android:label="@string/e3_undo_title"

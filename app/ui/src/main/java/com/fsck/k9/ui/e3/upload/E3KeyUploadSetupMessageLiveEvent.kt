@@ -5,6 +5,7 @@ import android.content.Context
 import android.content.Intent
 import android.graphics.Bitmap
 import com.fsck.k9.Account
+import com.fsck.k9.crypto.E3Constants
 import com.fsck.k9.crypto.KeyFormattingUtils
 import com.fsck.k9.helper.SingleLiveEvent
 import com.fsck.k9.mail.Message
@@ -39,7 +40,8 @@ class E3KeyUploadSetupMessageLiveEvent(private val context: Context, private val
         val armoredKey = requestPgpKey(openPgpApi, account, true, true)
         val armoredKeyBytes = armoredKey.resultData.toByteArray()
         val e3KeyDigest = KeyFormattingUtils.beautifyHex(Hex.encodeHex(e3Digester.digest(armoredKeyBytes)))
-        val randomWords = wordList.getRandomWords(3).joinToString(" ")
+        val randomWords = wordList.getRandomWords(E3Constants.E3_VERIFICATION_PHRASE_LENGTH)
+                .joinToString(E3Constants.E3_VERIFICATION_PHRASE_DELIMITER)
 
         val setupMessage = messageCreator.createE3KeyUploadMessage(armoredKeyBytes,
                 account,

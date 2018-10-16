@@ -9,4 +9,8 @@ public final class E3Constants {
     public static final String MIME_E3_VERIFICATION = "X-E3-VERIFICATION";
 
     public static final String CONTENT_TYPE_PGP_KEYS = "application/pgp-keys";
+
+    public static final int E3_VERIFICATION_PHRASES = 3;
+    public static final int E3_VERIFICATION_PHRASE_LENGTH = 3;
+    public static final String E3_VERIFICATION_PHRASE_DELIMITER = " ";
 }
