@@ -1,6 +1,7 @@
 package com.fsck.k9.ui.e3.verify
 
 import android.app.Activity
+import android.arch.lifecycle.LifecycleOwner
 import android.content.Intent
 import android.widget.AdapterView
 import android.widget.TextView
@@ -20,6 +21,7 @@ import java.io.ByteArrayOutputStream
 import java.io.InputStream
 
 class E3KeyVerificationPresenter internal constructor(
+        lifecycleOwner: LifecycleOwner,
         private val preferences: Preferences,
         private val openPgpApiManager: OpenPgpApiManager,
         private val view: E3KeyVerificationActivity,

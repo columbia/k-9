@@ -47,6 +47,7 @@ val e3KeyVerifyUiModule = applicationContext {
     factory { E3KeyScanDownloadLiveEvent() }
     factory { params ->
         E3KeyVerificationPresenter(
+                lifecycleOwner = params["lifecycleOwner"],
                 preferences = get(),
                 openPgpApiManager = get(parameters = { params.values }),
                 view = params["e3VerifyView"],

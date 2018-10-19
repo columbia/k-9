@@ -1,25 +1,17 @@
 <?xml version="1.0" encoding="utf-8"?>
-<LinearLayout
+
+<TextView
     xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
     xmlns:tools="http://schemas.android.com/tools"
-    android:layout_width="match_parent"
+
+    android:id="@+id/e3KeyVerificationPhraseChoice"
+    style="?android:textAppearanceLarge"
+    android:layout_width="fill_parent"
     android:layout_height="wrap_content"
-    android:layout_gravity="center_horizontal"
-    android:orientation="vertical"
-    android:paddingLeft="12dp"
-    android:paddingRight="12dp">
-
-
-    <TextView
-        android:id="@+id/e3KeyVerificationPhraseChoice"
-        style="?android:textAppearanceLarge"
-        android:layout_width="fill_parent"
-        android:layout_height="wrap_content"
-        android:layout_gravity="center_vertical"
-        android:gravity="center_horizontal"
-        app:fontFamily="monospace"
-        tools:text="verification_phrase"
-        />
-
-</LinearLayout>
+    android:layout_gravity="center_vertical"
+    android:gravity="center_horizontal"
+    android:padding="20dp"
+    app:fontFamily="monospace"
+    tools:text="verification_phrase"
+    />

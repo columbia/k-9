@@ -16,7 +16,7 @@ import org.koin.android.ext.android.inject
 
 class E3KeyVerificationActivity : E3ActionBaseActivity() {
     private val presenter: E3KeyVerificationPresenter by inject {
-        mapOf("e3VerifyView" to this)
+        mapOf("lifecycleOwner" to this, "e3VerifyView" to this)
     }
 
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -48,7 +48,7 @@ class E3KeyVerificationActivity : E3ActionBaseActivity() {
         e3KeyVerifyErrorWrongPhrase.visibility = View.GONE
     }
 
-    fun sceneFinished(transition: Boolean = false) {
+    private fun sceneFinished(transition: Boolean = false) {
         if (transition) {
             setupSceneTransition()
         }
@@ -58,7 +58,7 @@ class E3KeyVerificationActivity : E3ActionBaseActivity() {
         e3KeyVerifyErrorWrongPhrase.visibility
     }
 
-    fun sceneErrorWrongPhrase() {
+    private fun sceneErrorWrongPhrase() {
         setupSceneTransition()
 
         e3KeyVerifyLayoutVerificationPhrases.visibility = View.GONE
