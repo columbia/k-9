@@ -41,25 +41,28 @@ class E3KeyVerificationPresenter internal constructor(
         view.sceneBegin()
     }
 
-    fun requestUserVerification(messageUid: String, correctVerificationPhrase: String) {
-        val phrases = generateRandomPhrasesList(correctVerificationPhrase)
+    fun requestUserVerification(uidsToPhrases: Map<String, String>) {
+        val verifiedKeys = arrayListOf<String>()
+        for ((uid, phrase) in uidsToPhrases) {
+            val phrases = generateRandomPhrasesList(phrase)
 
-        Timber.d("Created list of verification phrases: ${phrases.joinToString(", ")} (correct one is: $correctVerificationPhrase)")
+            Timber.d("Created list of verification phrases: ${phrases.joinToString(", ")} (correct one is: $phrase)")
 
-        val listener = AdapterView.OnItemClickListener { _, textView, _, _ ->
-            val selectedPhrase: String = (textView as TextView).text.toString()
+            val listener = AdapterView.OnItemClickListener { _, textView, _, _ ->
+                val selectedPhrase: String = (textView as TextView).text.toString()
 
-            if (selectedPhrase == correctVerificationPhrase) {
-                Timber.d("E3 key verified, recording the msgUid: $messageUid")
-                addVerifiedKeysFromMessages(listOf(messageUid))
-                view.returnResult(messageUid, true)
-            } else {
-                Timber.d("User chose wrong verification phrase for E3 key in msgUid=$messageUid, selectedPhrase=$selectedPhrase, correctPhrase=$correctVerificationPhrase")
-                view.returnResult(messageUid, false)
+                if (selectedPhrase == phrase) {
+                    Timber.d("E3 key verified, recording the msgUid: $uid")
+                    addVerifiedKeysFromMessages(listOf(uid))
+                    view.returnResult(verifiedKeys, true)
+                } else {
+                    Timber.d("User chose wrong verification phrase for E3 key in msgUid=$uid, selectedPhrase=$selectedPhrase, correctPhrase=$phrase")
+                    view.returnResult(verifiedKeys, false)
+                }
             }
-        }
 
-        view.addPhrasesToListView(phrases, listener)
+            view.addPhrasesToListView(phrases, listener)
+        }
     }
 
     private fun generateRandomPhrasesList(correctVerificationPhrase: String): List<String> {

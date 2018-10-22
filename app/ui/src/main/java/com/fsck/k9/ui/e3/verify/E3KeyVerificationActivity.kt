@@ -15,6 +15,7 @@ import kotlinx.android.synthetic.main.crypto_e3_key_verify.*
 import org.koin.android.ext.android.inject
 
 class E3KeyVerificationActivity : E3ActionBaseActivity() {
+    private lateinit var uidsToPhrases: Map<String, String>
     private val presenter: E3KeyVerificationPresenter by inject {
         mapOf("lifecycleOwner" to this, "e3VerifyView" to this)
     }
@@ -24,13 +25,25 @@ class E3KeyVerificationActivity : E3ActionBaseActivity() {
         setContentView(R.layout.crypto_e3_key_verify)
 
         val accountUuid = intent.getStringExtra(EXTRA_ACCOUNT)
-        val msgUid = intent.getStringExtra(EXTRA_MESSAGE_UID)
-        val correctVerificationPhrase = intent.getStringExtra(EXTRA_VERIFICATION_PHRASE)
+
+        val serializedMap = intent.getSerializableExtra(EXTRA_UIDS_TO_PHRASES)
+
+        if (serializedMap != null) {
+            @Suppress("UNCHECKED_CAST")
+            uidsToPhrases = intent.getSerializableExtra(EXTRA_UIDS_TO_PHRASES) as Map<String, String>
+        } else {
+            finishAsCancelled()
+            return
+        }
 
         supportActionBar!!.setDisplayHomeAsUpEnabled(true)
 
         presenter.initFromIntent(accountUuid)
-        presenter.requestUserVerification(msgUid, correctVerificationPhrase)
+    }
+
+    override fun onStart() {
+        super.onStart()
+        presenter.requestUserVerification(uidsToPhrases)
     }
 
     override fun onOptionsItemSelected(item: MenuItem?): Boolean {
@@ -74,9 +87,9 @@ class E3KeyVerificationActivity : E3ActionBaseActivity() {
         listView.onItemClickListener = listener
     }
 
-    fun returnResult(messageUid: String, successful: Boolean) {
+    fun returnResult(messageUids: ArrayList<String>, successful: Boolean) {
         val resultIntent = Intent()
-        resultIntent.putExtra(VERIFY_PHRASE_RESULT_EXTRA_MESSAGE_UID, messageUid)
+        resultIntent.putStringArrayListExtra(VERIFY_PHRASE_RESULT_EXTRA_MESSAGE_UIDS, messageUids)
         if (successful) {
             resultIntent.putExtra(VERIFY_PHRASE_RESULT_EXTRA_SUCCESS, "true")
             sceneFinished()
@@ -89,17 +102,15 @@ class E3KeyVerificationActivity : E3ActionBaseActivity() {
 
     companion object {
         const val VERIFY_PHRASE_REQUEST_CODE = 1
-        const val VERIFY_PHRASE_RESULT_EXTRA_MESSAGE_UID = "message_uid"
+        const val VERIFY_PHRASE_RESULT_EXTRA_MESSAGE_UIDS = "message_uids"
         const val VERIFY_PHRASE_RESULT_EXTRA_SUCCESS = "success"
         private const val EXTRA_ACCOUNT = "account"
-        private const val EXTRA_MESSAGE_UID = "message_uid"
-        private const val EXTRA_VERIFICATION_PHRASE = "verification_phrase"
+        private const val EXTRA_UIDS_TO_PHRASES = "uids_to_phrases"
 
-        fun createIntent(context: Context, accountUuid: String, msgUid: String, verificationPhrase: String): Intent {
+        fun createIntent(context: Context, accountUuid: String, uidsToPhrases: HashMap<String, String>): Intent {
             val intent = Intent(context, E3KeyVerificationActivity::class.java)
             intent.putExtra(EXTRA_ACCOUNT, accountUuid)
-            intent.putExtra(EXTRA_MESSAGE_UID, msgUid)
-            intent.putExtra(EXTRA_VERIFICATION_PHRASE, verificationPhrase)
+            intent.putExtra(EXTRA_UIDS_TO_PHRASES, uidsToPhrases)
             return intent
         }
     }

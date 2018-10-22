@@ -9,8 +9,6 @@ import com.fsck.k9.mailstore.LocalMessage
 import kotlinx.coroutines.experimental.android.UI
 import kotlinx.coroutines.experimental.launch
 import timber.log.Timber
-import java.util.*
-import java.util.concurrent.ConcurrentLinkedQueue
 
 class E3KeyScanPresenter internal constructor(
         lifecycleOwner: LifecycleOwner,
@@ -19,7 +17,6 @@ class E3KeyScanPresenter internal constructor(
         private val view: E3KeyScanActivity
 ) {
     private lateinit var account: Account
-    private lateinit var pendingKeysToVerify: Queue<LocalMessage>
 
     init {
         viewModel.e3KeyScanScanLiveEvent.observe(lifecycleOwner, Observer { msg -> msg?.let { onEventE3KeyScan(it) } })
@@ -33,7 +30,6 @@ class E3KeyScanPresenter internal constructor(
         }
 
         account = preferences.getAccount(accountUuid)
-        pendingKeysToVerify = ConcurrentLinkedQueue<LocalMessage>()
 
         view.setAddress(account.identities[0].email)
 
@@ -62,18 +58,14 @@ class E3KeyScanPresenter internal constructor(
         viewModel.e3KeyScanDownloadLiveEvent.downloadE3KeysAsync(e3KeyScanResult)
     }
 
-    fun verifyNextKey() {
-        if (anyKeysToVerify()) {
-            val keyToVerify = pendingKeysToVerify.poll()
-            val uid = keyToVerify.uid
-            val phrase = keyToVerify.getHeader(E3Constants.MIME_E3_VERIFICATION)[0]
+    fun verifyKeys(keyMessages: List<LocalMessage>) {
+        val uidsToPhrases = hashMapOf<String, String>()
 
-            view.startVerifyKeyActivity(account.uuid, uid, phrase)
+        for (keyMsg in keyMessages) {
+            uidsToPhrases[keyMsg.uid] = keyMsg.getHeader(E3Constants.MIME_E3_VERIFICATION)[0]
         }
-    }
 
-    fun anyKeysToVerify(): Boolean {
-        return pendingKeysToVerify.isNotEmpty()
+        view.startVerifyKeyActivity(account.uuid, uidsToPhrases)
     }
 
     private fun onLoadedE3KeyScanDownload(result: E3KeyScanDownloadResult?) {
@@ -85,13 +77,15 @@ class E3KeyScanPresenter internal constructor(
                 Timber.d("Got downloaded key results ${result.resultMessages.size}")
                 //addKeysFromMessagesToKeychain(result.resultMessages)
 
+                val keyMessages = mutableListOf<LocalMessage>()
+
                 for (keyMsg in result.resultMessages) {
                     if (keyMsg.headerNames.contains(E3Constants.MIME_E3_VERIFICATION)) {
-                        pendingKeysToVerify.add(keyMsg)
+                        keyMessages.add(keyMsg)
                     }
                 }
 
-                verifyNextKey()
+                verifyKeys(keyMessages)
             }
             is E3KeyScanDownloadResult.NoneFound -> {
                 view.setLoadingStateFinished()

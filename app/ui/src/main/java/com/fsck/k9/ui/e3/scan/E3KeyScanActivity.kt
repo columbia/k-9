@@ -42,40 +42,13 @@ class E3KeyScanActivity : E3ActionBaseActivity() {
         return super.onOptionsItemSelected(item)
     }
 
-    fun startVerifyKeyActivity(accountUuid: String, msgUid: String, verificationPhrase: String) {
-        val keyVerifyIntent = E3KeyVerificationActivity.createIntent(this, accountUuid, msgUid, verificationPhrase)
+    fun startVerifyKeyActivity(accountUuid: String, uidsToPhrases: HashMap<String, String>) {
+        val keyVerifyIntent = E3KeyVerificationActivity.createIntent(this, accountUuid, uidsToPhrases)
 
-        Timber.d("Starting E3KeyVerificationActivity for msgUid=$msgUid, verificationPhrase=$verificationPhrase")
-        startActivityForResult(keyVerifyIntent, E3KeyVerificationActivity.VERIFY_PHRASE_REQUEST_CODE)
+        Timber.d("Starting E3KeyVerificationActivity for msgUid=$uidsToPhrases")
+        startActivity(keyVerifyIntent)
     }
 
-    override fun onActivityResult(requestCode: Int, resultCode: Int, data: Intent?) {
-        when (requestCode) {
-            E3KeyVerificationActivity.VERIFY_PHRASE_REQUEST_CODE -> {
-                handleVerifyActivityResult(data)
-                if (presenter.anyKeysToVerify()) {
-                    presenter.verifyNextKey()
-                }
-                return
-            }
-        }
-        super.onActivityResult(requestCode, resultCode, data)
-    }
-
-    private fun handleVerifyActivityResult(data: Intent?) {
-        val keyMsgUid = data?.getStringExtra(E3KeyVerificationActivity.VERIFY_PHRASE_RESULT_EXTRA_MESSAGE_UID)
-        val success = data?.getStringExtra(E3KeyVerificationActivity.VERIFY_PHRASE_RESULT_EXTRA_SUCCESS)
-
-        if (keyMsgUid != null) {
-            if (success != null) {
-                Timber.d("Successfully verified key from messageUid=$keyMsgUid")
-            } else {
-                Timber.d("User failed to select the correct verification phrase for messageUid=$keyMsgUid")
-            }
-        } else {
-            Timber.e("Got null or missing message uid from E3KeyVerificationActivity")
-        }
-    }
 
     fun setAddress(address: String) {
         e3KeyScanAddress.text = address
