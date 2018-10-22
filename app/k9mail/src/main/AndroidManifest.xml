@@ -478,6 +478,10 @@
             </intent-filter>
         </service>
 
+        <service
+            android:name=".service.E3KeyScanService"
+            android:enabled="true"/>
+
         <provider
             android:name=".provider.AttachmentProvider"
             android:authorities="${applicationId}.attachmentprovider"

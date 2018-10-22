@@ -59,6 +59,7 @@ import com.fsck.k9.controller.MessagingControllerCommands.PendingMoveOrCopy;
 import com.fsck.k9.controller.MessagingControllerCommands.PendingSetFlag;
 import com.fsck.k9.controller.ProgressBodyFactory.ProgressListener;
 import com.fsck.k9.crypto.BackendE3PgpService;
+import com.fsck.k9.crypto.E3KeyPredicate;
 import com.fsck.k9.helper.Contacts;
 import com.fsck.k9.mail.Address;
 import com.fsck.k9.mail.AuthenticationFailedException;
@@ -134,6 +135,7 @@ public class MessagingController {
 
 
     private MessagingListener checkMailListener = null;
+    private MessagingListener e3KeyListener = null;
     private volatile boolean stopped = false;
 
 
@@ -2928,6 +2930,20 @@ public class MessagingController {
         }
     }
 
+    public MessagingListener getE3KeyListener() {
+        return e3KeyListener;
+    }
+
+    public void setE3KeyListener(MessagingListener e3KeyListener) {
+        if (this.e3KeyListener != null) {
+            removeListener(this.e3KeyListener);
+        }
+        this.e3KeyListener = e3KeyListener;
+        if (this.e3KeyListener != null) {
+            addListener(this.e3KeyListener);
+        }
+    }
+
     public Collection<Pusher> getPushers() {
         return pushers.values();
     }
@@ -3130,6 +3146,7 @@ public class MessagingController {
         private final MessagingListener listener;
         private final LocalStore localStore;
         private final int previousUnreadMessageCount;
+        private final E3KeyPredicate e3KeyPredicate;
         boolean syncFailed = false;
 
 
@@ -3137,6 +3154,7 @@ public class MessagingController {
             this.account = account;
             this.listener = listener;
             this.localStore = getLocalStoreOrThrow(account);
+            this.e3KeyPredicate = new E3KeyPredicate();
 
             previousUnreadMessageCount = getUnreadMessageCount();
         }
@@ -3209,6 +3227,10 @@ public class MessagingController {
                 for (MessagingListener messagingListener : getListeners(listener)) {
                     messagingListener.synchronizeMailboxNewMessage(account, folderServerId, message);
                 }
+            }
+
+            if (account.isE3ProviderConfigured() && e3KeyPredicate.apply(message)) {
+                notificationController.addNewE3KeyNotification(account, message);
             }
         }
 

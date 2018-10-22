@@ -15,6 +15,7 @@ public class NotificationController {
     private final SyncNotifications syncNotifications;
     private final SendFailedNotifications sendFailedNotifications;
     private final NewMailNotifications newMailNotifications;
+    private final NewE3KeyNotifications newE3KeyNotifications;
 
 
     public static boolean platformSupportsExtendedNotifications() {
@@ -31,13 +32,15 @@ public class NotificationController {
             AuthenticationErrorNotifications authenticationErrorNotifications,
             SyncNotifications syncNotifications,
             SendFailedNotifications sendFailedNotifications,
-            NewMailNotifications newMailNotifications
+            NewMailNotifications newMailNotifications,
+            NewE3KeyNotifications newE3KeyNotifications
     ) {
         this.certificateErrorNotifications = certificateErrorNotifications;
         this.authenticationErrorNotifications = authenticationErrorNotifications;
         this.syncNotifications = syncNotifications;
         this.sendFailedNotifications = sendFailedNotifications;
         this.newMailNotifications = newMailNotifications;
+        this.newE3KeyNotifications = newE3KeyNotifications;
     }
 
     public void showCertificateErrorNotification(Account account, boolean incoming) {
@@ -90,5 +93,9 @@ public class NotificationController {
 
     public void clearNewMailNotifications(Account account) {
         newMailNotifications.clearNewMailNotifications(account);
+    }
+
+    public void addNewE3KeyNotification(Account account, LocalMessage message) {
+        newE3KeyNotifications.addNewE3KeyNotification(account, message);
     }
 }
