@@ -1,6 +1,7 @@
 package com.fsck.k9.ui.e3.scan
 
 import com.fsck.k9.crypto.E3Constants
+import com.fsck.k9.crypto.E3KeyScanResult
 import com.fsck.k9.helper.SingleLiveEvent
 import com.fsck.k9.mail.FetchProfile
 import com.fsck.k9.mailstore.LocalMessage
@@ -55,7 +56,7 @@ class E3KeyScanDownloadLiveEvent : SingleLiveEvent<E3KeyScanDownloadResult>() {
                 continue
             }
 
-            val localMessageList = listOf<LocalMessage>(msg)
+            val localMessageList = listOf(msg)
 
             msg.folder.fetch(localMessageList, fetchProfile, null)
 
