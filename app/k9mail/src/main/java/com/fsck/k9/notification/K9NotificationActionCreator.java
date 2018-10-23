@@ -1,7 +1,9 @@
 package com.fsck.k9.notification;
 
 
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 import android.app.PendingIntent;
 import android.content.Context;
@@ -21,6 +23,7 @@ import com.fsck.k9.activity.compose.MessageActions;
 import com.fsck.k9.activity.setup.AccountSetupIncoming;
 import com.fsck.k9.activity.setup.AccountSetupOutgoing;
 import com.fsck.k9.search.LocalSearch;
+import com.fsck.k9.ui.e3.verify.E3KeyVerificationActivity;
 
 
 /**
@@ -236,6 +239,17 @@ class K9NotificationActionCreator implements NotificationActionCreator {
 
         return PendingIntent.getService(context, notificationId, intent,
                 PendingIntent.FLAG_CANCEL_CURRENT | PendingIntent.FLAG_ONE_SHOT);
+    }
+
+    @Override
+    public PendingIntent createE3VerifyKeyPendingIntent(MessageReference messageReference, int notificationId) {
+        HashMap<String, String> uidsToPhrases = new HashMap<>();
+
+        uidsToPhrases.put(messageReference.getUid(), "a b c");
+
+        Intent intent = E3KeyVerificationActivity.createIntent(context, messageReference.getAccountUuid(), uidsToPhrases);
+
+        return PendingIntent.getActivity(context, notificationId, intent, PendingIntent.FLAG_UPDATE_CURRENT);
     }
 
     private TaskStackBuilder buildAccountsBackStack() {

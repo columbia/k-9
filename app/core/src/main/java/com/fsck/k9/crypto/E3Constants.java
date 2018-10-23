@@ -13,4 +13,12 @@ public final class E3Constants {
     public static final int E3_VERIFICATION_PHRASES = 3;
     public static final int E3_VERIFICATION_PHRASE_LENGTH = 3;
     public static final String E3_VERIFICATION_PHRASE_DELIMITER = " ";
+    public static final long E3_VERIFICATION_ALLOWED_AGE_MS = 1200L; //120000L;
+
+    // TODO: E3 make these strings usable by the Notification classes
+    // <string name="e3_key_notification_title">New E3 device detected</string>
+    // <string name="e3_key_notification_text">Press to verify your new device.</string>
+    public static final String E3_KEY_NOTIFICATION_TITLE = "New E3 device detected";
+    public static final String E3_KEY_NOTIFICATION_TEXT = "Press to verify your new device.";
+    public static final String E3_KEY_NOTIFICATION_BIG_TEXT = "A new E3 device was detected. Press to verify your new device.";
 }

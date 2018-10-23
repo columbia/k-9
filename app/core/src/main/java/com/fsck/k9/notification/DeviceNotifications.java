@@ -18,6 +18,8 @@ import com.fsck.k9.K9.NotificationHideSubject;
 import com.fsck.k9.K9.NotificationQuickDelete;
 import com.fsck.k9.NotificationSetting;
 import com.fsck.k9.controller.MessageReference;
+import com.fsck.k9.core.R;
+import com.fsck.k9.crypto.E3Constants;
 
 import static com.fsck.k9.notification.NotificationHelper.NOTIFICATION_LED_BLINK_SLOW;
 import static com.fsck.k9.notification.NotificationController.platformSupportsExtendedNotifications;
@@ -81,6 +83,7 @@ class DeviceNotifications extends BaseNotifications {
 
     public Notification buildSummaryNotificationForE3Key(Account account, NotificationData notificationData,
                                                          boolean silent) {
+        int notificationId = NotificationIds.getNewE3KeyNotificationId(account);
         NotificationHolder holder = notificationData.getHolderForLatestNotification();
         NotificationCompat.Builder builder = createBigTextStyleE3KeyNotification(account, holder);
         lockScreenNotification.configureLockScreenNotification(builder, notificationData);
@@ -99,6 +102,9 @@ class DeviceNotifications extends BaseNotifications {
                 (notificationSetting.isLedEnabled()) ? notificationSetting.getLedColor() : null,
                 NOTIFICATION_LED_BLINK_SLOW,
                 ringAndVibrate);
+
+        PendingIntent pendingIntent = actionCreator.createE3VerifyKeyPendingIntent(holder.content.messageReference, notificationId);
+        builder.setContentIntent(pendingIntent);
 
         return builder.build();
     }
@@ -143,12 +149,13 @@ class DeviceNotifications extends BaseNotifications {
                 .setGroupSummary(true);
 
         builder.setTicker("content.summary")
-                .setContentTitle("content.sender")
-                .setContentText("content.subject")
-                .setSubText(accountName);
+                .setContentTitle(E3Constants.E3_KEY_NOTIFICATION_TITLE)
+                .setContentText(E3Constants.E3_KEY_NOTIFICATION_TEXT)
+                .setSubText(account.getEmail())
+                .setPriority(NotificationCompat.PRIORITY_HIGH);
 
         NotificationCompat.BigTextStyle style = createBigTextStyle(builder);
-        style.bigText("content.preview");
+        style.bigText(E3Constants.E3_KEY_NOTIFICATION_BIG_TEXT);
 
         builder.setStyle(style);
 

@@ -1,6 +1,5 @@
 package com.fsck.k9.ui.e3.verify
 
-import android.app.Activity
 import android.arch.lifecycle.LifecycleOwner
 import android.content.Intent
 import android.widget.AdapterView
@@ -12,8 +11,6 @@ import com.fsck.k9.mail.internet.MimeUtility
 import com.fsck.k9.mailstore.LocalMessage
 import com.fsck.k9.ui.crypto.PgpWordList
 import com.fsck.k9.ui.e3.E3OpenPgpPresenterCallback
-import kotlinx.coroutines.experimental.android.UI
-import kotlinx.coroutines.experimental.launch
 import org.openintents.openpgp.OpenPgpApiManager
 import org.openintents.openpgp.util.OpenPgpApi
 import timber.log.Timber

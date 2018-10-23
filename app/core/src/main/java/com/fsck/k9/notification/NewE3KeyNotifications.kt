@@ -1,9 +1,10 @@
 package com.fsck.k9.notification
 
-import android.support.v4.app.NotificationCompat
+import android.os.Handler
 import android.support.v4.app.NotificationManagerCompat
 import android.util.SparseArray
 import com.fsck.k9.Account
+import com.fsck.k9.crypto.E3Constants
 import com.fsck.k9.mailstore.LocalMessage
 
 /**
@@ -31,7 +32,7 @@ class NewE3KeyNotifications internal constructor(private val notificationHelper:
                 cancelNotification(notificationId)
             }
 
-            createSummaryNotification(account, notificationData, false)
+            notifyUsingSummaryNotification(account, notificationData, false)
         }
     }
 
@@ -48,9 +49,9 @@ class NewE3KeyNotifications internal constructor(private val notificationHelper:
         return newNotificationHolder
     }
 
-    private fun createSummaryNotification(account: Account, notificationData: NotificationData, silent: Boolean) {
+    private fun notifyUsingSummaryNotification(account: Account, notificationData: NotificationData, silent: Boolean) {
         val notification = deviceNotifications.buildSummaryNotificationForE3Key(account, notificationData, silent)
-        val notificationId = NotificationIds.getNewMailSummaryNotificationId(account)
+        val notificationId = NotificationIds.getNewE3KeyNotificationId(account)
 
         getNotificationManager().notify(notificationId, notification)
     }
