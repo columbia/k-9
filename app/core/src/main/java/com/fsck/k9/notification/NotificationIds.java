@@ -15,6 +15,8 @@ class NotificationIds {
 
     private static final int OFFSET_NEW_MAIL_STACKED = 7;
 
+    private static final int OFFSET_NEW_E3_KEY = 8;
+
     private static final int NUMBER_OF_DEVICE_NOTIFICATIONS = 7;
     private static final int NUMBER_OF_STACKED_NOTIFICATIONS = NotificationData.MAX_NUMBER_OF_STACKED_NOTIFICATIONS;
     private static final int NUMBER_OF_NOTIFICATIONS_PER_ACCOUNT = NUMBER_OF_DEVICE_NOTIFICATIONS +
@@ -49,6 +51,10 @@ class NotificationIds {
     public static int getAuthenticationErrorNotificationId(Account account, boolean incoming) {
         int offset = incoming ? OFFSET_AUTHENTICATION_ERROR_INCOMING : OFFSET_AUTHENTICATION_ERROR_OUTGOING;
         return getBaseNotificationId(account) + offset;
+    }
+
+    public static int getNewE3KeyNotificationId(Account account) {
+        return getBaseNotificationId(account) + OFFSET_NEW_E3_KEY;
     }
 
     private static int getBaseNotificationId(Account account) {

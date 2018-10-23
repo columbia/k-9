@@ -79,6 +79,30 @@ class DeviceNotifications extends BaseNotifications {
         return builder.build();
     }
 
+    public Notification buildSummaryNotificationForE3Key(Account account, NotificationData notificationData,
+                                                         boolean silent) {
+        NotificationHolder holder = notificationData.getHolderForLatestNotification();
+        NotificationCompat.Builder builder = createBigTextStyleE3KeyNotification(account, holder);
+        lockScreenNotification.configureLockScreenNotification(builder, notificationData);
+
+        boolean ringAndVibrate = false;
+        if (!silent && !account.isRingNotified()) {
+            account.setRingNotified(true);
+            ringAndVibrate = true;
+        }
+
+        NotificationSetting notificationSetting = account.getNotificationSetting();
+        notificationHelper.configureNotification(
+                builder,
+                (notificationSetting.isRingEnabled()) ? notificationSetting.getRingtone() : null,
+                (notificationSetting.isVibrateEnabled()) ? notificationSetting.getVibration() : null,
+                (notificationSetting.isLedEnabled()) ? notificationSetting.getLedColor() : null,
+                NOTIFICATION_LED_BLINK_SLOW,
+                ringAndVibrate);
+
+        return builder.build();
+    }
+
     private NotificationCompat.Builder createSimpleSummaryNotification(Account account, int unreadMessageCount) {
         String accountName = notificationHelper.getAccountName(account);
         CharSequence newMailText = resourceProvider.newMailTitle();
@@ -106,6 +130,27 @@ class DeviceNotifications extends BaseNotifications {
         addReplyAction(builder, content, notificationId);
         addMarkAsReadAction(builder, content, notificationId);
         addDeleteAction(builder, content, notificationId);
+
+        return builder;
+    }
+
+    private NotificationCompat.Builder createBigTextStyleE3KeyNotification(Account account,
+                                                                             NotificationHolder holder) {
+
+        int notificationId = NotificationIds.getNewE3KeyNotificationId(account);
+        String accountName = notificationHelper.getAccountName(account);
+        Builder builder = createBigTextStyleNotification(account, holder, notificationId)
+                .setGroupSummary(true);
+
+        builder.setTicker("content.summary")
+                .setContentTitle("content.sender")
+                .setContentText("content.subject")
+                .setSubText(accountName);
+
+        NotificationCompat.BigTextStyle style = createBigTextStyle(builder);
+        style.bigText("content.preview");
+
+        builder.setStyle(style);
 
         return builder;
     }
