@@ -12,6 +12,7 @@
 
     <TextView
         style="?android:textAppearanceMedium"
+        android:id="@+id/e3KeyVerifyLayoutInstructions"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:layout_marginTop="24dp"
@@ -44,6 +45,15 @@
         android:layout_height="wrap_content"
         android:text="@string/e3_key_verify_error_wrong_phrase"
         tools:visibility="gone"
+        />
+
+    <Button
+        android:id="@+id/e3KeyVerifyNextKey"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_gravity="center_horizontal"
+        android:layout_marginTop="24dp"
+        android:text="@string/e3_key_next_verify_button"
         />
 
 

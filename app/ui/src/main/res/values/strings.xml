@@ -1381,6 +1381,7 @@ Please submit bug reports, contribute new features and ask questions at
     <string name="e3_key_verify_intro">Select the verification phrase displayed on your new device:</string>
     <string name="e3_key_verify_correct_phrase">Device successfully verified.</string>
     <string name="e3_key_verify_error_wrong_phrase">Incorrect phrase! If this was a mistake, please restart the setup process on your other device.</string>
+    <string name="e3_key_next_verify_button">Verify next device</string>
 
     <string name="e3_undo_title">Undo E3 encryption</string>
     <string name="e3_undo_intro">Decrypts all E3-encrypted emails, restoring them to their original plaintext emails.

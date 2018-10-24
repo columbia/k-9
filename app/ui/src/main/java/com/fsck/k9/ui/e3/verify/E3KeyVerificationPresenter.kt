@@ -38,30 +38,29 @@ class E3KeyVerificationPresenter internal constructor(
         view.sceneBegin()
     }
 
-    fun requestUserVerification(uidsToPhrases: Map<String, String>) {
-        val verifiedKeys = arrayListOf<String>()
-        for ((uid, phrase) in uidsToPhrases) {
-            val phrases = generateRandomPhrasesList(phrase)
+    fun requestUserVerification(uidToPhrase: E3KeyVerificationActivity.E3KeyUidToPhrase, moreKeys: Boolean = false) {
+        val uid = uidToPhrase.uid
+        val phrase = uidToPhrase.phrase
+        val phrases = generateRandomPhrasesList(phrase)
 
-            Timber.d("Created list of verification phrases: ${phrases.joinToString(", ")} (correct one is: $phrase)")
+        Timber.d("Created list of verification phrases: ${phrases.joinToString(", ")} (correct one is: $phrase)")
 
-            val listener = AdapterView.OnItemClickListener { _, textView, _, _ ->
-                val selectedPhrase: String = (textView as TextView).text.toString()
+        val listener = AdapterView.OnItemClickListener { _, textView, _, _ ->
+            val selectedPhrase: String = (textView as TextView).text.toString()
 
-                if (selectedPhrase == phrase) {
-                    Timber.d("E3 key verified, recording the msgUid: $uid")
-                    addVerifiedKeysFromMessages(listOf(uid))
-                    view.sceneFinished()
-                } else {
-                    Timber.d("User chose wrong verification phrase for E3 key in msgUid=$uid, selectedPhrase=$selectedPhrase, correctPhrase=$phrase")
-                    view.sceneErrorWrongPhrase()
-                }
-
-                openPgpApiManager.setOpenPgpProvider(null, null)
+            if (selectedPhrase == phrase) {
+                Timber.d("E3 key verified, recording the msgUid: $uid")
+                addVerifiedKeysFromMessages(listOf(uid))
+                view.sceneFinished(moreKeys)
+            } else {
+                Timber.d("User chose wrong verification phrase for E3 key in msgUid=$uid, selectedPhrase=$selectedPhrase, correctPhrase=$phrase")
+                view.sceneErrorWrongPhrase(moreKeys)
             }
 
-            view.addPhrasesToListView(phrases, listener)
+            openPgpApiManager.setOpenPgpProvider(null, null)
         }
+
+        view.addPhrasesToListView(phrases, listener)
     }
 
     private fun generateRandomPhrasesList(correctVerificationPhrase: String): List<String> {

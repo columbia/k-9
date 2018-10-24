@@ -12,9 +12,10 @@ import com.fsck.k9.ui.e3.E3ActionBaseActivity
 import com.fsck.k9.ui.R
 import kotlinx.android.synthetic.main.crypto_e3_key_verify.*
 import org.koin.android.ext.android.inject
+import java.util.*
 
 class E3KeyVerificationActivity : E3ActionBaseActivity() {
-    private lateinit var uidsToPhrases: Map<String, String>
+    private val uidsToPhrases: Queue<E3KeyUidToPhrase> = ArrayDeque()
     private val presenter: E3KeyVerificationPresenter by inject {
         mapOf("lifecycleOwner" to this, "e3VerifyView" to this)
     }
@@ -29,10 +30,19 @@ class E3KeyVerificationActivity : E3ActionBaseActivity() {
 
         if (serializedMap != null) {
             @Suppress("UNCHECKED_CAST")
-            uidsToPhrases = intent.getSerializableExtra(EXTRA_UIDS_TO_PHRASES) as Map<String, String>
+            val uidsToPhrasesMap = intent.getSerializableExtra(EXTRA_UIDS_TO_PHRASES) as Map<String, String>
+
+            for ((uid, phrase) in uidsToPhrasesMap) {
+                uidsToPhrases.add(E3KeyUidToPhrase(uid, phrase))
+            }
         } else {
             finishAsCancelled()
             return
+        }
+
+        e3KeyVerifyNextKey.setOnClickListener {
+            sceneBegin()
+            requestNextVerification()
         }
 
         supportActionBar!!.setDisplayHomeAsUpEnabled(true)
@@ -42,7 +52,8 @@ class E3KeyVerificationActivity : E3ActionBaseActivity() {
 
     override fun onStart() {
         super.onStart()
-        presenter.requestUserVerification(uidsToPhrases)
+
+        requestNextVerification()
     }
 
     override fun onOptionsItemSelected(item: MenuItem?): Boolean {
@@ -54,28 +65,46 @@ class E3KeyVerificationActivity : E3ActionBaseActivity() {
         return super.onOptionsItemSelected(item)
     }
 
+    private fun requestNextVerification() {
+        val uidToPhrase = uidsToPhrases.poll()
+        presenter.requestUserVerification(uidToPhrase, uidsToPhrases.isNotEmpty())
+    }
+
     fun sceneBegin() {
+        e3KeyVerifyLayoutInstructions.visibility = View.VISIBLE
         e3KeyVerifyLayoutVerificationPhrases.visibility = View.VISIBLE
         e3KeyVerifyCorrectPhrase.visibility = View.GONE
         e3KeyVerifyErrorWrongPhrase.visibility = View.GONE
+        e3KeyVerifyNextKey.visibility = View.GONE
     }
 
-    fun sceneFinished(transition: Boolean = false) {
+    fun sceneFinished(nextKey: Boolean, transition: Boolean = false) {
         if (transition) {
             setupSceneTransition()
         }
 
+        e3KeyVerifyLayoutInstructions.visibility = View.GONE
         e3KeyVerifyLayoutVerificationPhrases.visibility = View.GONE
         e3KeyVerifyCorrectPhrase.visibility = View.VISIBLE
         e3KeyVerifyErrorWrongPhrase.visibility
+
+        if (nextKey) {
+            e3KeyVerifyNextKey.visibility = View.VISIBLE
+        }
     }
 
-    fun sceneErrorWrongPhrase() {
+    fun sceneErrorWrongPhrase(nextKey: Boolean) {
         setupSceneTransition()
 
+
+        e3KeyVerifyLayoutInstructions.visibility = View.GONE
         e3KeyVerifyLayoutVerificationPhrases.visibility = View.GONE
         e3KeyVerifyCorrectPhrase.visibility = View.GONE
         e3KeyVerifyErrorWrongPhrase.visibility = View.VISIBLE
+
+        if (nextKey) {
+            e3KeyVerifyNextKey.visibility = View.VISIBLE
+        }
     }
 
     fun addPhrasesToListView(phrases: List<String>, listener: AdapterView.OnItemClickListener) {
@@ -98,4 +127,6 @@ class E3KeyVerificationActivity : E3ActionBaseActivity() {
             return intent
         }
     }
+
+    class E3KeyUidToPhrase internal constructor(val uid: String, val phrase: String)
 }
