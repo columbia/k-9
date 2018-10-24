@@ -51,11 +51,13 @@ class E3KeyVerificationPresenter internal constructor(
                 if (selectedPhrase == phrase) {
                     Timber.d("E3 key verified, recording the msgUid: $uid")
                     addVerifiedKeysFromMessages(listOf(uid))
-                    view.returnResult(verifiedKeys, true)
+                    view.sceneFinished()
                 } else {
                     Timber.d("User chose wrong verification phrase for E3 key in msgUid=$uid, selectedPhrase=$selectedPhrase, correctPhrase=$phrase")
-                    view.returnResult(verifiedKeys, false)
+                    view.sceneErrorWrongPhrase()
                 }
+
+                openPgpApiManager.setOpenPgpProvider(null, null)
             }
 
             view.addPhrasesToListView(phrases, listener)

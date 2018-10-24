@@ -1,6 +1,5 @@
 package com.fsck.k9.ui.e3.verify
 
-import android.app.Activity
 import android.content.Context
 import android.content.Intent
 import android.os.Bundle
@@ -61,7 +60,7 @@ class E3KeyVerificationActivity : E3ActionBaseActivity() {
         e3KeyVerifyErrorWrongPhrase.visibility = View.GONE
     }
 
-    private fun sceneFinished(transition: Boolean = false) {
+    fun sceneFinished(transition: Boolean = false) {
         if (transition) {
             setupSceneTransition()
         }
@@ -71,7 +70,7 @@ class E3KeyVerificationActivity : E3ActionBaseActivity() {
         e3KeyVerifyErrorWrongPhrase.visibility
     }
 
-    private fun sceneErrorWrongPhrase() {
+    fun sceneErrorWrongPhrase() {
         setupSceneTransition()
 
         e3KeyVerifyLayoutVerificationPhrases.visibility = View.GONE
@@ -87,23 +86,7 @@ class E3KeyVerificationActivity : E3ActionBaseActivity() {
         listView.onItemClickListener = listener
     }
 
-    fun returnResult(messageUids: ArrayList<String>, successful: Boolean) {
-        val resultIntent = Intent()
-        resultIntent.putStringArrayListExtra(VERIFY_PHRASE_RESULT_EXTRA_MESSAGE_UIDS, messageUids)
-        if (successful) {
-            resultIntent.putExtra(VERIFY_PHRASE_RESULT_EXTRA_SUCCESS, "true")
-            sceneFinished()
-        } else {
-            sceneErrorWrongPhrase()
-        }
-        setResult(Activity.RESULT_OK, resultIntent)
-        finish()
-    }
-
     companion object {
-        const val VERIFY_PHRASE_REQUEST_CODE = 1
-        const val VERIFY_PHRASE_RESULT_EXTRA_MESSAGE_UIDS = "message_uids"
-        const val VERIFY_PHRASE_RESULT_EXTRA_SUCCESS = "success"
         private const val EXTRA_ACCOUNT = "account"
         private const val EXTRA_UIDS_TO_PHRASES = "uids_to_phrases"
 
