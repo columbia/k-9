@@ -81,7 +81,7 @@ class DeviceNotifications extends BaseNotifications {
         return builder.build();
     }
 
-    public Notification buildSummaryNotificationForE3Key(Account account, NotificationData notificationData,
+    public Notification buildSummaryNotificationForE3Key(Account account, E3NotificationData notificationData,
                                                          boolean silent) {
         int notificationId = NotificationIds.getNewE3KeyNotificationId(account);
         NotificationHolder holder = notificationData.getHolderForLatestNotification();
@@ -103,7 +103,10 @@ class DeviceNotifications extends BaseNotifications {
                 NOTIFICATION_LED_BLINK_SLOW,
                 ringAndVibrate);
 
-        PendingIntent pendingIntent = actionCreator.createE3VerifyKeyPendingIntent(holder.content.messageReference, notificationId);
+        PendingIntent pendingIntent = actionCreator
+                .createE3VerifyKeyPendingIntent(holder.content.messageReference,
+                        notificationData.verificationPhrase,
+                        notificationId);
         builder.setContentIntent(pendingIntent);
 
         return builder.build();
@@ -144,11 +147,11 @@ class DeviceNotifications extends BaseNotifications {
                                                                              NotificationHolder holder) {
 
         int notificationId = NotificationIds.getNewE3KeyNotificationId(account);
-        String accountName = notificationHelper.getAccountName(account);
+        // String accountName = notificationHelper.getAccountName(account);
         Builder builder = createBigTextStyleNotification(account, holder, notificationId)
                 .setGroupSummary(true);
 
-        builder.setTicker("content.summary")
+        builder.setTicker(E3Constants.E3_KEY_NOTIFICATION_TITLE)
                 .setContentTitle(E3Constants.E3_KEY_NOTIFICATION_TITLE)
                 .setContentText(E3Constants.E3_KEY_NOTIFICATION_TEXT)
                 .setSubText(account.getEmail())

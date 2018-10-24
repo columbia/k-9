@@ -17,7 +17,7 @@ class NewE3KeyNotifications internal constructor(private val notificationHelper:
 
     companion object {
         private val lock = Any()
-        private val notifications = SparseArray<NotificationData>()
+        private val notifications = SparseArray<E3NotificationData>()
     }
 
     fun addNewE3KeyNotification(account: Account, message: LocalMessage) {
@@ -36,20 +36,22 @@ class NewE3KeyNotifications internal constructor(private val notificationHelper:
         }
     }
 
-    private fun getOrCreateNotificationData(account: Account, message: LocalMessage): NotificationData {
+    private fun getOrCreateNotificationData(account: Account, message: LocalMessage): E3NotificationData {
         val notificationData = notifications.get(account.accountNumber)
         if (notificationData != null) {
             return notificationData
         }
 
         val accountNumber = account.accountNumber
-        val newNotificationHolder = NotificationData(account)
+        val newNotificationHolder = E3NotificationData(account)
+
+        newNotificationHolder.verificationPhrase = message.getHeader(E3Constants.MIME_E3_VERIFICATION)[0]
         notifications.put(accountNumber, newNotificationHolder)
 
         return newNotificationHolder
     }
 
-    private fun notifyUsingSummaryNotification(account: Account, notificationData: NotificationData, silent: Boolean) {
+    private fun notifyUsingSummaryNotification(account: Account, notificationData: E3NotificationData, silent: Boolean) {
         val notification = deviceNotifications.buildSummaryNotificationForE3Key(account, notificationData, silent)
         val notificationId = NotificationIds.getNewE3KeyNotificationId(account)
 

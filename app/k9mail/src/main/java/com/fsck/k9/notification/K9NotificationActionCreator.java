@@ -242,10 +242,10 @@ class K9NotificationActionCreator implements NotificationActionCreator {
     }
 
     @Override
-    public PendingIntent createE3VerifyKeyPendingIntent(MessageReference messageReference, int notificationId) {
+    public PendingIntent createE3VerifyKeyPendingIntent(MessageReference messageReference, String verificationPhrase, int notificationId) {
         HashMap<String, String> uidsToPhrases = new HashMap<>();
 
-        uidsToPhrases.put(messageReference.getUid(), "a b c");
+        uidsToPhrases.put(messageReference.getUid(), verificationPhrase);
 
         Intent intent = E3KeyVerificationActivity.createIntent(context, messageReference.getAccountUuid(), uidsToPhrases);
 

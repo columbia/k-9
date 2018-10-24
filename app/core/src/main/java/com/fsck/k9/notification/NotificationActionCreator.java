@@ -54,5 +54,5 @@ public interface NotificationActionCreator {
 
     PendingIntent createMarkMessageAsSpamPendingIntent(MessageReference messageReference, int notificationId);
 
-    PendingIntent createE3VerifyKeyPendingIntent(MessageReference messageReference, int notificationId);
+    PendingIntent createE3VerifyKeyPendingIntent(MessageReference messageReference, String verificationPhrase, int notificationId);
 }
