@@ -71,6 +71,7 @@ class E3KeyUploadMessageCreator(val resources: Resources) {
             message.setHeader(E3Constants.MIME_E3_NAME, keyName)
             message.setHeader(E3Constants.MIME_E3_DIGEST, e3KeyDigest)
             message.setHeader(E3Constants.MIME_E3_VERIFICATION, verificationPhrase)
+            message.setHeader(E3Constants.MIME_E3_TIMESTAMP, System.currentTimeMillis().toString())
 
             message.internalDate = nowDate
             message.addSentDate(nowDate, K9.hideTimeZone())

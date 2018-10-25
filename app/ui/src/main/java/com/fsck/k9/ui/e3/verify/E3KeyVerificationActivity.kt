@@ -118,12 +118,14 @@ class E3KeyVerificationActivity : E3ActionBaseActivity() {
     companion object {
         private const val EXTRA_ACCOUNT = "account"
         private const val EXTRA_UIDS_TO_PHRASES = "uids_to_phrases"
+        private const val EXTRA_FOLDER = "folder"
 
         @JvmStatic
         fun createIntent(context: Context, accountUuid: String, uidsToPhrases: HashMap<String, String>): Intent {
             val intent = Intent(context, E3KeyVerificationActivity::class.java)
             intent.putExtra(EXTRA_ACCOUNT, accountUuid)
             intent.putExtra(EXTRA_UIDS_TO_PHRASES, uidsToPhrases)
+            // intent.putExtra(EXTRA_FOLDER, folder)
             return intent
         }
     }

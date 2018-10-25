@@ -81,6 +81,13 @@ class E3KeyVerificationPresenter internal constructor(
 
     private fun addVerifiedKeysFromMessages(msgUids: List<String>) {
         val localMessages = mutableListOf<LocalMessage>()
+        val localFolder = account.localStore.getFolder(account.inboxFolder)
+
+        for (uid in msgUids) {
+            val localMessage = localFolder.getMessage(uid)
+            localMessages.add(localMessage)
+        }
+
         addKeysFromMessagesToKeychain(localMessages)
     }
 
