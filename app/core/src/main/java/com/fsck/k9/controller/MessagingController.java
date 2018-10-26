@@ -3219,9 +3219,13 @@ public class MessagingController {
             LocalMessage message = loadMessage(folderServerId, messageServerId);
             LocalFolder localFolder = message.getFolder();
 
-            if (account.isE3ProviderConfigured() && e3KeyPredicate.apply(message)) {
-                Timber.d("syncNewMessage() got E3 key message, adding notification");
-                notificationController.addNewE3KeyNotification(account, message);
+            if (account.isE3ProviderConfigured() && e3KeyPredicate.applyNonStrict(message)) {
+                if (e3KeyPredicate.apply(message)) {
+                    Timber.d("syncNewMessage() got E3 key message, adding notification");
+                    notificationController.addNewE3KeyNotification(account, message);
+                } else {
+                    Timber.d("syncNewMessage() got either non-fresh or inapplicable E3 key message, skipping notifications");
+                }
             } else if (shouldNotifyForMessage(account, localFolder, message, isOldMessage)) {
                 // Notify with the localMessage so that we don't have to recalculate the content preview.
                 notificationController.addNewMailNotification(account, message, previousUnreadMessageCount);

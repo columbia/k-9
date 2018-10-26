@@ -10,6 +10,10 @@ class E3KeyPredicate(private val account: Account) {
                 && !isOwnKey(localMessage)
     }
 
+    fun applyNonStrict(localMessage: LocalMessage): Boolean {
+        return localMessage.headerNames.containsAll(requiredHeaders)
+    }
+
     private fun isOwnKey(localMessage: LocalMessage): Boolean {
         val uuidHeader = localMessage.getHeader(E3Constants.MIME_E3_UID)[0]
         return uuidHeader != null

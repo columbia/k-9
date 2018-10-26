@@ -8,7 +8,12 @@ public final class E3Constants {
     public static final String MIME_E3_NAME = "X-E3-NAME";
     public static final String MIME_E3_VERIFICATION = "X-E3-VERIFICATION";
     public static final String MIME_E3_TIMESTAMP = "X-E3-TIMESTAMP";
-    public static final String MIME_E3_UID = "X-E3-UID"; // Used for uniquely identifying E3 key emails *internally*
+
+    /* Used for uniquely identifying E3 key emails *internally*
+     * and is ONLY used for showing/hiding notifications. Do
+     * NOT use for any kind of key verification or identification.
+     */
+    public static final String MIME_E3_UID = "X-E3-UID";
 
     public static final String CONTENT_TYPE_PGP_KEYS = "application/pgp-keys";
 
