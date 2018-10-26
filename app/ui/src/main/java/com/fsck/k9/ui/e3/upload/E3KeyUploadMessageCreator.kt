@@ -31,6 +31,11 @@ class E3KeyUploadMessageCreator(context: Context, private val resources: Resourc
 
     private val wordList: PgpWordList = PgpWordList(context)
 
+    fun loadAllE3KeysUploadMessage(openPgpApi: OpenPgpApi, account: Account): E3KeyUploadMessage {
+        // TODO: E3 implement getting and adding all keys
+        return loadE3KeyUploadMessage(openPgpApi, account)
+    }
+
     fun loadE3KeyUploadMessage(openPgpApi: OpenPgpApi, account: Account): E3KeyUploadMessage {
         val beautifulKeyId = KeyFormattingUtils.beautifyKeyId(account.e3Key)
 
@@ -122,6 +127,7 @@ class E3KeyUploadMessageCreator(context: Context, private val resources: Resourc
             message.setHeader(E3Constants.MIME_E3_DIGEST, e3KeyDigest)
             message.setHeader(E3Constants.MIME_E3_VERIFICATION, verificationPhrase)
             message.setHeader(E3Constants.MIME_E3_TIMESTAMP, System.currentTimeMillis().toString())
+            message.setHeader(E3Constants.MIME_E3_UID, account.uuid)
 
             message.internalDate = nowDate
             message.addSentDate(nowDate, K9.hideTimeZone())

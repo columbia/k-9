@@ -3154,7 +3154,7 @@ public class MessagingController {
             this.account = account;
             this.listener = listener;
             this.localStore = getLocalStoreOrThrow(account);
-            this.e3KeyPredicate = new E3KeyPredicate();
+            this.e3KeyPredicate = new E3KeyPredicate(account);
 
             previousUnreadMessageCount = getUnreadMessageCount();
         }

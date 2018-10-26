@@ -51,7 +51,10 @@ val e3KeyVerifyUiModule = applicationContext {
                 preferences = get(),
                 openPgpApiManager = get(parameters = { params.values }),
                 view = params["e3VerifyView"],
-                wordGenerator = PgpWordList(get()))
+                wordGenerator = PgpWordList(get()),
+                e3KeyUploadMessageCreator = E3KeyUploadMessageCreator(get(), get()),
+                messagingController = get()
+        )
     }
 }
 

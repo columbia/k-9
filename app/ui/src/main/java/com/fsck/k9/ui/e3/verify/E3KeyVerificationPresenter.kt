@@ -6,11 +6,18 @@ import android.widget.AdapterView
 import android.widget.TextView
 import com.fsck.k9.Account
 import com.fsck.k9.Preferences
+import com.fsck.k9.controller.MessagingController
 import com.fsck.k9.crypto.e3.E3Constants
 import com.fsck.k9.mail.internet.MimeUtility
 import com.fsck.k9.mailstore.LocalMessage
 import com.fsck.k9.ui.crypto.PgpWordList
 import com.fsck.k9.ui.e3.E3OpenPgpPresenterCallback
+import com.fsck.k9.ui.e3.upload.E3KeyUploadMessageCreator
+import com.fsck.k9.ui.e3.upload.E3KeyUploadMessageUploadResult
+import kotlinx.coroutines.experimental.android.UI
+import kotlinx.coroutines.experimental.delay
+import kotlinx.coroutines.experimental.launch
+import org.jetbrains.anko.coroutines.experimental.bg
 import org.openintents.openpgp.OpenPgpApiManager
 import org.openintents.openpgp.util.OpenPgpApi
 import timber.log.Timber
@@ -22,7 +29,9 @@ class E3KeyVerificationPresenter internal constructor(
         private val preferences: Preferences,
         private val openPgpApiManager: OpenPgpApiManager,
         private val view: E3KeyVerificationActivity,
-        private val wordGenerator: PgpWordList
+        private val wordGenerator: PgpWordList,
+        private val e3KeyUploadMessageCreator: E3KeyUploadMessageCreator,
+        private val messagingController: MessagingController
 ) {
     private lateinit var account: Account
 
@@ -49,8 +58,11 @@ class E3KeyVerificationPresenter internal constructor(
             val selectedPhrase: String = (textView as TextView).text.toString()
 
             if (selectedPhrase == phrase) {
-                Timber.d("E3 key verified, recording the msgUid: $uid")
+                Timber.d("E3 key verified, adding to keychain")
                 addVerifiedKeysFromMessages(listOf(uid))
+                Timber.d("E3 key added to keychain, now uploading all own keys")
+                uploadKeys()
+
                 view.sceneFinished(moreKeys)
             } else {
                 Timber.d("User chose wrong verification phrase for E3 key in msgUid=$uid, selectedPhrase=$selectedPhrase, correctPhrase=$phrase")
@@ -61,6 +73,25 @@ class E3KeyVerificationPresenter internal constructor(
         }
 
         view.addPhrasesToListView(phrases, listener)
+    }
+
+    private fun uploadKeys() {
+        val keyUploadMessage = e3KeyUploadMessageCreator.loadAllE3KeysUploadMessage(openPgpApiManager.openPgpApi, account)
+        launch(UI) {
+            val setupMessage = bg {
+                messagingController.sendMessageBlocking(account, keyUploadMessage.keyUploadMessage)
+            }
+
+            delay(2000)
+
+            try {
+                setupMessage.await()
+                E3KeyUploadMessageUploadResult.Success(keyUploadMessage.pendingIntentForGetKey, keyUploadMessage)
+                Timber.d("E3 Successfully uploaded keys")
+            } catch (e: Exception) {
+                E3KeyUploadMessageUploadResult.Failure(e)
+            }
+        }
     }
 
     private fun generateRandomPhrasesList(correctVerificationPhrase: String): List<String> {
