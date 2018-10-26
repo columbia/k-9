@@ -69,7 +69,9 @@ class E3KeyVerificationPresenter internal constructor(
                 view.sceneErrorWrongPhrase(moreKeys)
             }
 
-            openPgpApiManager.setOpenPgpProvider(null, null)
+            if (!moreKeys) {
+                openPgpApiManager.setOpenPgpProvider(null, null)
+            }
         }
 
         view.addPhrasesToListView(phrases, listener)
