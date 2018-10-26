@@ -6,8 +6,8 @@ import com.fsck.k9.AccountStats
 import com.fsck.k9.controller.MessagingController
 import com.fsck.k9.controller.MessagingControllerCommands.*
 import com.fsck.k9.controller.SimpleMessagingListener
-import com.fsck.k9.crypto.E3Constants
-import com.fsck.k9.crypto.SimpleE3PgpDecryptor
+import com.fsck.k9.crypto.e3.E3Constants
+import com.fsck.k9.crypto.e3.SimpleE3PgpDecryptor
 import com.fsck.k9.helper.MessageHelper
 import com.fsck.k9.helper.SingleLiveEvent
 import com.fsck.k9.mail.*

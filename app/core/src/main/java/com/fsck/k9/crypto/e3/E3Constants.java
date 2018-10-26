@@ -1,4 +1,4 @@
-package com.fsck.k9.crypto;
+package com.fsck.k9.crypto.e3;
 
 
 public final class E3Constants {

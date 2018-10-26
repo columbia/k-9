@@ -1,10 +1,9 @@
-package com.fsck.k9.crypto;
+package com.fsck.k9.crypto.e3;
 
 import android.app.PendingIntent;
 import android.content.Intent;
 import android.support.annotation.NonNull;
 
-import com.fsck.k9.crypto.E3Constants;
 import com.fsck.k9.mail.Address;
 import com.fsck.k9.mail.Body;
 import com.fsck.k9.mail.BodyPart;
@@ -17,7 +16,6 @@ import com.fsck.k9.mail.internet.MimeBodyPart;
 import com.fsck.k9.mail.internet.MimeHeader;
 import com.fsck.k9.mail.internet.MimeMessage;
 import com.fsck.k9.mail.internet.MimeMessageHelper;
-import com.fsck.k9.mail.internet.MimeMultipart;
 
 import org.apache.james.mime4j.util.MimeUtil;
 import org.openintents.openpgp.OpenPgpError;

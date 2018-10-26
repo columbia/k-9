@@ -18,8 +18,7 @@ import com.fsck.k9.K9.NotificationHideSubject;
 import com.fsck.k9.K9.NotificationQuickDelete;
 import com.fsck.k9.NotificationSetting;
 import com.fsck.k9.controller.MessageReference;
-import com.fsck.k9.core.R;
-import com.fsck.k9.crypto.E3Constants;
+import com.fsck.k9.crypto.e3.E3Constants;
 
 import static com.fsck.k9.notification.NotificationHelper.NOTIFICATION_LED_BLINK_SLOW;
 import static com.fsck.k9.notification.NotificationController.platformSupportsExtendedNotifications;

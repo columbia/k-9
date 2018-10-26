@@ -23,8 +23,6 @@ import com.fsck.k9.backend.api.SyncConfig;
 import com.fsck.k9.backend.api.SyncConfig.ExpungePolicy;
 import com.fsck.k9.backend.api.SyncListener;
 import com.fsck.k9.backend.api.SyncUpdatedListener;
-import com.fsck.k9.crypto.E3Constants;
-import com.fsck.k9.crypto.SimpleE3PgpEncryptor;
 import com.fsck.k9.helper.ExceptionHelper;
 import com.fsck.k9.mail.AuthenticationFailedException;
 import com.fsck.k9.mail.BodyFactory;
@@ -41,13 +39,8 @@ import com.fsck.k9.mail.internet.MimeMessage;
 import com.fsck.k9.mail.internet.MimeUtility;
 import com.fsck.k9.mail.store.imap.ImapFolder;
 import com.fsck.k9.mail.store.imap.ImapStore;
-import com.fsck.k9.mailstore.LocalMessage;
 
 import org.jetbrains.annotations.NotNull;
-import org.openintents.openpgp.IOpenPgpService2;
-import org.openintents.openpgp.util.OpenPgpApi;
-import org.openintents.openpgp.util.OpenPgpServiceConnection;
-import org.openintents.openpgp.util.OpenPgpServiceConnection.OnBound;
 
 import timber.log.Timber;
 

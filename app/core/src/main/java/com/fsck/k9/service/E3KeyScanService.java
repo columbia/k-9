@@ -8,8 +8,8 @@ import android.os.PowerManager;
 import com.fsck.k9.Account;
 import com.fsck.k9.K9;
 import com.fsck.k9.Preferences;
-import com.fsck.k9.crypto.E3KeyScanResult;
-import com.fsck.k9.crypto.E3KeyScanner;
+import com.fsck.k9.crypto.e3.E3KeyScanResult;
+import com.fsck.k9.crypto.e3.E3KeyScanner;
 import com.fsck.k9.power.TracingPowerManager;
 import com.fsck.k9.power.TracingPowerManager.TracingWakeLock;
 

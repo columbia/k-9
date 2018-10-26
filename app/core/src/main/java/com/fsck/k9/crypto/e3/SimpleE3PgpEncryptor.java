@@ -1,4 +1,4 @@
-package com.fsck.k9.crypto;
+package com.fsck.k9.crypto.e3;
 
 import android.app.PendingIntent;
 import android.content.Intent;

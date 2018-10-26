@@ -1,4 +1,4 @@
-package com.fsck.k9.crypto
+package com.fsck.k9.crypto.e3
 
 import com.fsck.k9.mailstore.LocalMessage
 

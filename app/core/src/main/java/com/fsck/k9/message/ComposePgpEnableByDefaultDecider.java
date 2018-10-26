@@ -3,7 +3,7 @@ package com.fsck.k9.message;
 
 import java.util.List;
 
-import com.fsck.k9.crypto.E3Constants;
+import com.fsck.k9.crypto.e3.E3Constants;
 import com.fsck.k9.crypto.MessageCryptoStructureDetector;
 import com.fsck.k9.mail.Flag;
 import com.fsck.k9.mail.Message;

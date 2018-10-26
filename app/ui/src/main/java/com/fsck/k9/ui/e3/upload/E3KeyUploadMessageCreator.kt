@@ -6,7 +6,7 @@ import android.os.Build
 import android.util.Base64
 import com.fsck.k9.Account
 import com.fsck.k9.K9
-import com.fsck.k9.crypto.E3Constants
+import com.fsck.k9.crypto.e3.E3Constants
 import com.fsck.k9.crypto.KeyFormattingUtils
 import com.fsck.k9.mail.Address
 import com.fsck.k9.mail.Flag

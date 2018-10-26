@@ -4,8 +4,8 @@ import android.arch.lifecycle.LifecycleOwner
 import android.arch.lifecycle.Observer
 import com.fsck.k9.Account
 import com.fsck.k9.Preferences
-import com.fsck.k9.crypto.E3Constants
-import com.fsck.k9.crypto.E3KeyScanResult
+import com.fsck.k9.crypto.e3.E3Constants
+import com.fsck.k9.crypto.e3.E3KeyScanResult
 import com.fsck.k9.mailstore.LocalMessage
 import kotlinx.coroutines.experimental.android.UI
 import kotlinx.coroutines.experimental.launch

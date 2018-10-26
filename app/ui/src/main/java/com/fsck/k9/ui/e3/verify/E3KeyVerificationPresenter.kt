@@ -6,7 +6,7 @@ import android.widget.AdapterView
 import android.widget.TextView
 import com.fsck.k9.Account
 import com.fsck.k9.Preferences
-import com.fsck.k9.crypto.E3Constants
+import com.fsck.k9.crypto.e3.E3Constants
 import com.fsck.k9.mail.internet.MimeUtility
 import com.fsck.k9.mailstore.LocalMessage
 import com.fsck.k9.ui.crypto.PgpWordList

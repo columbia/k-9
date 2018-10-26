@@ -5,7 +5,7 @@ import android.content.Context
 import android.content.Intent
 import android.graphics.Bitmap
 import com.fsck.k9.Account
-import com.fsck.k9.crypto.E3Constants
+import com.fsck.k9.crypto.e3.E3Constants
 import com.fsck.k9.crypto.KeyFormattingUtils
 import com.fsck.k9.helper.SingleLiveEvent
 import com.fsck.k9.mail.Message
@@ -51,8 +51,6 @@ class E3KeyUploadSetupMessageLiveEvent(private val context: Context, private val
                 armoredKey.fingerprint,
                 randomWords
         )
-
-        //armoredKey.fingerprint.qrBitmap?.recycle()
 
         return E3KeyUploadMessage(setupMessage, armoredKey.pendingIntent, randomWords, armoredKey)
     }
