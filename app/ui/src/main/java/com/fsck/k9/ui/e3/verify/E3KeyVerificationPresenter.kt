@@ -8,6 +8,7 @@ import com.fsck.k9.Account
 import com.fsck.k9.Preferences
 import com.fsck.k9.controller.MessagingController
 import com.fsck.k9.crypto.e3.E3Constants
+import com.fsck.k9.mail.FetchProfile
 import com.fsck.k9.mail.internet.MimeUtility
 import com.fsck.k9.mailstore.LocalMessage
 import com.fsck.k9.ui.crypto.PgpWordList
@@ -115,18 +116,24 @@ class E3KeyVerificationPresenter internal constructor(
     private fun addVerifiedKeysFromMessages(msgUids: List<String>) {
         val localMessages = mutableListOf<LocalMessage>()
         val localFolder = account.localStore.getFolder(account.inboxFolder)
+        val fetchProfile = FetchProfile()
+
+        fetchProfile.add(FetchProfile.Item.ENVELOPE)
+        fetchProfile.add(FetchProfile.Item.BODY)
 
         for (uid in msgUids) {
             val localMessage = localFolder.getMessage(uid)
             localMessages.add(localMessage)
         }
 
+        localFolder.fetch(localMessages, fetchProfile, null)
         addKeysFromMessagesToKeychain(localMessages)
     }
 
     private fun addKeysFromMessagesToKeychain(keyMessages: List<LocalMessage>) {
         for (keyMsg: LocalMessage in keyMessages) {
             if (!keyMsg.hasAttachments()) {
+                Timber.e("Got a keyMsg without any attachments")
                 continue
             }
 
