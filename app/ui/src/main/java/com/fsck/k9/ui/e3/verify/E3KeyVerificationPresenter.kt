@@ -14,7 +14,6 @@ import com.fsck.k9.mailstore.LocalMessage
 import com.fsck.k9.ui.crypto.PgpWordList
 import com.fsck.k9.ui.e3.E3OpenPgpPresenterCallback
 import com.fsck.k9.ui.e3.upload.E3KeyUploadMessageCreator
-import com.fsck.k9.ui.e3.upload.E3KeyUploadMessageUploadResult
 import kotlinx.coroutines.experimental.android.UI
 import kotlinx.coroutines.experimental.delay
 import kotlinx.coroutines.experimental.launch
@@ -89,10 +88,9 @@ class E3KeyVerificationPresenter internal constructor(
 
             try {
                 setupMessage.await()
-                E3KeyUploadMessageUploadResult.Success(keyUploadMessage.pendingIntentForGetKey, keyUploadMessage)
                 Timber.d("E3 Successfully uploaded keys")
             } catch (e: Exception) {
-                E3KeyUploadMessageUploadResult.Failure(e)
+                Timber.e("E3 failed to upload keys", e)
             }
         }
     }

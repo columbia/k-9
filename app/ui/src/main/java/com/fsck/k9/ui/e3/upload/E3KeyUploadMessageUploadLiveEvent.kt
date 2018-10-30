@@ -33,6 +33,7 @@ class E3KeyUploadMessageUploadLiveEvent(
 
 sealed class E3KeyUploadMessageUploadResult {
     data class Success(val pendingIntentForGetKey: PendingIntent,
-                       val sentMessage: E3KeyUploadMessage) : E3KeyUploadMessageUploadResult()
-    data class Failure(val exception: Exception) : E3KeyUploadMessageUploadResult()
+                       val sentMessage: E3KeyUploadMessage): E3KeyUploadMessageUploadResult()
+
+    data class Failure(val exception: Exception): E3KeyUploadMessageUploadResult()
 }
