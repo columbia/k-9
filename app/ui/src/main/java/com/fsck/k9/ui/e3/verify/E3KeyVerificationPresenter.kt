@@ -13,6 +13,7 @@ import com.fsck.k9.mail.internet.MimeUtility
 import com.fsck.k9.mailstore.LocalMessage
 import com.fsck.k9.ui.crypto.PgpWordList
 import com.fsck.k9.ui.e3.E3OpenPgpPresenterCallback
+import com.fsck.k9.ui.e3.upload.E3KeyUploadMessage
 import com.fsck.k9.ui.e3.upload.E3KeyUploadMessageCreator
 import kotlinx.coroutines.experimental.android.UI
 import kotlinx.coroutines.experimental.delay
@@ -61,9 +62,9 @@ class E3KeyVerificationPresenter internal constructor(
                 Timber.d("E3 key verified, adding to keychain")
                 val e3Digests = addVerifiedKeysFromMessages(listOf(uid))
                 Timber.d("E3 key added to keychain, now attempting to upload all own keys")
-                uploadKeys(e3Digests)
+                val newVerificationPhrase = uploadKeys(e3Digests)?.verificationPhrase
 
-                view.sceneFinished(moreKeys)
+                view.sceneFinished(newVerificationPhrase, moreKeys)
             } else {
                 Timber.d("User chose wrong verification phrase for E3 key in msgUid=$uid, selectedPhrase=$selectedPhrase, correctPhrase=$phrase")
                 view.sceneErrorWrongPhrase(moreKeys)
@@ -78,13 +79,13 @@ class E3KeyVerificationPresenter internal constructor(
     }
 
     // Invoked in response to verifying a newly detected key
-    private fun uploadKeys(receivedE3KeyDigests: E3DigestsAndResponses) {
+    private fun uploadKeys(receivedE3KeyDigests: E3DigestsAndResponses): E3KeyUploadMessage? {
         val keyUploadMessage = e3KeyUploadMessageCreator.loadAllE3KeysUploadMessage(
                 openPgpApiManager.openPgpApi, account, receivedE3KeyDigests)
 
         if (keyUploadMessage == null) {
             Timber.d("E3 key upload skipped probably because already uploaded key")
-            return
+            return null
         }
 
         launch(UI) {
@@ -101,6 +102,8 @@ class E3KeyVerificationPresenter internal constructor(
                 Timber.e("E3 failed to upload keys", e)
             }
         }
+
+        return keyUploadMessage
     }
 
     private fun generateRandomPhrasesList(correctVerificationPhrase: String): List<String> {

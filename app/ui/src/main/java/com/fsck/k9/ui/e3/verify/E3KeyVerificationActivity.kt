@@ -11,6 +11,7 @@ import android.widget.ListView
 import com.fsck.k9.ui.e3.E3ActionBaseActivity
 import com.fsck.k9.ui.R
 import kotlinx.android.synthetic.main.crypto_e3_key_verify.*
+import kotlinx.android.synthetic.main.text_list_item.view.*
 import org.koin.android.ext.android.inject
 import java.util.*
 
@@ -74,11 +75,13 @@ class E3KeyVerificationActivity : E3ActionBaseActivity() {
         e3KeyVerifyLayoutInstructions.visibility = View.VISIBLE
         e3KeyVerifyLayoutVerificationPhrases.visibility = View.VISIBLE
         e3KeyVerifyCorrectPhrase.visibility = View.GONE
+        e3KeyUploadResponseLayoutVerification.visibility = View.GONE
+        e3KeyUploadResponseLayoutVerificationPhrase.visibility = View.GONE
         e3KeyVerifyErrorWrongPhrase.visibility = View.GONE
         e3KeyVerifyNextKey.visibility = View.GONE
     }
 
-    fun sceneFinished(nextKey: Boolean, transition: Boolean = false) {
+    fun sceneFinished(newVerificationPhrase: String?, nextKey: Boolean, transition: Boolean = false) {
         if (transition) {
             setupSceneTransition()
         }
@@ -87,6 +90,12 @@ class E3KeyVerificationActivity : E3ActionBaseActivity() {
         e3KeyVerifyLayoutVerificationPhrases.visibility = View.GONE
         e3KeyVerifyCorrectPhrase.visibility = View.VISIBLE
         e3KeyVerifyErrorWrongPhrase.visibility
+
+        if (newVerificationPhrase != null && newVerificationPhrase.isNotEmpty()) {
+            e3KeyUploadResponseLayoutVerification.visibility = View.VISIBLE
+            e3KeyUploadResponseLayoutVerificationPhrase.visibility = View.VISIBLE
+            e3KeyVerificationPhrase.text = newVerificationPhrase
+        }
 
         if (nextKey) {
             e3KeyVerifyNextKey.visibility = View.VISIBLE
@@ -100,6 +109,8 @@ class E3KeyVerificationActivity : E3ActionBaseActivity() {
         e3KeyVerifyLayoutInstructions.visibility = View.GONE
         e3KeyVerifyLayoutVerificationPhrases.visibility = View.GONE
         e3KeyVerifyCorrectPhrase.visibility = View.GONE
+        e3KeyUploadResponseLayoutVerification.visibility = View.GONE
+        e3KeyUploadResponseLayoutVerificationPhrase.visibility = View.GONE
         e3KeyVerifyErrorWrongPhrase.visibility = View.VISIBLE
 
         if (nextKey) {

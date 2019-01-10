@@ -1330,6 +1330,7 @@ Please submit bug reports, contribute new features and ask questions at
     <string name="e3_key_upload_uploading_to">Uploading E3 public key to:</string>
     <string name="e3_key_upload_finish">E3 public key upload complete.</string>
     <string name="e3_key_upload_verification">Verification Phrase:</string>
+    <string name="e3_key_upload_verification_response_instructions">Confirm this verification phrase on your other devices now:</string>
     <string name="e3_key_upload_qr_code_desc">Key fingerprint QR code</string>
     <string name="e3_key_upload_qr_code_instructions">FOR ADVANCED USERS: Scan this QR code in your E3 standalone client:</string>
     <string name="e3_key_upload_verification_instructions">Only verify keys on your standalone client with this EXACT verification phrase!</string>
