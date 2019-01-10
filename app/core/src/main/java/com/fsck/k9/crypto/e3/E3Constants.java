@@ -8,6 +8,7 @@ public final class E3Constants {
     public static final String MIME_E3_NAME = "X-E3-NAME";
     public static final String MIME_E3_VERIFICATION = "X-E3-VERIFICATION";
     public static final String MIME_E3_TIMESTAMP = "X-E3-TIMESTAMP";
+    public static final String MIME_E3_RESPONSE_TO = "X-E3-RESPONSE";
 
     /* Used for uniquely identifying E3 key emails *internally*
      * and is ONLY used for showing/hiding notifications. Do
@@ -20,6 +21,7 @@ public final class E3Constants {
     public static final int E3_VERIFICATION_PHRASES = 3;
     public static final int E3_VERIFICATION_PHRASE_LENGTH = 3;
     public static final String E3_VERIFICATION_PHRASE_DELIMITER = " ";
+    public static final String E3_KEY_DIGEST_DELIMITER = ",";
     public static final long E3_VERIFICATION_ALLOWED_AGE_MS = 1200L; //120000L;
 
     // TODO: E3 make these strings usable by the Notification classes

@@ -59,9 +59,9 @@ class E3KeyVerificationPresenter internal constructor(
 
             if (selectedPhrase == phrase) {
                 Timber.d("E3 key verified, adding to keychain")
-                addVerifiedKeysFromMessages(listOf(uid))
-                Timber.d("E3 key added to keychain, now uploading all own keys")
-                uploadKeys()
+                val e3Digests = addVerifiedKeysFromMessages(listOf(uid))
+                Timber.d("E3 key added to keychain, now attempting to upload all own keys")
+                uploadKeys(e3Digests)
 
                 view.sceneFinished(moreKeys)
             } else {
@@ -77,8 +77,16 @@ class E3KeyVerificationPresenter internal constructor(
         view.addPhrasesToListView(phrases, listener)
     }
 
-    private fun uploadKeys() {
-        val keyUploadMessage = e3KeyUploadMessageCreator.loadAllE3KeysUploadMessage(openPgpApiManager.openPgpApi, account)
+    // Invoked in response to verifying a newly detected key
+    private fun uploadKeys(receivedE3KeyDigests: E3DigestsAndResponses) {
+        val keyUploadMessage = e3KeyUploadMessageCreator.loadAllE3KeysUploadMessage(
+                openPgpApiManager.openPgpApi, account, receivedE3KeyDigests)
+
+        if (keyUploadMessage == null) {
+            Timber.d("E3 key upload skipped probably because already uploaded key")
+            return
+        }
+
         launch(UI) {
             val setupMessage = bg {
                 messagingController.sendMessageBlocking(account, keyUploadMessage.keyUploadMessage)
@@ -111,7 +119,10 @@ class E3KeyVerificationPresenter internal constructor(
         return phrases
     }
 
-    private fun addVerifiedKeysFromMessages(msgUids: List<String>) {
+    // Returns a list of the E3 Key Digests of all the verified keys and their RESPONSE TO digests
+    private fun addVerifiedKeysFromMessages(msgUids: List<String>): E3DigestsAndResponses {
+        val e3KeyDigests = mutableSetOf<String>()
+        val allResponseToE3KeyDigests = mutableSetOf<String>()
         val localMessages = mutableListOf<LocalMessage>()
         val localFolder = account.localStore.getFolder(account.inboxFolder)
         val fetchProfile = FetchProfile()
@@ -122,10 +133,21 @@ class E3KeyVerificationPresenter internal constructor(
         for (uid in msgUids) {
             val localMessage = localFolder.getMessage(uid)
             localMessages.add(localMessage)
+
+            val e3KeyDigest = localMessage.getHeader(E3Constants.MIME_E3_DIGEST)[0]
+            e3KeyDigests.add(e3KeyDigest)
+
+            if (localMessage.headerNames.contains(E3Constants.MIME_E3_RESPONSE_TO)) {
+                val decodedResponseTo = MimeUtility.unfoldAndDecode(localMessage.getHeader(E3Constants.MIME_E3_RESPONSE_TO)[0])
+                val responseToE3KeyDigests = decodedResponseTo.split(E3Constants.E3_KEY_DIGEST_DELIMITER)
+                allResponseToE3KeyDigests.addAll(responseToE3KeyDigests)
+            }
         }
 
         localFolder.fetch(localMessages, fetchProfile, null)
         addKeysFromMessagesToKeychain(localMessages)
+
+        return E3DigestsAndResponses(e3KeyDigests, allResponseToE3KeyDigests)
     }
 
     private fun addKeysFromMessagesToKeychain(keyMessages: List<LocalMessage>) {
@@ -163,3 +185,5 @@ class E3KeyVerificationPresenter internal constructor(
         view.finishAsCancelled()
     }
 }
+
+data class E3DigestsAndResponses(val verifiedE3KeyDigests: Set<String>, val responseToKeyDigests: Set<String>)

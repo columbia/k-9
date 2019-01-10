@@ -12,7 +12,7 @@ class E3KeyUploadSetupMessageLiveEvent(private val keyUploadMessageCreator: E3Ke
     fun loadE3KeyUploadMessageAsync(openPgpApi: OpenPgpApi, account: Account) {
         launch(UI) {
             val setupMessage = bg {
-                keyUploadMessageCreator.loadE3KeyUploadMessage(openPgpApi, account)
+                keyUploadMessageCreator.loadE3KeyUploadMessage(openPgpApi, account, null)
             }
 
             value = setupMessage.await()

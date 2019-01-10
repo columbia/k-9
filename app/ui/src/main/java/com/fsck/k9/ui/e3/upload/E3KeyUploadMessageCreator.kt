@@ -21,6 +21,7 @@ import com.fsck.k9.mail.internet.*
 import com.fsck.k9.mailstore.BinaryMemoryBody
 import com.fsck.k9.ui.R
 import com.fsck.k9.ui.crypto.PgpWordList
+import com.fsck.k9.ui.e3.verify.E3DigestsAndResponses
 import org.openintents.openpgp.util.OpenPgpApi
 import java.io.ByteArrayOutputStream
 import java.io.InputStream
@@ -31,12 +32,14 @@ class E3KeyUploadMessageCreator(context: Context, private val resources: Resourc
 
     private val wordList: PgpWordList = PgpWordList(context)
 
-    fun loadAllE3KeysUploadMessage(openPgpApi: OpenPgpApi, account: Account): E3KeyUploadMessage {
+    // Invoked in response to receiving and verifying an uploaded key, so now we want to upload our key
+    fun loadAllE3KeysUploadMessage(openPgpApi: OpenPgpApi, account: Account, e3KeyDigestsAndResponses: E3DigestsAndResponses): E3KeyUploadMessage? {
         // TODO: E3 implement getting and adding all keys
-        return loadE3KeyUploadMessage(openPgpApi, account)
+        return loadE3KeyUploadMessage(openPgpApi, account, e3KeyDigestsAndResponses)
     }
 
-    fun loadE3KeyUploadMessage(openPgpApi: OpenPgpApi, account: Account): E3KeyUploadMessage {
+    // Returns null if no upload is performed
+    fun loadE3KeyUploadMessage(openPgpApi: OpenPgpApi, account: Account, e3KeyDigestsAndResponses: E3DigestsAndResponses?): E3KeyUploadMessage? {
         val beautifulKeyId = KeyFormattingUtils.beautifyKeyId(account.e3Key)
 
         // TODO: E3 handle multiple PendingIntent
@@ -46,16 +49,26 @@ class E3KeyUploadMessageCreator(context: Context, private val resources: Resourc
         val randomWords = wordList.getRandomWords(E3Constants.E3_VERIFICATION_PHRASE_LENGTH)
                 .joinToString(E3Constants.E3_VERIFICATION_PHRASE_DELIMITER)
 
-        val setupMessage = createE3KeyUploadMessage(armoredKeyBytes,
-                account,
-                armoredKey.identity,
-                beautifulKeyId,
-                e3KeyDigest,
-                armoredKey.fingerprint,
-                randomWords
-        )
+        // TODO: E3 ensure that all E3 key digests are compared in a way accounting for spaces/lowercase/uppercase
 
-        return E3KeyUploadMessage(setupMessage, armoredKey.pendingIntent, randomWords, armoredKey)
+        // Upload only if we are manually uploading or if we are uploading in response to a device that hasn't seen our key
+        if (e3KeyDigestsAndResponses == null
+                || e3KeyDigestsAndResponses.verifiedE3KeyDigests.isEmpty()
+                || !e3KeyDigestsAndResponses.responseToKeyDigests.contains(e3KeyDigest)) {
+            val setupMessage = createE3KeyUploadMessage(armoredKeyBytes,
+                    account,
+                    armoredKey.identity,
+                    beautifulKeyId,
+                    e3KeyDigest,
+                    armoredKey.fingerprint,
+                    randomWords,
+                    e3KeyDigestsAndResponses?.verifiedE3KeyDigests
+            )
+
+            return E3KeyUploadMessage(setupMessage, armoredKey.pendingIntent, randomWords, armoredKey)
+        }
+
+        return null
     }
 
     private fun requestPgpKey(openPgpApi: OpenPgpApi, account: Account, armored: Boolean, fingerprint: Boolean): KeyResult {
@@ -79,9 +92,14 @@ class E3KeyUploadMessageCreator(context: Context, private val resources: Resourc
      *
      * @param pgpKeyData should be an ASCII armored PGP key
      */
-    private fun createE3KeyUploadMessage(pgpKeyData: ByteArray, account: Account, keyUserIdentity: String,
-                                 keyId: String, e3KeyDigest: String, pgpFingerprint: KeyFingerprint,
-                                 verificationPhrase: String): Message {
+    private fun createE3KeyUploadMessage(pgpKeyData: ByteArray,
+                                         account: Account,
+                                         keyUserIdentity: String,
+                                         keyId: String,
+                                         e3KeyDigest: String,
+                                         pgpFingerprint: KeyFingerprint,
+                                         verificationPhrase: String,
+                                         initialUploadedE3KeyDigests: Set<String>?): Message {
         try {
             val address = Address.parse(account.getIdentity(0).email)[0]
             val subjectText = resources.getString(R.string.e3_key_upload_msg_subject)
@@ -128,6 +146,11 @@ class E3KeyUploadMessageCreator(context: Context, private val resources: Resourc
             message.setHeader(E3Constants.MIME_E3_VERIFICATION, verificationPhrase)
             message.setHeader(E3Constants.MIME_E3_TIMESTAMP, System.currentTimeMillis().toString())
             message.setHeader(E3Constants.MIME_E3_UID, account.uuid)
+
+            if (initialUploadedE3KeyDigests != null && !initialUploadedE3KeyDigests.isEmpty()) {
+                val receivedE3KeyDigests = initialUploadedE3KeyDigests.joinToString(E3Constants.E3_KEY_DIGEST_DELIMITER)
+                message.setHeader(E3Constants.MIME_E3_RESPONSE_TO, receivedE3KeyDigests)
+            }
 
             message.internalDate = nowDate
             message.addSentDate(nowDate, K9.hideTimeZone())
