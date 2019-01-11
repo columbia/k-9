@@ -51,10 +51,11 @@ class E3KeyUploadMessageCreator(context: Context, private val resources: Resourc
 
         // TODO: E3 ensure that all E3 key digests are compared in a way accounting for spaces/lowercase/uppercase
 
-        // Upload only if we are manually uploading or if we are uploading in response to a device that hasn't seen our key
+        // Upload only if we are manually uploading or if we received a manually uploaded key (aka no RESPONSE TO header)
         if (e3KeyDigestsAndResponses == null
-                || e3KeyDigestsAndResponses.verifiedE3KeyDigests.isEmpty()
-                || !e3KeyDigestsAndResponses.responseToKeyDigests.contains(e3KeyDigest)) {
+                || e3KeyDigestsAndResponses.verifiedE3KeyDigests.isEmpty() // If empty, means we're not uploading in response to verifying keys
+                || e3KeyDigestsAndResponses.responseToKeyDigests.isEmpty() // If empty, means we're responding to an uploaded key, but not a RESPONSE TO one
+        ) {
             val setupMessage = createE3KeyUploadMessage(armoredKeyBytes,
                     account,
                     armoredKey.identity,
