@@ -19,6 +19,7 @@ import com.fsck.k9.K9.NotificationQuickDelete;
 import com.fsck.k9.NotificationSetting;
 import com.fsck.k9.controller.MessageReference;
 import com.fsck.k9.crypto.e3.E3Constants;
+import com.fsck.k9.mailstore.LocalMessage;
 
 import static com.fsck.k9.notification.NotificationHelper.NOTIFICATION_LED_BLINK_SLOW;
 import static com.fsck.k9.notification.NotificationController.platformSupportsExtendedNotifications;
@@ -80,7 +81,7 @@ class DeviceNotifications extends BaseNotifications {
         return builder.build();
     }
 
-    public Notification buildSummaryNotificationForE3Key(Account account, E3NotificationData notificationData,
+    public Notification buildSummaryNotificationForE3Key(Account account, LocalMessage message, E3NotificationData notificationData,
                                                          boolean silent) {
         int notificationId = NotificationIds.getNewE3KeyNotificationId(account);
         NotificationHolder holder = notificationData.getHolderForLatestNotification();
@@ -104,9 +105,11 @@ class DeviceNotifications extends BaseNotifications {
 
         PendingIntent pendingIntent = actionCreator
                 .createE3VerifyKeyPendingIntent(holder.content.messageReference,
-                        notificationData.verificationPhrase,
+                        message.getHeader(E3Constants.MIME_E3_VERIFICATION)[0],
+                        //notificationData.verificationPhrase,
                         notificationId);
         builder.setContentIntent(pendingIntent);
+        builder.setAutoCancel(true);
 
         return builder.build();
     }

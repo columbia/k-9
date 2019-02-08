@@ -31,7 +31,7 @@ class NewE3KeyNotifications internal constructor(private val notificationHelper:
                 cancelNotification(notificationId)
             }
 
-            notifyUsingSummaryNotification(account, notificationData, false)
+            notifyUsingSummaryNotification(account, message, notificationData, false)
         }
     }
 
@@ -50,8 +50,8 @@ class NewE3KeyNotifications internal constructor(private val notificationHelper:
         return newNotificationHolder
     }
 
-    private fun notifyUsingSummaryNotification(account: Account, notificationData: E3NotificationData, silent: Boolean) {
-        val notification = deviceNotifications.buildSummaryNotificationForE3Key(account, notificationData, silent)
+    private fun notifyUsingSummaryNotification(account: Account, message: LocalMessage, notificationData: E3NotificationData, silent: Boolean) {
+        val notification = deviceNotifications.buildSummaryNotificationForE3Key(account, message, notificationData, silent)
         val notificationId = NotificationIds.getNewE3KeyNotificationId(account)
 
         getNotificationManager().notify(notificationId, notification)

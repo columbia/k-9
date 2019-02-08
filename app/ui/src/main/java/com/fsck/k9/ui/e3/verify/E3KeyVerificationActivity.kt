@@ -68,7 +68,10 @@ class E3KeyVerificationActivity : E3ActionBaseActivity() {
 
     private fun requestNextVerification() {
         val uidToPhrase = uidsToPhrases.poll()
-        presenter.requestUserVerification(uidToPhrase, uidsToPhrases.isNotEmpty())
+
+        if (uidToPhrase != null) {
+            presenter.requestUserVerification(uidToPhrase, uidsToPhrases.isNotEmpty())
+        }
     }
 
     fun sceneBegin() {
