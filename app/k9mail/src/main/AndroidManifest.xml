@@ -149,6 +149,11 @@
             android:label="@string/account_setup_names_title"/>
 
         <activity
+            android:name=".activity.setup.AccountSetupE3"
+            android:configChanges="locale"
+            android:label="@string/account_setup_e3_title"/>
+
+        <activity
             android:name=".activity.ChooseAccount"
             android:configChanges="locale"
             android:label="@string/choose_account_title"

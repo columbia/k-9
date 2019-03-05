@@ -155,6 +155,7 @@ class E3KeyUploadActivity : E3ActionBaseActivity() {
     companion object {
         private const val EXTRA_ACCOUNT = "account"
 
+        @JvmStatic
         fun createIntent(context: Context, accountUuid: String): Intent {
             val intent = Intent(context, E3KeyUploadActivity::class.java)
             intent.putExtra(EXTRA_ACCOUNT, accountUuid)

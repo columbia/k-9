@@ -38,5 +38,5 @@
         android:layout_weight="1" />
 </LinearLayout>
 </ScrollView>
-    <include layout="@layout/wizard_done" />
+    <include layout="@layout/wizard_next" />
 </LinearLayout>

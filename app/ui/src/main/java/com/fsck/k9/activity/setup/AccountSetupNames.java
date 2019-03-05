@@ -16,7 +16,6 @@ import android.widget.EditText;
 
 import com.fsck.k9.Account;
 import com.fsck.k9.Preferences;
-import com.fsck.k9.activity.Accounts;
 import com.fsck.k9.activity.K9Activity;
 import com.fsck.k9.ui.R;
 import com.fsck.k9.helper.Utility;
@@ -30,7 +29,7 @@ public class AccountSetupNames extends K9Activity implements OnClickListener {
 
     private Account mAccount;
 
-    private Button mDoneButton;
+    private Button mNextButton;
 
     public static void actionSetNames(Context context, Account account) {
         Intent i = new Intent(context, AccountSetupNames.class);
@@ -44,8 +43,8 @@ public class AccountSetupNames extends K9Activity implements OnClickListener {
         setContentView(R.layout.account_setup_names);
         mDescription = findViewById(R.id.account_description);
         mName = findViewById(R.id.account_name);
-        mDoneButton = findViewById(R.id.done);
-        mDoneButton.setOnClickListener(this);
+        mNextButton = findViewById(R.id.next);
+        mNextButton.setOnClickListener(this);
 
         TextWatcher validationTextWatcher = new TextWatcher() {
             public void afterTextChanged(Editable s) {
@@ -75,13 +74,13 @@ public class AccountSetupNames extends K9Activity implements OnClickListener {
             mName.setText(mAccount.getName());
         }
         if (!Utility.requiredFieldValid(mName)) {
-            mDoneButton.setEnabled(false);
+            mNextButton.setEnabled(false);
         }
     }
 
     private void validateFields() {
-        mDoneButton.setEnabled(Utility.requiredFieldValid(mName));
-        Utility.setCompoundDrawablesAlpha(mDoneButton, mDoneButton.isEnabled() ? 255 : 128);
+        mNextButton.setEnabled(Utility.requiredFieldValid(mName));
+        Utility.setCompoundDrawablesAlpha(mNextButton, mNextButton.isEnabled() ? 255 : 128);
     }
 
     protected void onNext() {
@@ -90,12 +89,15 @@ public class AccountSetupNames extends K9Activity implements OnClickListener {
         }
         mAccount.setName(mName.getText().toString());
         mAccount.save(Preferences.getPreferences(this));
-        Accounts.listAccounts(this);
+
+        AccountSetupE3.actionSetupE3(this, mAccount);
+
+        //Accounts.listAccounts(this);
         finish();
     }
 
     public void onClick(View v) {
-        if (v.getId() == R.id.done) {
+        if (v.getId() == R.id.next) {
             onNext();
         }
     }

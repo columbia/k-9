@@ -391,6 +391,8 @@ Please submit bug reports, contribute new features and ask questions at
     <string name="account_setup_names_account_name_label">Give this account a name (optional):</string>
     <string name="account_setup_names_user_name_label">Type your name (displays on outgoing messages):</string>
 
+    <string name="account_setup_e3_title">Setting up E3</string>
+
     <string name="account_setup_account_type_title">Account type</string>
     <string name="account_setup_account_type_instructions">What kind of account is this?</string>
     <string name="account_setup_account_type_pop_action">POP3</string>
