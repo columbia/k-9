@@ -234,7 +234,25 @@ public class OpenPgpApi {
      */
     public static final String ACTION_UPDATE_AUTOCRYPT_PEER = "org.openintents.openpgp.action.UPDATE_AUTOCRYPT_PEER";
 
+    /**
+     * ACTION_ADD_ENCRYPT_ON_RECEIPT_KEY
+     *
+     * required extras:
+     * byte[]      EXTRA_ASCII_ARMORED_KEY       (ascii armored key to add)
+     */
     public static final String ACTION_ADD_ENCRYPT_ON_RECEIPT_KEY = "org.openintents.openpgp.action.ADD_ENCRYPT_ON_RECEIPT_KEY";
+
+    /**
+     * ACTION_CREATE_ENCRYPT_ON_RECEIPT_KEY
+     *
+     * required extras:
+     * String      EXTRA_NAME       (name to give to the encrypt on receipt key)
+     * String      EXTRA_EMAIL       (email for the encrypt on receipt key)
+     *
+     * returned extras:
+     * String      EXTRA_KEY_ID       (key id of the created key)
+     */
+    public static final String ACTION_CREATE_ENCRYPT_ON_RECEIPT_KEY = "org.openintents.openpgp.action.CREATE_ENCRYPT_ON_RECEIPT_KEY";
 
     /* Intent extras */
     public static final String EXTRA_API_VERSION = "api_version";
@@ -292,6 +310,8 @@ public class OpenPgpApi {
 
     // ENCRYPT-ON-RECEIPT
     public static final String EXTRA_ASCII_ARMORED_KEY = "ascii_armored_key";
+    public static final String EXTRA_NAME = "key_name";
+    public static final String EXTRA_EMAIL = "key_email";
 
     /* Service Intent returns */
     public static final String RESULT_CODE = "result_code";

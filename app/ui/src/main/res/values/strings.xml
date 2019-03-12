@@ -392,6 +392,7 @@ Please submit bug reports, contribute new features and ask questions at
     <string name="account_setup_names_user_name_label">Type your name (displays on outgoing messages):</string>
 
     <string name="account_setup_e3_title">Setting up E3</string>
+    <string name="account_setup_e3_error_generating_key">Failed to create your E3 encryption key!</string>
 
     <string name="account_setup_account_type_title">Account type</string>
     <string name="account_setup_account_type_instructions">What kind of account is this?</string>
