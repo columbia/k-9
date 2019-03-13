@@ -18,17 +18,16 @@ import com.fsck.k9.ui.R
 import com.fsck.k9.ui.e3.upload.E3KeyUploadActivity
 import com.fsck.k9.ui.settings.account.AccountSettingsFragment
 import com.fsck.k9.ui.settings.account.OpenPgpAppSelectDialog
-import org.koin.android.ext.android.inject
-import org.openintents.openpgp.OpenPgpApiManager
+import org.openintents.openpgp.IOpenPgpService2
 import org.openintents.openpgp.OpenPgpError
 import org.openintents.openpgp.util.OpenPgpApi
 import org.openintents.openpgp.util.OpenPgpProviderUtil
+import org.openintents.openpgp.util.OpenPgpServiceConnection
 import timber.log.Timber
 
 
 class AccountSetupE3 : K9Activity(), View.OnClickListener,
         ConfirmationDialogFragment.ConfirmationDialogFragmentListener {
-    private val openPgpApiManager: OpenPgpApiManager by inject(parameters = { mapOf("lifecycleOwner" to this) })
     private var mMessageView: TextView? = null
     private var mProgressBar: ProgressBar? = null
 
@@ -37,7 +36,7 @@ class AccountSetupE3 : K9Activity(), View.OnClickListener,
         private var mAccount: Account? = null
         private var mCanceled: Boolean = false
 
-        private const val NO_KEY = 0
+        private const val NO_KEY: Long = 0
 
         @JvmStatic
         fun actionSetupE3(context: Context, account: Account) {
@@ -65,21 +64,8 @@ class AccountSetupE3 : K9Activity(), View.OnClickListener,
             OpenPgpAppSelectDialog.startOpenPgpChooserActivity(this, mAccount, OpenPgpAppSelectDialog.ProviderType.E3)
         }
 
-        // Generate a key if one doesn't exist already
-        val generatedE3KeyId = generateE3Key()
-
-        if (generatedE3KeyId != null) {
-            setE3KeyPreference(generatedE3KeyId)
-
-            // Upload the key
-            val intent = E3KeyUploadActivity.createIntent(this, mAccount!!.uuid)
-            startActivity(intent)
-        } else {
-            onErrorGeneratingKey()
-            Accounts.listAccounts(this)
-        }
-
-        finish()
+        // Generate a key if one doesn't exist already, then the callback will upload it
+        generateE3Key(openPgpCreateKeyCallback)
         return
     }
 
@@ -98,17 +84,25 @@ class AccountSetupE3 : K9Activity(), View.OnClickListener,
         editor.apply()
     }
 
-    private fun generateE3Key(): Long? {
+    private fun generateE3Key(callback: OpenPgpApi.IOpenPgpCallback) {
         val data = Intent()
         data.action = OpenPgpApi.ACTION_CREATE_ENCRYPT_ON_RECEIPT_KEY
         data.putExtra(OpenPgpApi.EXTRA_NAME, "test key name")
         data.putExtra(OpenPgpApi.EXTRA_EMAIL, mAccount!!.email)
         //data.putExtra(OpenPgpApi.EXTRA_CREATE_SECURITY_TOKEN, false)
 
-        val api = openPgpApiManager.openPgpApi
-        api.executeApiAsync(data, null, null, openPgpCreateKeyCallback)
+        val serviceConnection = OpenPgpServiceConnection(applicationContext, mAccount!!.e3Provider, object : OpenPgpServiceConnection.OnBound {
+            override fun onBound(service: IOpenPgpService2) {
+                val openPgpApi = OpenPgpApi(applicationContext, service)
+                openPgpApi.executeApiAsync(data, null, null, callback)
+            }
 
-        return null
+            override fun onError(e: Exception) {
+                Timber.e("Got error while binding to OpenPGP service", e)
+            }
+        })
+
+        serviceConnection.bindToService()
     }
 
     private val openPgpCreateKeyCallback = OpenPgpApi.IOpenPgpCallback { result ->
@@ -118,11 +112,21 @@ class AccountSetupE3 : K9Activity(), View.OnClickListener,
                 val pendingIntentSelectKey = result.getParcelableExtra<PendingIntent>(OpenPgpApi.RESULT_INTENT)
 
                 if (result.hasExtra(OpenPgpApi.EXTRA_KEY_ID)) {
-                    val keyId = result.getLongExtra(OpenPgpApi.EXTRA_KEY_ID, NO_KEY.toLong())
+                    val keyId = result.getLongExtra(OpenPgpApi.EXTRA_KEY_ID, NO_KEY)
 
-                    //updateWidgetData(keyId, primaryUserId, keyCreationTime, pendingIntentSelectKey)
+                    if (keyId != NO_KEY) {
+                        setE3KeyPreference(keyId)
+
+                        // Upload the key
+                        val intent = E3KeyUploadActivity.createIntent(this, mAccount!!.uuid)
+                        startActivity(intent)
+                    } else {
+                        onErrorGeneratingKey()
+                        Accounts.listAccounts(this)
+                    }
                 } else {
-                    //updateWidgetData(pendingIntentSelectKey)
+                    onErrorGeneratingKey()
+                    Accounts.listAccounts(this)
                 }
             }
             OpenPgpApi.RESULT_CODE_ERROR -> {
