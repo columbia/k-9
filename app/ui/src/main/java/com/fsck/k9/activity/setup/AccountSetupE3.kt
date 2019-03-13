@@ -4,6 +4,7 @@ import android.app.Activity
 import android.app.PendingIntent
 import android.content.Context
 import android.content.Intent
+import android.content.IntentSender
 import android.os.Bundle
 import android.preference.PreferenceManager
 import android.view.View
@@ -33,10 +34,10 @@ class AccountSetupE3 : K9Activity(), View.OnClickListener,
 
     companion object {
         private const val EXTRA_ACCOUNT = "account"
+        private const val RESULT_CODE_PENDING_INTENT = 9990
         private var mAccount: Account? = null
         private var mCanceled: Boolean = false
-
-        private const val NO_KEY: Long = 0
+        private var pendingIntent: PendingIntent? = null
 
         @JvmStatic
         fun actionSetupE3(context: Context, account: Account) {
@@ -69,19 +70,15 @@ class AccountSetupE3 : K9Activity(), View.OnClickListener,
         return
     }
 
-    // Enable E3 in the account settings preference
-    private fun enableE3Preference() {
-        val sharedPrefs = PreferenceManager.getDefaultSharedPreferences(this)
-        val editor = sharedPrefs.edit()
-        editor.putBoolean(AccountSettingsFragment.PREFERENCE_E3_ENABLE, true)
-        editor.apply()
-    }
-
-    private fun setE3KeyPreference(e3KeyId: Long) {
-        val sharedPrefs = PreferenceManager.getDefaultSharedPreferences(this)
-        val editor = sharedPrefs.edit()
-        editor.putLong(AccountSettingsFragment.PREFERENCE_E3_KEY, e3KeyId)
-        editor.apply()
+    override fun onResume() {
+        super.onResume()
+        // Resume key generation after user allows access to openkeychain?
+        if (mAccount!!.e3Key == Account.NO_OPENPGP_KEY && pendingIntent != null) {
+            // Didn't generate key yet, so restart it
+            Timber.d("Resumed AccountSetupE3 without an E3 key generated yet, and potentially resolved a pending intent")
+            pendingIntent = null
+            generateE3Key(openPgpCreateKeyCallback)
+        }
     }
 
     private fun generateE3Key(callback: OpenPgpApi.IOpenPgpCallback) {
@@ -109,12 +106,12 @@ class AccountSetupE3 : K9Activity(), View.OnClickListener,
         val resultCode = result.getIntExtra(OpenPgpApi.RESULT_CODE, OpenPgpApi.RESULT_CODE_ERROR)
         when (resultCode) {
             OpenPgpApi.RESULT_CODE_SUCCESS, OpenPgpApi.RESULT_CODE_USER_INTERACTION_REQUIRED -> {
-                val pendingIntentSelectKey = result.getParcelableExtra<PendingIntent>(OpenPgpApi.RESULT_INTENT)
+                pendingIntent = result.getParcelableExtra(OpenPgpApi.RESULT_INTENT)
 
                 if (result.hasExtra(OpenPgpApi.EXTRA_KEY_ID)) {
-                    val keyId = result.getLongExtra(OpenPgpApi.EXTRA_KEY_ID, NO_KEY)
+                    val keyId = result.getLongExtra(OpenPgpApi.EXTRA_KEY_ID, Account.NO_OPENPGP_KEY)
 
-                    if (keyId != NO_KEY) {
+                    if (keyId != Account.NO_OPENPGP_KEY) {
                         setE3KeyPreference(keyId)
 
                         // Upload the key
@@ -125,8 +122,7 @@ class AccountSetupE3 : K9Activity(), View.OnClickListener,
                         Accounts.listAccounts(this)
                     }
                 } else {
-                    onErrorGeneratingKey()
-                    Accounts.listAccounts(this)
+                    apiStartPendingIntent()
                 }
             }
             OpenPgpApi.RESULT_CODE_ERROR -> {
@@ -134,6 +130,32 @@ class AccountSetupE3 : K9Activity(), View.OnClickListener,
                 Timber.e("RESULT_CODE_ERROR: %s", error.message)
             }
         }
+    }
+
+    private fun apiStartPendingIntent() {
+        try {
+            pendingIntent!!.send(RESULT_CODE_PENDING_INTENT,
+                    PendingIntent.OnFinished { pendingIntent, intent, i, s, bundle -> Timber.d("In pending intent callback") },
+                    null)
+            //startIntentSender(pendingIntent!!.intentSender, null, 0, 0, 0)
+        } catch (e: IntentSender.SendIntentException) {
+            Timber.e(e, "Error launching pending intent")
+        }
+    }
+
+    // Enable E3 in the account settings preference
+    private fun enableE3Preference() {
+        val sharedPrefs = PreferenceManager.getDefaultSharedPreferences(this)
+        val editor = sharedPrefs.edit()
+        editor.putBoolean(AccountSettingsFragment.PREFERENCE_E3_ENABLE, true)
+        editor.apply()
+    }
+
+    private fun setE3KeyPreference(e3KeyId: Long) {
+        val sharedPrefs = PreferenceManager.getDefaultSharedPreferences(this)
+        val editor = sharedPrefs.edit()
+        editor.putLong(AccountSettingsFragment.PREFERENCE_E3_KEY, e3KeyId)
+        editor.apply()
     }
 
     private fun setMessage(resId: Int) {
