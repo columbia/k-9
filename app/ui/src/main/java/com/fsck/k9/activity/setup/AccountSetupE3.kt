@@ -76,7 +76,6 @@ class AccountSetupE3 : K9Activity(), View.OnClickListener,
         if (mAccount!!.e3Key == Account.NO_OPENPGP_KEY && pendingIntent != null) {
             // Didn't generate key yet, so restart it
             Timber.d("Resumed AccountSetupE3 without an E3 key generated yet, and potentially resolved a pending intent")
-            pendingIntent = null
             generateE3Key(openPgpCreateKeyCallback)
         }
     }
@@ -110,13 +109,15 @@ class AccountSetupE3 : K9Activity(), View.OnClickListener,
 
                 if (result.hasExtra(OpenPgpApi.EXTRA_KEY_ID)) {
                     val keyId = result.getLongExtra(OpenPgpApi.EXTRA_KEY_ID, Account.NO_OPENPGP_KEY)
+                    pendingIntent = null
 
                     if (keyId != Account.NO_OPENPGP_KEY) {
                         setE3KeyPreference(keyId)
 
                         // Upload the key
-                        val intent = E3KeyUploadActivity.createIntent(this, mAccount!!.uuid)
-                        startActivity(intent)
+                        //val intent = E3KeyUploadActivity.createIntent(this, mAccount!!.uuid)
+                        //startActivity(intent)
+                        Accounts.listAccounts(this)
                     } else {
                         onErrorGeneratingKey()
                         Accounts.listAccounts(this)
