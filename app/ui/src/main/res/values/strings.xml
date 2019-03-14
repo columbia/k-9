@@ -393,6 +393,7 @@ Please submit bug reports, contribute new features and ask questions at
 
     <string name="account_setup_e3_title">Setting up E3</string>
     <string name="account_setup_e3_error_generating_key">Failed to create your E3 encryption key!</string>
+    <string name="account_setup_e3_generated_key_name">My %s\'s K-9 Mail E3 key</string>
 
     <string name="account_setup_account_type_title">Account type</string>
     <string name="account_setup_account_type_instructions">What kind of account is this?</string>
@@ -1334,9 +1335,10 @@ Please submit bug reports, contribute new features and ask questions at
     <string name="e3_key_upload_finish">E3 public key upload complete.</string>
     <string name="e3_key_upload_verification">Verification Phrase:</string>
     <string name="e3_key_upload_verification_response_instructions">Confirm this verification phrase on your other devices now:</string>
+    <string name="e3_key_upload_advanced">Advanced options</string>
     <string name="e3_key_upload_qr_code_desc">Key fingerprint QR code</string>
     <string name="e3_key_upload_qr_code_instructions">FOR ADVANCED USERS: Scan this QR code in your E3 standalone client:</string>
-    <string name="e3_key_upload_verification_instructions">Only verify keys on your standalone client with this EXACT verification phrase!</string>
+    <string name="e3_key_upload_verification_instructions">Only verify keys on your other E3 clients with this EXACT verification phrase!</string>
     <string name="e3_key_scan_completed_instructions">Please open your key chain app and use the QR code scanner to verify your newly added E3 keys!</string>
     <string name="e3_key_upload_error_upload">An error occurred while uploading the E3 public key. Please check your network connectivity and outgoing server configuration.</string>
 

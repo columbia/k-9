@@ -14,6 +14,7 @@ import com.fsck.k9.ui.e3.E3ActionBaseActivity
 import com.fsck.k9.view.StatusIndicator
 import kotlinx.android.synthetic.main.crypto_e3_key_upload.*
 import kotlinx.android.synthetic.main.text_list_item.view.*
+import kotlinx.android.synthetic.main.wizard_cancel_done.*
 import org.koin.android.ext.android.inject
 
 class E3KeyUploadActivity : E3ActionBaseActivity(), View.OnClickListener {
@@ -33,6 +34,7 @@ class E3KeyUploadActivity : E3ActionBaseActivity(), View.OnClickListener {
         e3KeyUploadButton.setOnClickListener { presenter.onClickUpload() }
 
         findViewById<View>(R.id.cancel).setOnClickListener(this)
+        findViewById<View>(R.id.done).setOnClickListener(this)
 
         presenter.initFromIntent(accountUuid)
     }
@@ -73,10 +75,14 @@ class E3KeyUploadActivity : E3ActionBaseActivity(), View.OnClickListener {
         e3KeyUploadLayoutVerificationPhrase.visibility = View.GONE
         e3KeyUploadLayoutVerificationInstructions.visibility = View.GONE
 
+        e3KeyUploadAdvancedOptions.visibility = View.GONE
         e3KeyUploadLayoutQrCodeInstructions.visibility = View.GONE
         e3KeyUploadLayoutQrCode.visibility = View.GONE
 
         e3KeyUploadErrorUpload.visibility = View.GONE
+
+        cancel.visibility = View.VISIBLE
+        done.visibility = View.GONE
     }
 
     fun sceneGeneratingAndUploading() {
@@ -92,10 +98,14 @@ class E3KeyUploadActivity : E3ActionBaseActivity(), View.OnClickListener {
         e3KeyUploadLayoutVerificationPhrase.visibility = View.GONE
         e3KeyUploadLayoutVerificationInstructions.visibility = View.GONE
 
+        e3KeyUploadAdvancedOptions.visibility = View.GONE
         e3KeyUploadLayoutQrCodeInstructions.visibility = View.GONE
         e3KeyUploadLayoutQrCode.visibility = View.GONE
 
         e3KeyUploadErrorUpload.visibility = View.GONE
+
+        cancel.visibility = View.VISIBLE
+        done.visibility = View.GONE
     }
 
     fun sceneSendError() {
@@ -111,10 +121,14 @@ class E3KeyUploadActivity : E3ActionBaseActivity(), View.OnClickListener {
         e3KeyUploadLayoutVerificationInstructions.visibility = View.GONE
         e3KeyUploadLayoutVerificationPhrase.visibility = View.GONE
 
+        e3KeyUploadAdvancedOptions.visibility = View.GONE
         e3KeyUploadLayoutQrCodeInstructions.visibility = View.GONE
         e3KeyUploadLayoutQrCode.visibility = View.GONE
 
         e3KeyUploadErrorUpload.visibility = View.VISIBLE
+
+        cancel.visibility = View.VISIBLE
+        done.visibility = View.GONE
     }
 
     fun sceneFinished(transition: Boolean = false) {
@@ -135,8 +149,12 @@ class E3KeyUploadActivity : E3ActionBaseActivity(), View.OnClickListener {
         e3KeyUploadLayoutVerificationPhrase.visibility = View.VISIBLE
         e3KeyUploadLayoutVerificationInstructions.visibility = View.VISIBLE
 
+        e3KeyUploadAdvancedOptions.visibility = View.VISIBLE
         e3KeyUploadLayoutQrCodeInstructions.visibility = View.VISIBLE
         e3KeyUploadLayoutQrCode.visibility = View.VISIBLE
+
+        cancel.visibility = View.GONE
+        done.visibility = View.VISIBLE
     }
 
     fun sceneCancelled() {
@@ -152,10 +170,14 @@ class E3KeyUploadActivity : E3ActionBaseActivity(), View.OnClickListener {
         e3KeyUploadLayoutVerificationInstructions.visibility = View.GONE
         e3KeyUploadLayoutVerificationPhrase.visibility = View.GONE
 
+        e3KeyUploadAdvancedOptions.visibility = View.GONE
         e3KeyUploadLayoutQrCodeInstructions.visibility = View.GONE
         e3KeyUploadLayoutQrCode.visibility = View.GONE
 
         e3KeyUploadErrorUpload.visibility = View.GONE
+
+        cancel.visibility = View.VISIBLE
+        done.visibility = View.GONE
     }
 
     fun setLoadingStateGenerating() {
@@ -198,6 +220,12 @@ class E3KeyUploadActivity : E3ActionBaseActivity(), View.OnClickListener {
     override fun onClick(v: View) {
         if (v.id == R.id.cancel) {
             onCancel()
+        } else if (v.id == R.id.done) {
+            if (isInitialSetup) {
+                Accounts.listAccounts(this)
+            }
+
+            finish()
         }
     }
 

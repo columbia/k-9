@@ -5,6 +5,7 @@ import android.app.PendingIntent
 import android.content.Context
 import android.content.Intent
 import android.content.IntentSender
+import android.os.Build
 import android.os.Bundle
 import android.preference.PreferenceManager
 import android.view.View
@@ -83,7 +84,7 @@ class AccountSetupE3 : K9Activity(), View.OnClickListener,
     private fun generateE3Key(callback: OpenPgpApi.IOpenPgpCallback) {
         val data = Intent()
         data.action = OpenPgpApi.ACTION_CREATE_ENCRYPT_ON_RECEIPT_KEY
-        data.putExtra(OpenPgpApi.EXTRA_NAME, "test key name")
+        data.putExtra(OpenPgpApi.EXTRA_NAME, String.format(resources.getString(R.string.account_setup_e3_generated_key_name), Build.MODEL))
         data.putExtra(OpenPgpApi.EXTRA_EMAIL, mAccount!!.email)
         //data.putExtra(OpenPgpApi.EXTRA_CREATE_SECURITY_TOKEN, false)
 
