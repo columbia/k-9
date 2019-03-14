@@ -11,6 +11,7 @@ import com.fsck.k9.Account
 import com.fsck.k9.K9
 import com.fsck.k9.crypto.KeyFormattingUtils
 import com.fsck.k9.crypto.e3.E3Constants
+import com.fsck.k9.crypto.e3.E3HeaderSigner
 import com.fsck.k9.helper.SingleLiveEvent
 import com.fsck.k9.mail.Address
 import com.fsck.k9.mail.Flag
@@ -23,8 +24,7 @@ import com.fsck.k9.ui.R
 import com.fsck.k9.ui.crypto.PgpWordList
 import com.fsck.k9.ui.e3.verify.E3DigestsAndResponses
 import org.openintents.openpgp.util.OpenPgpApi
-import java.io.ByteArrayOutputStream
-import java.io.InputStream
+import java.io.*
 import java.security.MessageDigest
 import java.util.*
 
@@ -48,7 +48,7 @@ class E3KeyUploadMessageCreator(context: Context, private val resources: Resourc
         val e3KeyDigest = KeyFormattingUtils.beautifyHex(Hex.encodeHex(e3Digester.digest(armoredKeyBytes)))
         val randomWords = wordList.getRandomWords(E3Constants.E3_VERIFICATION_PHRASE_LENGTH)
                 .joinToString(E3Constants.E3_VERIFICATION_PHRASE_DELIMITER)
-        val e3PublicKeys: Set<KeyResult> = requestKnownE3PublicKeys(openPgpApi, account)
+        val e3PublicKeys: Set<KeyResult> = requestKnownE3PublicKeys(openPgpApi)
 
         // TODO: E3 ensure that all E3 key digests are compared in a way accounting for spaces/lowercase/uppercase
 
@@ -57,7 +57,9 @@ class E3KeyUploadMessageCreator(context: Context, private val resources: Resourc
                 || e3KeyDigestsAndResponses.verifiedE3KeyDigests.isEmpty() // If empty, means we're not uploading in response to verifying keys
                 || e3KeyDigestsAndResponses.responseToKeyDigests.isEmpty() // If empty, means we're responding to an uploaded key, but not a RESPONSE TO one
         ) {
-            val setupMessage = createE3KeyUploadMessage(armoredKeyBytes,
+            val setupMessage = createE3KeyUploadMessage(
+                    openPgpApi,
+                    armoredKeyBytes,
                     account,
                     armoredKey.identity,
                     beautifulKeyId,
@@ -90,7 +92,7 @@ class E3KeyUploadMessageCreator(context: Context, private val resources: Resourc
         return KeyResult(resultIntent, baos, identity, KeyFingerprint(fingerprintString, fingerprintBitmap))
     }
 
-    private fun requestKnownE3PublicKeys(openPgpApi: OpenPgpApi, account: Account): Set<KeyResult> {
+    private fun requestKnownE3PublicKeys(openPgpApi: OpenPgpApi): Set<KeyResult> {
         val intent = Intent(OpenPgpApi.ACTION_GET_ENCRYPT_ON_RECEIPT_PUBLIC_KEYS)
         val keyIdsResult = openPgpApi.executeApi(intent, null as InputStream?, null)
 
@@ -111,7 +113,8 @@ class E3KeyUploadMessageCreator(context: Context, private val resources: Resourc
      *
      * @param pgpKeyData should be an ASCII armored PGP key
      */
-    private fun createE3KeyUploadMessage(pgpKeyData: ByteArray,
+    private fun createE3KeyUploadMessage(openPgpApi: OpenPgpApi,
+                                         pgpKeyData: ByteArray,
                                          account: Account,
                                          keyUserIdentity: String,
                                          keyId: String,
@@ -168,7 +171,7 @@ class E3KeyUploadMessageCreator(context: Context, private val resources: Resourc
             message.setHeader(E3Constants.MIME_E3_UID, account.uuid)
             addE3PublicKeysToHeader(message, e3PublicKeys)
 
-            message.setHeader(E3Constants.MIME_E3_SIGNATURE, "todo")
+
 
             if (initialUploadedE3KeyDigests != null && !initialUploadedE3KeyDigests.isEmpty()) {
                 val receivedE3KeyDigests = initialUploadedE3KeyDigests.joinToString(E3Constants.E3_KEY_DIGEST_DELIMITER)
@@ -179,6 +182,12 @@ class E3KeyUploadMessageCreator(context: Context, private val resources: Resourc
             message.addSentDate(nowDate, K9.hideTimeZone())
             message.setFrom(address)
             message.setRecipients(Message.RecipientType.TO, arrayOf(address))
+
+            val e3HeaderSigner = E3HeaderSigner(openPgpApi)
+
+            val e3HeaderSignature = e3HeaderSigner.signE3Headers(account.e3Key, message)
+            val foldedB64E3HeaderSignature = KeyFormattingUtils.createFoldedBase64KeyData(e3HeaderSignature!!.toByteArray(Charsets.UTF_8))
+            message.setHeader(E3Constants.MIME_E3_SIGNATURE, foldedB64E3HeaderSignature)
 
             return message
         } catch (e: MessagingException) {
