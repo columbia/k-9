@@ -43,11 +43,12 @@ class E3KeyUploadMessageCreator(context: Context, private val resources: Resourc
         val beautifulKeyId = KeyFormattingUtils.beautifyKeyId(account.e3Key)
 
         // TODO: E3 handle multiple PendingIntent
-        val armoredKey = requestPgpKey(openPgpApi, account, true, true)
+        val armoredKey = requestPgpKey(openPgpApi, account.e3Key, true, true)
         val armoredKeyBytes = armoredKey.resultData.toByteArray()
         val e3KeyDigest = KeyFormattingUtils.beautifyHex(Hex.encodeHex(e3Digester.digest(armoredKeyBytes)))
         val randomWords = wordList.getRandomWords(E3Constants.E3_VERIFICATION_PHRASE_LENGTH)
                 .joinToString(E3Constants.E3_VERIFICATION_PHRASE_DELIMITER)
+        val e3PublicKeys: Set<KeyResult> = requestKnownE3PublicKeys(openPgpApi, account)
 
         // TODO: E3 ensure that all E3 key digests are compared in a way accounting for spaces/lowercase/uppercase
 
@@ -63,7 +64,8 @@ class E3KeyUploadMessageCreator(context: Context, private val resources: Resourc
                     e3KeyDigest,
                     armoredKey.fingerprint,
                     randomWords,
-                    e3KeyDigestsAndResponses?.verifiedE3KeyDigests
+                    e3KeyDigestsAndResponses?.verifiedE3KeyDigests,
+                    e3PublicKeys
             )
 
             return E3KeyUploadMessage(setupMessage, armoredKey.pendingIntent, randomWords, armoredKey)
@@ -72,9 +74,9 @@ class E3KeyUploadMessageCreator(context: Context, private val resources: Resourc
         return null
     }
 
-    private fun requestPgpKey(openPgpApi: OpenPgpApi, account: Account, armored: Boolean, fingerprint: Boolean): KeyResult {
+    private fun requestPgpKey(openPgpApi: OpenPgpApi, keyId: Long, armored: Boolean, fingerprint: Boolean): KeyResult {
         val intent = Intent(OpenPgpApi.ACTION_GET_KEY)
-        intent.putExtra(OpenPgpApi.EXTRA_KEY_ID, account.e3Key)
+        intent.putExtra(OpenPgpApi.EXTRA_KEY_ID, keyId)
         intent.putExtra(OpenPgpApi.EXTRA_REQUEST_ASCII_ARMOR, armored)
         intent.putExtra(OpenPgpApi.EXTRA_REQUEST_FINGERPRINT, fingerprint)
         val baos = ByteArrayOutputStream()
@@ -88,8 +90,24 @@ class E3KeyUploadMessageCreator(context: Context, private val resources: Resourc
         return KeyResult(resultIntent, baos, identity, KeyFingerprint(fingerprintString, fingerprintBitmap))
     }
 
+    private fun requestKnownE3PublicKeys(openPgpApi: OpenPgpApi, account: Account): Set<KeyResult> {
+        val intent = Intent(OpenPgpApi.ACTION_GET_ENCRYPT_ON_RECEIPT_PUBLIC_KEYS)
+        val keyIdsResult = openPgpApi.executeApi(intent, null as InputStream?, null)
+
+        val eorKeyIds = keyIdsResult.getLongArrayExtra(OpenPgpApi.EXTRA_KEY_IDS)
+        val eorKeyResults = mutableSetOf<KeyResult>()
+
+        for (keyId: Long in eorKeyIds) {
+            eorKeyResults.add(requestPgpKey(openPgpApi, keyId, true, true))
+        }
+
+        return eorKeyResults
+    }
+
     /**
      * Caller is responsible for managing the lifetime/memory of [KeyFingerprint.qrBitmap].
+     *
+     * TODO: E3 Make this into a builder class some day...
      *
      * @param pgpKeyData should be an ASCII armored PGP key
      */
@@ -100,7 +118,8 @@ class E3KeyUploadMessageCreator(context: Context, private val resources: Resourc
                                          e3KeyDigest: String,
                                          pgpFingerprint: KeyFingerprint,
                                          verificationPhrase: String,
-                                         initialUploadedE3KeyDigests: Set<String>?): Message {
+                                         initialUploadedE3KeyDigests: Set<String>?,
+                                         e3PublicKeys: Set<KeyResult>): Message {
         try {
             val address = Address.parse(account.getIdentity(0).email)[0]
             val subjectText = resources.getString(R.string.e3_key_upload_msg_subject)
@@ -147,6 +166,9 @@ class E3KeyUploadMessageCreator(context: Context, private val resources: Resourc
             message.setHeader(E3Constants.MIME_E3_VERIFICATION, verificationPhrase)
             message.setHeader(E3Constants.MIME_E3_TIMESTAMP, System.currentTimeMillis().toString())
             message.setHeader(E3Constants.MIME_E3_UID, account.uuid)
+            addE3PublicKeysToHeader(message, e3PublicKeys)
+
+            message.setHeader(E3Constants.MIME_E3_SIGNATURE, "todo")
 
             if (initialUploadedE3KeyDigests != null && !initialUploadedE3KeyDigests.isEmpty()) {
                 val receivedE3KeyDigests = initialUploadedE3KeyDigests.joinToString(E3Constants.E3_KEY_DIGEST_DELIMITER)
@@ -169,6 +191,13 @@ class E3KeyUploadMessageCreator(context: Context, private val resources: Resourc
         keyAttachment.setHeader(MimeHeader.HEADER_CONTENT_TYPE, E3Constants.CONTENT_TYPE_PGP_KEYS)
         keyAttachment.setHeader(MimeHeader.HEADER_CONTENT_DISPOSITION, "attachment; filename=\"e3_key.asc\"")
         return keyAttachment
+    }
+
+    private fun addE3PublicKeysToHeader(message: MimeMessage, e3PublicKeys: Set<KeyResult>) {
+        for (keyResult in e3PublicKeys) {
+            val foldedBase64Key = KeyFormattingUtils.createFoldedBase64KeyData(keyResult.resultData.toByteArray())
+            message.addHeader(E3Constants.MIME_E3_KEYS, foldedBase64Key)
+        }
     }
 
     companion object {

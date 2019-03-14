@@ -254,6 +254,17 @@ public class OpenPgpApi {
      */
     public static final String ACTION_CREATE_ENCRYPT_ON_RECEIPT_KEY = "org.openintents.openpgp.action.CREATE_ENCRYPT_ON_RECEIPT_KEY";
 
+    /**
+     * ACTION_GET_ENCRYPT_ON_RECEIPT_PUBLIC_KEYS
+     *
+     * required extras:
+     * String      EXTRA_EMAIL       (email for the encrypt on receipt key)
+     *
+     * returned extras:
+     * long[]      EXTRA_KEY_IDS       (key ids of known and verified EOR public keys)
+     */
+    public static final String ACTION_GET_ENCRYPT_ON_RECEIPT_PUBLIC_KEYS = "org.openintents.openpgp.action.ACTION_GET_ENCRYPT_ON_RECEIPT_PUBLIC_KEYS";
+
     /* Intent extras */
     public static final String EXTRA_API_VERSION = "api_version";
 

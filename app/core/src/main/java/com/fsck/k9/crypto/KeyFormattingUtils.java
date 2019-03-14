@@ -2,10 +2,14 @@ package com.fsck.k9.crypto;
 
 import java.util.Locale;
 
+import okio.ByteString;
+
 /**
  * Taken from the open-keychain/OpenKeychain project.
  */
 public class KeyFormattingUtils {
+    private static final int HEADER_LINE_LENGTH = 76;
+
     /**
      * Makes a human-readable version of a key ID, which is usually 64 bits: lower-case, no
      * leading 0x, space-separated quartets (for keys whose length in hex is divisible by 4)
@@ -63,6 +67,29 @@ public class KeyFormattingUtils {
 
     public static String convertKeyIdToHexShort(long keyId) {
         return "0x" + convertKeyIdToHex32bit(keyId);
+    }
+
+    /**
+     * Copied from {@link com.fsck.k9.autocrypt.AutocryptHeader}.
+     *
+     * @param keyData Key data in bytes.
+     * @return Folded base64 key data.
+     */
+    public static String createFoldedBase64KeyData(byte[] keyData) {
+        String base64KeyData = ByteString.of(keyData).base64();
+        StringBuilder result = new StringBuilder();
+
+        for (int i = 0, base64Length = base64KeyData.length(); i < base64Length; i += HEADER_LINE_LENGTH) {
+            if (i + HEADER_LINE_LENGTH <= base64Length) {
+                result.append("\r\n ");
+                result.append(base64KeyData, i, i + HEADER_LINE_LENGTH);
+            } else {
+                result.append("\r\n ");
+                result.append(base64KeyData, i, base64Length);
+            }
+        }
+
+        return result.toString();
     }
 
     private static String convertKeyIdToHex32bit(long keyId) {
