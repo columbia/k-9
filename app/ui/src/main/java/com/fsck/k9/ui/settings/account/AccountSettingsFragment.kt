@@ -1,5 +1,7 @@
 package com.fsck.k9.ui.settings.account
 
+import android.app.AlertDialog
+import android.content.DialogInterface
 import android.content.Intent
 import android.os.Bundle
 import android.support.v14.preference.SwitchPreference
@@ -285,8 +287,18 @@ class AccountSettingsFragment : PreferenceFragmentCompat() {
 
     private fun configureE3KeyUpload(account: Account) {
         findPreference(PREFERENCE_E3_KEY_UPLOAD).onClick {
-            val intent = E3KeyUploadActivity.createIntent(requireContext(), account.uuid)
-            startActivity(intent)
+            if (account.e3Key != Account.NO_OPENPGP_KEY) {
+                val intent = E3KeyUploadActivity.createIntent(requireContext(), account.uuid)
+                startActivity(intent)
+            } else {
+                val alertDialog = AlertDialog.Builder(activity)
+                        .setTitle("test title")
+                        .setMessage("test message")
+                        .setCancelable(true)
+                        .setPositiveButton(getString(R.string.ok), DialogInterface.OnClickListener { dialogInterface, i -> dialogInterface.cancel() })
+                        .create()
+                alertDialog.show()
+            }
         }
     }
 

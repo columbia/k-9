@@ -101,6 +101,7 @@ class AccountSetupE3 : K9Activity(), View.OnClickListener,
         serviceConnection.bindToService()
     }
 
+    // Runs after OpenPgpApi succeeds in generating the key
     private val openPgpCreateKeyCallback = OpenPgpApi.IOpenPgpCallback { result ->
         val resultCode = result.getIntExtra(OpenPgpApi.RESULT_CODE, OpenPgpApi.RESULT_CODE_ERROR)
         when (resultCode) {
@@ -122,6 +123,8 @@ class AccountSetupE3 : K9Activity(), View.OnClickListener,
                         onErrorGeneratingKey()
                         Accounts.listAccounts(this)
                     }
+
+                    finish()
                 } else {
                     apiStartPendingIntent()
                 }
@@ -157,6 +160,7 @@ class AccountSetupE3 : K9Activity(), View.OnClickListener,
         val editor = sharedPrefs.edit()
         editor.putLong(AccountSettingsFragment.PREFERENCE_E3_KEY, e3KeyId)
         editor.apply()
+        mAccount!!.e3Key = e3KeyId
     }
 
     private fun setMessage(resId: Int) {

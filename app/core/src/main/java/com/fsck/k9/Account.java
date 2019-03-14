@@ -318,7 +318,7 @@ public class Account implements BaseAccount, StoreConfig {
         syncRemoteDeletions = true;
         openPgpKey = NO_OPENPGP_KEY;
         e3Key = NO_OPENPGP_KEY;
-        e3Mode = E3Mode.PASSIVE;
+        e3Mode = E3Mode.STANDALONE;
         e3KeyVerificationPhrase = "";
         allowRemoteSearch = false;
         remoteSearchFullText = false;
