@@ -1369,6 +1369,7 @@ Please submit bug reports, contribute new features and ask questions at
     </string>
     <string name="e3_key_upload_msg_user_id">%s (Key ID: %s)</string>
     <string name="e3_key_upload_error_send">An error occurred while sending the message. Please check your network connectivity and outgoing server configuration.</string>
+    <string name="e3_key_upload_cancelled">Cancelled the key upload wizard.</string>
 
     <string name="e3_key_scan_title">Scan for E3 public keys</string>
     <string name="e3_key_scan_intro">Scanning for your other uploaded E3 public keys allows you to encrypt your email using all of your public keys.</string>

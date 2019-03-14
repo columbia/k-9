@@ -288,7 +288,7 @@ class AccountSettingsFragment : PreferenceFragmentCompat() {
     private fun configureE3KeyUpload(account: Account) {
         findPreference(PREFERENCE_E3_KEY_UPLOAD).onClick {
             if (account.e3Key != Account.NO_OPENPGP_KEY) {
-                val intent = E3KeyUploadActivity.createIntent(requireContext(), account.uuid)
+                val intent = E3KeyUploadActivity.createIntent(requireContext(), account.uuid, false)
                 startActivity(intent)
             } else {
                 val alertDialog = AlertDialog.Builder(activity)

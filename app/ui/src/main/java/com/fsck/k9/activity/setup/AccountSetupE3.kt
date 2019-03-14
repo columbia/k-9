@@ -116,9 +116,8 @@ class AccountSetupE3 : K9Activity(), View.OnClickListener,
                         setE3KeyPreference(keyId)
 
                         // Upload the key
-                        //val intent = E3KeyUploadActivity.createIntent(this, mAccount!!.uuid)
-                        //startActivity(intent)
-                        Accounts.listAccounts(this)
+                        val intent = E3KeyUploadActivity.createIntent(this, mAccount!!.uuid, true)
+                        startActivity(intent)
                     } else {
                         onErrorGeneratingKey()
                         Accounts.listAccounts(this)

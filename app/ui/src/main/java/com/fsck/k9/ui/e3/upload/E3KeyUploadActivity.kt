@@ -1,18 +1,22 @@
 package com.fsck.k9.ui.e3.upload
 
+import android.app.Activity
 import android.content.Context
 import android.content.Intent
 import android.graphics.Bitmap
 import android.os.Bundle
 import android.view.MenuItem
 import android.view.View
+import android.widget.TextView
+import com.fsck.k9.activity.Accounts
 import com.fsck.k9.ui.R
 import com.fsck.k9.ui.e3.E3ActionBaseActivity
 import com.fsck.k9.view.StatusIndicator
 import kotlinx.android.synthetic.main.crypto_e3_key_upload.*
+import kotlinx.android.synthetic.main.text_list_item.view.*
 import org.koin.android.ext.android.inject
 
-class E3KeyUploadActivity : E3ActionBaseActivity() {
+class E3KeyUploadActivity : E3ActionBaseActivity(), View.OnClickListener {
     private val presenter: E3KeyUploadPresenter by inject {
         mapOf("lifecycleOwner" to this, "e3UploadView" to this)
     }
@@ -21,11 +25,14 @@ class E3KeyUploadActivity : E3ActionBaseActivity() {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.crypto_e3_key_upload)
 
+        isInitialSetup = intent.getBooleanExtra(EXTRA_IS_SETUP, false)
         val accountUuid = intent.getStringExtra(EXTRA_ACCOUNT)
 
         supportActionBar!!.setDisplayHomeAsUpEnabled(true)
 
         e3KeyUploadButton.setOnClickListener { presenter.onClickUpload() }
+
+        findViewById<View>(R.id.cancel).setOnClickListener(this)
 
         presenter.initFromIntent(accountUuid)
     }
@@ -132,6 +139,25 @@ class E3KeyUploadActivity : E3ActionBaseActivity() {
         e3KeyUploadLayoutQrCode.visibility = View.VISIBLE
     }
 
+    fun sceneCancelled() {
+        setupSceneTransition()
+
+        e3KeyUploadHeader.visibility = View.VISIBLE
+        e3KeyUploadButton.visibility = View.GONE
+        e3KeyUploadMsgInfo.visibility = View.GONE
+        e3KeyUploadLayoutGenerating.visibility = View.GONE
+        e3KeyUploadLayoutUploading.visibility = View.GONE
+        e3KeyUploadLayoutFinish.visibility = View.GONE
+        e3KeyUploadLayoutVerification.visibility = View.GONE
+        e3KeyUploadLayoutVerificationInstructions.visibility = View.GONE
+        e3KeyUploadLayoutVerificationPhrase.visibility = View.GONE
+
+        e3KeyUploadLayoutQrCodeInstructions.visibility = View.GONE
+        e3KeyUploadLayoutQrCode.visibility = View.GONE
+
+        e3KeyUploadErrorUpload.visibility = View.GONE
+    }
+
     fun setLoadingStateGenerating() {
         e3KeyUploadProgressGenerating.setDisplayedChild(StatusIndicator.Status.PROGRESS)
         e3KeyUploadProgressUploading.setDisplayedChild(StatusIndicator.Status.IDLE)
@@ -152,13 +178,39 @@ class E3KeyUploadActivity : E3ActionBaseActivity() {
         e3KeyUploadProgressUploading.setDisplayedChild(StatusIndicator.Status.OK)
     }
 
+    private fun setMessage(resId: Int) {
+        findViewById<TextView>(R.id.e3KeyUploadHeader).text = getString(resId)
+        sceneCancelled()
+    }
+
+    private fun onCancel() {
+        //mCanceled = true
+        setMessage(R.string.e3_key_upload_cancelled)
+        setResult(Activity.RESULT_CANCELED)
+
+        if (isInitialSetup) {
+            Accounts.listAccounts(this)
+        }
+
+        finish()
+    }
+
+    override fun onClick(v: View) {
+        if (v.id == R.id.cancel) {
+            onCancel()
+        }
+    }
+
     companion object {
         private const val EXTRA_ACCOUNT = "account"
+        private const val EXTRA_IS_SETUP = "is_setup"
+        private var isInitialSetup: Boolean = false
 
         @JvmStatic
-        fun createIntent(context: Context, accountUuid: String): Intent {
+        fun createIntent(context: Context, accountUuid: String, isInitialSetup: Boolean): Intent {
             val intent = Intent(context, E3KeyUploadActivity::class.java)
             intent.putExtra(EXTRA_ACCOUNT, accountUuid)
+            intent.putExtra(EXTRA_IS_SETUP, isInitialSetup)
             return intent
         }
     }
