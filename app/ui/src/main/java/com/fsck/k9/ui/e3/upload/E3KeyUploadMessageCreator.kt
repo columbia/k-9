@@ -171,8 +171,6 @@ class E3KeyUploadMessageCreator(context: Context, private val resources: Resourc
             message.setHeader(E3Constants.MIME_E3_UID, account.uuid)
             addE3PublicKeysToHeader(message, e3PublicKeys)
 
-
-
             if (initialUploadedE3KeyDigests != null && !initialUploadedE3KeyDigests.isEmpty()) {
                 val receivedE3KeyDigests = initialUploadedE3KeyDigests.joinToString(E3Constants.E3_KEY_DIGEST_DELIMITER)
                 message.setHeader(E3Constants.MIME_E3_RESPONSE_TO, receivedE3KeyDigests)
