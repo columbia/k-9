@@ -90,6 +90,10 @@ import com.fsck.k9.search.SearchAccount;
 import com.fsck.k9.search.SearchSpecification;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.openintents.openpgp.IOpenPgpService2;
+import org.openintents.openpgp.util.OpenPgpApi;
+import org.openintents.openpgp.util.OpenPgpServiceConnection;
+import org.openintents.openpgp.util.OpenPgpServiceConnection.OnBound;
 
 import timber.log.Timber;
 
@@ -3146,7 +3150,6 @@ public class MessagingController {
         private final MessagingListener listener;
         private final LocalStore localStore;
         private final int previousUnreadMessageCount;
-        private final E3KeyPredicate e3KeyPredicate;
         boolean syncFailed = false;
 
 
@@ -3154,7 +3157,6 @@ public class MessagingController {
             this.account = account;
             this.listener = listener;
             this.localStore = getLocalStoreOrThrow(account);
-            this.e3KeyPredicate = new E3KeyPredicate(account);
 
             previousUnreadMessageCount = getUnreadMessageCount();
         }
@@ -3216,16 +3218,30 @@ public class MessagingController {
                 boolean isOldMessage) {
 
             // Send a notification of this message
-            LocalMessage message = loadMessage(folderServerId, messageServerId);
+            final LocalMessage message = loadMessage(folderServerId, messageServerId);
             LocalFolder localFolder = message.getFolder();
 
-            if (account.isE3ProviderConfigured() && e3KeyPredicate.applyNonStrict(message)) {
-                if (e3KeyPredicate.apply(message)) {
-                    Timber.d("syncNewMessage() got E3 key message, adding notification");
-                    notificationController.addNewE3KeyNotification(account, message);
-                } else {
-                    Timber.d("syncNewMessage() got either non-fresh or inapplicable E3 key message, skipping notifications");
-                }
+            if (account.isE3ProviderConfigured() && E3KeyPredicate.applyNonStrict(message)) {
+                final OpenPgpServiceConnection openPgpServiceConnection = new OpenPgpServiceConnection(context, account.getE3Provider(), new OnBound() {
+                    @Override
+                    public void onBound(IOpenPgpService2 service) {
+                        final OpenPgpApi openPgpApi = new OpenPgpApi(context, service);
+                        final E3KeyPredicate e3KeyPredicate = new E3KeyPredicate(openPgpApi, account);
+
+                        if (e3KeyPredicate.apply(message)) {
+                            Timber.d("syncNewMessage() got E3 key message, adding notification");
+                            notificationController.addNewE3KeyNotification(account, message);
+                        } else {
+                            Timber.d("syncNewMessage() got either non-fresh or inapplicable E3 key message, skipping notifications");
+                        }
+                    }
+
+                    @Override
+                    public void onError(Exception e) {
+                        Timber.e("Got error while binding to OpenPGP service", e);
+                    }
+                });
+                openPgpServiceConnection.bindToService();
             } else if (shouldNotifyForMessage(account, localFolder, message, isOldMessage)) {
                 // Notify with the localMessage so that we don't have to recalculate the content preview.
                 notificationController.addNewMailNotification(account, message, previousUnreadMessageCount);
