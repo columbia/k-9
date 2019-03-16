@@ -15,6 +15,7 @@ import com.fsck.k9.Account
 import com.fsck.k9.Preferences
 import com.fsck.k9.activity.Accounts
 import com.fsck.k9.activity.K9Activity
+import com.fsck.k9.crypto.OpenPgpApiHelper
 import com.fsck.k9.fragment.ConfirmationDialogFragment
 import com.fsck.k9.ui.R
 import com.fsck.k9.ui.e3.upload.E3KeyUploadActivity
@@ -32,13 +33,16 @@ class AccountSetupE3 : K9Activity(), View.OnClickListener,
         ConfirmationDialogFragment.ConfirmationDialogFragmentListener {
     private var mMessageView: TextView? = null
     private var mProgressBar: ProgressBar? = null
+    private var pendingIntent: PendingIntent? = null
+    private var selectKeyPendingIntent: PendingIntent? = null
+    private var mAccount: Account? = null
+    private var mCanceled: Boolean = false
+    private var defaultUserId: String? = null
 
     companion object {
         private const val EXTRA_ACCOUNT = "account"
-        private const val RESULT_CODE_PENDING_INTENT = 9990
-        private var mAccount: Account? = null
-        private var mCanceled: Boolean = false
-        private var pendingIntent: PendingIntent? = null
+        private const val RESULT_CODE_PENDING_INTENT_GENERATE = 9990
+        private const val RESULT_CODE_PENDING_INTENT_SELECT = 9991
 
         @JvmStatic
         fun actionSetupE3(context: Context, account: Account) {
@@ -56,6 +60,7 @@ class AccountSetupE3 : K9Activity(), View.OnClickListener,
 
         val accountUuid = intent.getStringExtra(EXTRA_ACCOUNT)
         mAccount = Preferences.getPreferences(this).getAccount(accountUuid)
+        defaultUserId = OpenPgpApiHelper.buildUserId(mAccount!!.getIdentity(0))
 
         // Choose crypto/key provider (aka choose OpenKeychain, for example)
         val openPgpProviderPackages = OpenPgpProviderUtil.getOpenPgpProviderPackages(this)
@@ -73,20 +78,25 @@ class AccountSetupE3 : K9Activity(), View.OnClickListener,
 
     override fun onResume() {
         super.onResume()
+        /*
         // Resume key generation after user allows access to openkeychain?
         if (mAccount!!.e3Key == Account.NO_OPENPGP_KEY && pendingIntent != null) {
             // Didn't generate key yet, so restart it
             Timber.d("Resumed AccountSetupE3 without an E3 key generated yet, and potentially resolved a pending intent")
             generateE3Key(openPgpCreateKeyCallback)
+        } else if (selectKeyPendingIntent != null) {
+            // Key id was set so key was generated, but probably needs to be selected?
+            Timber.d("Resumed AccountSetupE3 without an E3 key selected yet, and potentially resolved a pending intent")
+            selectKeyPendingIntent = null
+            selectE3Key(openPgpSelectKeyCallback)
         }
+        */
     }
 
     private fun generateE3Key(callback: OpenPgpApi.IOpenPgpCallback) {
-        val data = Intent()
-        data.action = OpenPgpApi.ACTION_CREATE_ENCRYPT_ON_RECEIPT_KEY
-        data.putExtra(OpenPgpApi.EXTRA_NAME, String.format(resources.getString(R.string.account_setup_e3_generated_key_name), Build.MODEL))
+        val data = Intent(OpenPgpApi.ACTION_CREATE_ENCRYPT_ON_RECEIPT_KEY)
+        data.putExtra(OpenPgpApi.EXTRA_NAME, String.format(resources.getString(R.string.account_setup_e3_generated_key_name), Build.BRAND, Build.MODEL))
         data.putExtra(OpenPgpApi.EXTRA_EMAIL, mAccount!!.email)
-        //data.putExtra(OpenPgpApi.EXTRA_CREATE_SECURITY_TOKEN, false)
 
         val serviceConnection = OpenPgpServiceConnection(applicationContext, mAccount!!.e3Provider, object : OpenPgpServiceConnection.OnBound {
             override fun onBound(service: IOpenPgpService2) {
@@ -102,11 +112,32 @@ class AccountSetupE3 : K9Activity(), View.OnClickListener,
         serviceConnection.bindToService()
     }
 
+    private fun selectE3Key(callback: OpenPgpApi.IOpenPgpCallback) {
+        // Now select the key in OpenKeychain so that it can be used for signing
+        val serviceConnection = OpenPgpServiceConnection(applicationContext, mAccount!!.e3Provider, object : OpenPgpServiceConnection.OnBound {
+            override fun onBound(service: IOpenPgpService2) {
+                val openPgpApi = OpenPgpApi(applicationContext, service)
+                val selectKeyIntent = Intent(OpenPgpApi.ACTION_GET_SIGN_KEY_ID)
+                selectKeyIntent.putExtra(OpenPgpApi.EXTRA_USER_ID, defaultUserId)
+                selectKeyIntent.putExtra(OpenPgpApi.EXTRA_PRESELECT_KEY_ID, mAccount!!.e3Key)
+                selectKeyIntent.putExtra(OpenPgpApi.EXTRA_SHOW_AUTOCRYPT_HINT, false)
+                openPgpApi.executeApiAsync(selectKeyIntent, null, null, callback)
+            }
+
+            override fun onError(e: Exception) {
+                Timber.e("Got error while binding to OpenPGP service", e)
+            }
+        })
+
+        serviceConnection.bindToService()
+    }
+
     // Runs after OpenPgpApi succeeds in generating the key
     private val openPgpCreateKeyCallback = OpenPgpApi.IOpenPgpCallback { result ->
         val resultCode = result.getIntExtra(OpenPgpApi.RESULT_CODE, OpenPgpApi.RESULT_CODE_ERROR)
         when (resultCode) {
-            OpenPgpApi.RESULT_CODE_SUCCESS, OpenPgpApi.RESULT_CODE_USER_INTERACTION_REQUIRED -> {
+            OpenPgpApi.RESULT_CODE_SUCCESS,
+            OpenPgpApi.RESULT_CODE_USER_INTERACTION_REQUIRED -> {
                 pendingIntent = result.getParcelableExtra(OpenPgpApi.RESULT_INTENT)
 
                 if (result.hasExtra(OpenPgpApi.EXTRA_KEY_ID)) {
@@ -115,7 +146,33 @@ class AccountSetupE3 : K9Activity(), View.OnClickListener,
 
                     if (keyId != Account.NO_OPENPGP_KEY) {
                         setE3KeyPreference(keyId)
+                        selectE3Key(openPgpSelectKeyCallback)
+                    } else {
+                        onErrorGeneratingKey()
+                        Accounts.listAccounts(this)
+                        finish()
+                    }
+                } else {
+                    apiStartPendingIntentForResult(pendingIntent!!, RESULT_CODE_PENDING_INTENT_GENERATE)
+                }
+            }
+            OpenPgpApi.RESULT_CODE_ERROR -> {
+                val error = result.getParcelableExtra<OpenPgpError>(OpenPgpApi.RESULT_ERROR)
+                Timber.e("RESULT_CODE_ERROR: %s", error.message)
+            }
+        }
+    }
 
+    // Runs after OpenPgpApi succeeds in selecting the key to use for signing
+    private val openPgpSelectKeyCallback = OpenPgpApi.IOpenPgpCallback { result ->
+        val resultCode = result.getIntExtra(OpenPgpApi.RESULT_CODE, OpenPgpApi.RESULT_CODE_ERROR)
+        when (resultCode) {
+            OpenPgpApi.RESULT_CODE_SUCCESS -> {
+                selectKeyPendingIntent = result.getParcelableExtra(OpenPgpApi.RESULT_INTENT)
+                if (result.hasExtra(OpenPgpApi.EXTRA_SIGN_KEY_ID)) {
+                    val signKeyId = result.getLongExtra(OpenPgpApi.EXTRA_SIGN_KEY_ID, Account.NO_OPENPGP_KEY)
+
+                    if (signKeyId != Account.NO_OPENPGP_KEY) {
                         // Upload the key
                         val intent = E3KeyUploadActivity.createIntent(this, mAccount!!.uuid, true)
                         startActivity(intent)
@@ -126,25 +183,55 @@ class AccountSetupE3 : K9Activity(), View.OnClickListener,
 
                     finish()
                 } else {
-                    apiStartPendingIntent()
+                    apiStartPendingIntentForResult(selectKeyPendingIntent!!, RESULT_CODE_PENDING_INTENT_SELECT)
                 }
+            }
+            OpenPgpApi.RESULT_CODE_USER_INTERACTION_REQUIRED -> {
+                selectKeyPendingIntent = result.getParcelableExtra(OpenPgpApi.RESULT_INTENT)
+
+                apiStartPendingIntentForResult(selectKeyPendingIntent!!, RESULT_CODE_PENDING_INTENT_SELECT)
             }
             OpenPgpApi.RESULT_CODE_ERROR -> {
                 val error = result.getParcelableExtra<OpenPgpError>(OpenPgpApi.RESULT_ERROR)
                 Timber.e("RESULT_CODE_ERROR: %s", error.message)
             }
+            else -> {
+                Timber.e("OpenPgp select sign key result code: $resultCode")
+            }
         }
     }
 
-    private fun apiStartPendingIntent() {
+    private fun apiStartPendingIntentForResult(pi: PendingIntent, activityRequestCode: Int) {
         try {
-            pendingIntent!!.send(RESULT_CODE_PENDING_INTENT,
-                    PendingIntent.OnFinished { pendingIntent, intent, i, s, bundle -> Timber.d("In pending intent callback") },
-                    null)
-            //startIntentSender(pendingIntent!!.intentSender, null, 0, 0, 0)
+            startIntentSenderForResult(pi.intentSender, activityRequestCode, null, 0, 0, 0)
         } catch (e: IntentSender.SendIntentException) {
             Timber.e(e, "Error launching pending intent")
         }
+    }
+
+    override fun onActivityResult(requestCode: Int, resultCode: Int, data: Intent) {
+        when (requestCode) {
+            RESULT_CODE_PENDING_INTENT_GENERATE -> {
+                Timber.d("Got result for key generation PendingIntent")
+                if (resultCode == Activity.RESULT_OK) {
+                    generateE3Key(openPgpCreateKeyCallback)
+                }
+            }
+            RESULT_CODE_PENDING_INTENT_SELECT -> {
+                Timber.d("Got result for key selection PendingIntent")
+                if (resultCode == Activity.RESULT_OK) {
+                    // Upload the key
+                    val intent = E3KeyUploadActivity.createIntent(this, mAccount!!.uuid, true)
+                    startActivity(intent)
+                } else {
+                    onErrorGeneratingKey()
+                    Accounts.listAccounts(this)
+                }
+                finish()
+            }
+        }
+
+        super.onActivityResult(requestCode, resultCode, data)
     }
 
     // Enable E3 in the account settings preference
