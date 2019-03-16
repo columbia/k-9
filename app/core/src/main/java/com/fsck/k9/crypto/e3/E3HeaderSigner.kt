@@ -55,7 +55,7 @@ class E3HeaderSigner(private val openPgpApi: OpenPgpApi) {
                 handleOpenPgpSignatureResult(signatureResult)
             }
             else -> {
-                Timber.e("Failed to sign E3 key upload headers, got OpenPgpApi result code=$resultCode")
+                Timber.e("Failed to verify E3 key upload headers, got OpenPgpApi result code=$resultCode")
                 false
             }
         }

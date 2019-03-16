@@ -12,6 +12,7 @@ import com.fsck.k9.K9
 import com.fsck.k9.crypto.KeyFormattingUtils
 import com.fsck.k9.crypto.e3.E3Constants
 import com.fsck.k9.crypto.e3.E3HeaderSigner
+import com.fsck.k9.crypto.e3.E3KeyEmailParser
 import com.fsck.k9.helper.SingleLiveEvent
 import com.fsck.k9.mail.Address
 import com.fsck.k9.mail.Flag
@@ -182,9 +183,11 @@ class E3KeyUploadMessageCreator(context: Context, private val resources: Resourc
             message.setRecipients(Message.RecipientType.TO, arrayOf(address))
 
             val e3HeaderSigner = E3HeaderSigner(openPgpApi)
+            val e3KeyEmailParser = E3KeyEmailParser()
+            val parsedE3KeyEmail = e3KeyEmailParser.parseKeyEmail(message)
 
-            val e3HeaderSignature = e3HeaderSigner.signE3Headers(account.e3Key, message)
-            val foldedB64E3HeaderSignature = KeyFormattingUtils.createFoldedBase64KeyData(e3HeaderSignature!!.toByteArray(Charsets.UTF_8))
+            val e3HeaderSignature = e3HeaderSigner.signE3Headers(account.e3Key, parsedE3KeyEmail)
+            val foldedB64E3HeaderSignature = KeyFormattingUtils.foldBase64KeyData(e3HeaderSignature!!.toByteArray(Charsets.UTF_8))
             message.setHeader(E3Constants.MIME_E3_SIGNATURE, foldedB64E3HeaderSignature)
 
             return message
@@ -202,7 +205,7 @@ class E3KeyUploadMessageCreator(context: Context, private val resources: Resourc
 
     private fun addE3PublicKeysToHeader(message: MimeMessage, e3PublicKeys: Set<KeyResult>) {
         for (keyResult in e3PublicKeys) {
-            val foldedBase64Key = KeyFormattingUtils.createFoldedBase64KeyData(keyResult.resultData.toByteArray())
+            val foldedBase64Key = KeyFormattingUtils.foldBase64KeyData(keyResult.resultData.toByteArray())
             message.addHeader(E3Constants.MIME_E3_KEYS, foldedBase64Key)
         }
     }

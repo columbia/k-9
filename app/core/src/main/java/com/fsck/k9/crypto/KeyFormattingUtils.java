@@ -1,7 +1,10 @@
 package com.fsck.k9.crypto;
 
+import com.fsck.k9.mail.filter.Base64;
+
 import java.util.Locale;
 
+import kotlin.text.Charsets;
 import okio.ByteString;
 
 /**
@@ -75,7 +78,7 @@ public class KeyFormattingUtils {
      * @param keyData Key data in bytes.
      * @return Folded base64 key data.
      */
-    public static String createFoldedBase64KeyData(byte[] keyData) {
+    public static String foldBase64KeyData(byte[] keyData) {
         String base64KeyData = ByteString.of(keyData).base64();
         StringBuilder result = new StringBuilder();
 
@@ -90,6 +93,11 @@ public class KeyFormattingUtils {
         }
 
         return result.toString();
+    }
+
+    public static byte[] unfoldBase64KeyData(byte[] foldedBase64Data) {
+        String unfolded = new String(foldedBase64Data).replace("\r\n ", "");
+        return Base64.decode(unfolded).getBytes(Charsets.UTF_8);
     }
 
     private static String convertKeyIdToHex32bit(long keyId) {

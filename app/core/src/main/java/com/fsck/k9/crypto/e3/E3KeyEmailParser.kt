@@ -1,5 +1,6 @@
 package com.fsck.k9.crypto.e3
 
+import com.fsck.k9.crypto.KeyFormattingUtils
 import com.fsck.k9.mail.internet.MimeMessage
 import java.util.*
 
@@ -21,7 +22,9 @@ class E3KeyEmailParser {
     private fun getE3SignatureHeader(message: MimeMessage): ByteArray? {
         return when (message.headerNames.contains(E3Constants.MIME_E3_SIGNATURE)) {
             true -> {
-                message.getHeader(E3Constants.MIME_E3_SIGNATURE)[0].toByteArray(Charsets.UTF_8)
+                val base64EncodedSignature = message.getHeader(E3Constants.MIME_E3_SIGNATURE)[0].toByteArray(Charsets.UTF_8)
+
+                KeyFormattingUtils.unfoldBase64KeyData(base64EncodedSignature)
             }
             false -> {
                 null
