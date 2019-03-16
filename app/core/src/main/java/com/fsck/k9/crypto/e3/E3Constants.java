@@ -12,6 +12,7 @@ public final class E3Constants {
     public static final String MIME_E3_TIMESTAMP = "X-E3-TIMESTAMP";
     public static final String MIME_E3_RESPONSE_TO = "X-E3-RESPONSE";
     public static final String MIME_E3_KEYS = "X-E3-KEYS";
+    public static final String MIME_E3_DELETE = "X-E3-DELETE";
     public static final String MIME_E3_SIGNATURE = "X-E3-SIGNATURE";
 
     /* Used for uniquely identifying E3 key emails *internally*

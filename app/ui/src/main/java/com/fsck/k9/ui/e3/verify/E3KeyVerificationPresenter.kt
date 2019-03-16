@@ -153,6 +153,7 @@ class E3KeyVerificationPresenter internal constructor(
         return E3DigestsAndResponses(e3KeyDigests, allResponseToE3KeyDigests)
     }
 
+    // TODO: E3 use E3PublicKeyManager
     private fun addKeysFromMessagesToKeychain(keyMessages: List<LocalMessage>) {
         for (keyMsg: LocalMessage in keyMessages) {
             if (!keyMsg.hasAttachments()) {

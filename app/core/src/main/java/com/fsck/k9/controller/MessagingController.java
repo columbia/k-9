@@ -60,7 +60,10 @@ import com.fsck.k9.controller.MessagingControllerCommands.PendingSetFlag;
 import com.fsck.k9.controller.ProgressBodyFactory.ProgressListener;
 import com.fsck.k9.crypto.e3.BackendE3PgpService;
 import com.fsck.k9.crypto.e3.E3HeaderSigner;
+import com.fsck.k9.crypto.e3.E3KeyEmail;
+import com.fsck.k9.crypto.e3.E3KeyEmailParser;
 import com.fsck.k9.crypto.e3.E3KeyPredicate;
+import com.fsck.k9.crypto.e3.E3PublicKeyManager;
 import com.fsck.k9.helper.Contacts;
 import com.fsck.k9.mail.Address;
 import com.fsck.k9.mail.AuthenticationFailedException;
@@ -3153,6 +3156,7 @@ public class MessagingController {
         private final int previousUnreadMessageCount;
         boolean syncFailed = false;
         private final E3KeyPredicate e3KeyPredicate;
+        private final E3KeyEmailParser e3KeyEmailParser;
 
 
         ControllerSyncListener(Account account, MessagingListener listener) {
@@ -3160,6 +3164,7 @@ public class MessagingController {
             this.listener = listener;
             this.localStore = getLocalStoreOrThrow(account);
             this.e3KeyPredicate = new E3KeyPredicate(account);
+            this.e3KeyEmailParser = new E3KeyEmailParser();
 
             previousUnreadMessageCount = getUnreadMessageCount();
         }
@@ -3305,12 +3310,17 @@ public class MessagingController {
                 public void onBound(IOpenPgpService2 service) {
                     final OpenPgpApi openPgpApi = new OpenPgpApi(context, service);
                     final E3HeaderSigner signatureVerifier = new E3HeaderSigner(openPgpApi);
+                    final E3KeyEmail parsedE3KeyEmail = e3KeyEmailParser.parseKeyEmail(message);
 
-                    if (signatureVerifier.verifyE3Headers(message)) {
+                    if (signatureVerifier.verifyE3Headers(parsedE3KeyEmail)) {
                         // The key upload email is from a device we trust, so update our state with
                         // what it says
                         // TODO: E3 add a different notification that explains something was done?
+                        final E3PublicKeyManager e3KeyManager = new E3PublicKeyManager(openPgpApi);
 
+                        e3KeyManager.addPublicKeysFromKeyEmail(parsedE3KeyEmail);
+
+                        //e3KeyManager.deletePublicKeysFromKeyEmail(parsedE3KeyEmail);
                     } else {
                         // E3 key upload email was from a device we don't recognize, so the user
                         // needs to manually verify it.

@@ -2,7 +2,6 @@ package com.fsck.k9.crypto.e3
 
 import android.content.Intent
 import com.fsck.k9.mail.MessagingException
-import com.fsck.k9.mail.internet.MimeMessage
 import org.openintents.openpgp.OpenPgpSignatureResult
 import org.openintents.openpgp.util.OpenPgpApi
 import timber.log.Timber
@@ -12,12 +11,8 @@ import java.io.OutputStreamWriter
 
 class E3HeaderSigner(private val openPgpApi: OpenPgpApi) {
 
-    private val parser = E3KeyEmailParser()
-
-    fun signE3Headers(keyId: Long, message: MimeMessage): String? {
-        val parsedE3KeyEmail = parser.parseKeyEmail(message)
-
-        val dataSource = createOpenPgpDataSourceFromString(parsedE3KeyEmail.headersToSign)
+    fun signE3Headers(keyId: Long, message: E3KeyEmail): String? {
+        val dataSource = createOpenPgpDataSourceFromString(message.headersToSign)
 
         val intent = Intent(OpenPgpApi.ACTION_DETACHED_SIGN)
         intent.putExtra(OpenPgpApi.EXTRA_SIGN_KEY_ID, keyId)
@@ -40,14 +35,12 @@ class E3HeaderSigner(private val openPgpApi: OpenPgpApi) {
         }
     }
 
-    fun verifyE3Headers(message: MimeMessage): Boolean {
-        val parsedE3KeyEmail = parser.parseKeyEmail(message)
-
+    fun verifyE3Headers(message: E3KeyEmail): Boolean {
         // Rebuild the original signed data from headers
-        val dataSource = createOpenPgpDataSourceFromString(parsedE3KeyEmail.headersToSign)
+        val dataSource = createOpenPgpDataSourceFromString(message.headersToSign)
 
         // Get the actual signature
-        val signatureData = parsedE3KeyEmail.headersSignature
+        val signatureData = message.headersSignature
 
         val intent = Intent(OpenPgpApi.ACTION_DECRYPT_VERIFY)
         intent.putExtra(OpenPgpApi.EXTRA_DETACHED_SIGNATURE, signatureData)
