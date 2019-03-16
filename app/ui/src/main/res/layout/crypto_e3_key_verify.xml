@@ -4,92 +4,100 @@
     xmlns:app="http://schemas.android.com/apk/res-auto"
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="wrap_content"
-    android:layout_height="wrap_content"
+    android:layout_height="fill_parent"
     android:layout_gravity="center_horizontal"
     android:orientation="vertical"
     android:paddingLeft="12dp"
     android:paddingRight="12dp">
 
-    <TextView
-        style="?android:textAppearanceMedium"
-        android:id="@+id/e3KeyVerifyLayoutInstructions"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:layout_marginTop="24dp"
-        android:text="@string/e3_key_verify_intro" />
-
-    <ListView
-        android:id="@+id/e3KeyVerifyLayoutVerificationPhrases"
-        android:layout_width="fill_parent"
-        android:layout_height="wrap_content"
-        android:orientation="horizontal"
-        android:padding="8dp"
-        android:dividerHeight="1dp"
-        android:divider="#ccc"
-        android:choiceMode="singleChoice">
-    </ListView>
-
-    <TextView
-        android:id="@+id/e3KeyVerifyCorrectPhrase"
-        style="?android:textAppearanceMedium"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:text="@string/e3_key_verify_correct_phrase"
-        tools:visibility="gone"
-        />
-
-    <LinearLayout
-        android:id="@+id/e3KeyUploadResponseLayoutVerification"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:orientation="horizontal"
-        android:padding="8dp">
-
-        <TextView
-            style="?android:textAppearanceMedium"
-            android:layout_width="match_parent"
+        <LinearLayout
+            android:orientation="vertical"
+            android:layout_gravity="center_horizontal"
             android:layout_height="wrap_content"
-            android:text="@string/e3_key_upload_verification_response_instructions"
-            />
-    </LinearLayout>
+            android:padding="6dip"
+            android:layout_width="fill_parent">
 
-    <LinearLayout
-        android:id="@+id/e3KeyUploadResponseLayoutVerificationPhrase"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:orientation="horizontal"
-        android:padding="8dp">
+            <TextView
+                style="?android:textAppearanceMedium"
+                android:id="@+id/e3KeyVerifyLayoutInstructions"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="24dp"
+                android:text="@string/e3_key_verify_intro" />
 
-        <TextView
-            android:id="@+id/e3KeyVerificationPhrase"
-            style="?android:textAppearanceLarge"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:layout_gravity="center_vertical"
-            android:gravity="center_horizontal"
-            app:fontFamily="monospace"
-            tools:text=""
-            />
+            <ListView
+                android:id="@+id/e3KeyVerifyLayoutVerificationPhrases"
+                android:layout_width="fill_parent"
+                android:layout_height="wrap_content"
+                android:orientation="horizontal"
+                android:padding="8dp"
+                android:dividerHeight="1dp"
+                android:divider="#ccc"
+                android:choiceMode="singleChoice">
+            </ListView>
 
-    </LinearLayout>
+            <TextView
+                android:id="@+id/e3KeyVerifyCorrectPhrase"
+                style="?android:textAppearanceMedium"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="@string/e3_key_verify_correct_phrase"
+                tools:visibility="gone"
+                />
 
-    <TextView
-        android:id="@+id/e3KeyVerifyErrorWrongPhrase"
-        style="?android:textAppearanceMedium"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:text="@string/e3_key_verify_error_wrong_phrase"
-        tools:visibility="gone"
-        />
+            <LinearLayout
+                android:id="@+id/e3KeyUploadResponseLayoutVerification"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:orientation="horizontal"
+                android:padding="8dp">
 
-    <Button
-        android:id="@+id/e3KeyVerifyNextKey"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:layout_gravity="center_horizontal"
-        android:layout_marginTop="24dp"
-        android:text="@string/e3_key_next_verify_button"
-        />
+                <TextView
+                    style="?android:textAppearanceMedium"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:text="@string/e3_key_upload_verification_response_instructions"
+                    />
+            </LinearLayout>
 
+            <LinearLayout
+                android:id="@+id/e3KeyUploadResponseLayoutVerificationPhrase"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:orientation="horizontal"
+                android:padding="8dp">
 
+                <TextView
+                    android:id="@+id/e3KeyVerificationPhrase"
+                    style="?android:textAppearanceLarge"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_gravity="center_vertical"
+                    android:gravity="center_horizontal"
+                    app:fontFamily="monospace"
+                    tools:text=""
+                    />
+
+            </LinearLayout>
+
+            <TextView
+                android:id="@+id/e3KeyVerifyErrorWrongPhrase"
+                style="?android:textAppearanceMedium"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="@string/e3_key_verify_error_wrong_phrase"
+                tools:visibility="gone"
+                />
+
+            <Button
+                android:id="@+id/e3KeyVerifyNextKey"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_gravity="center_horizontal"
+                android:layout_marginTop="24dp"
+                android:text="@string/e3_key_next_verify_button"
+                />
+        </LinearLayout>
+
+    <include layout="@layout/wizard_cancel_done" />
 </LinearLayout>

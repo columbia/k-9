@@ -1,5 +1,6 @@
 package com.fsck.k9.ui.e3.verify
 
+import android.app.Activity
 import android.content.Context
 import android.content.Intent
 import android.os.Bundle
@@ -8,14 +9,16 @@ import android.view.View
 import android.widget.AdapterView
 import android.widget.ArrayAdapter
 import android.widget.ListView
+import com.fsck.k9.activity.Accounts
 import com.fsck.k9.ui.e3.E3ActionBaseActivity
 import com.fsck.k9.ui.R
 import kotlinx.android.synthetic.main.crypto_e3_key_verify.*
 import kotlinx.android.synthetic.main.text_list_item.view.*
+import kotlinx.android.synthetic.main.wizard_cancel_done.*
 import org.koin.android.ext.android.inject
 import java.util.*
 
-class E3KeyVerificationActivity : E3ActionBaseActivity() {
+class E3KeyVerificationActivity : E3ActionBaseActivity(), View.OnClickListener {
     private val uidsToPhrases: Queue<E3KeyUidToPhrase> = ArrayDeque()
     private val presenter: E3KeyVerificationPresenter by inject {
         mapOf("lifecycleOwner" to this, "e3VerifyView" to this)
@@ -45,6 +48,9 @@ class E3KeyVerificationActivity : E3ActionBaseActivity() {
             sceneBegin()
             requestNextVerification()
         }
+
+        findViewById<View>(R.id.cancel).setOnClickListener(this)
+        findViewById<View>(R.id.done).setOnClickListener(this)
 
         supportActionBar!!.setDisplayHomeAsUpEnabled(true)
 
@@ -82,6 +88,9 @@ class E3KeyVerificationActivity : E3ActionBaseActivity() {
         e3KeyUploadResponseLayoutVerificationPhrase.visibility = View.GONE
         e3KeyVerifyErrorWrongPhrase.visibility = View.GONE
         e3KeyVerifyNextKey.visibility = View.GONE
+
+        cancel.visibility = View.VISIBLE
+        done.visibility = View.GONE
     }
 
     fun sceneFinished(newVerificationPhrase: String?, nextKey: Boolean, transition: Boolean = false) {
@@ -103,6 +112,9 @@ class E3KeyVerificationActivity : E3ActionBaseActivity() {
         if (nextKey) {
             e3KeyVerifyNextKey.visibility = View.VISIBLE
         }
+
+        cancel.visibility = View.GONE
+        done.visibility = View.VISIBLE
     }
 
     fun sceneErrorWrongPhrase(nextKey: Boolean) {
@@ -119,6 +131,9 @@ class E3KeyVerificationActivity : E3ActionBaseActivity() {
         if (nextKey) {
             e3KeyVerifyNextKey.visibility = View.VISIBLE
         }
+
+        cancel.visibility = View.GONE
+        done.visibility = View.VISIBLE
     }
 
     fun addPhrasesToListView(phrases: List<String>, listener: AdapterView.OnItemClickListener) {
@@ -127,6 +142,16 @@ class E3KeyVerificationActivity : E3ActionBaseActivity() {
 
         listView.adapter = phrasesAdapter
         listView.onItemClickListener = listener
+    }
+
+    override fun onClick(v: View) {
+        if (v.id == R.id.cancel) {
+            setResult(Activity.RESULT_CANCELED)
+
+            finish()
+        } else if (v.id == R.id.done) {
+            finish()
+        }
     }
 
     companion object {
