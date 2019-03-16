@@ -12,10 +12,12 @@ import java.io.OutputStreamWriter
 
 class E3HeaderSigner(private val openPgpApi: OpenPgpApi) {
 
-    fun signE3Headers(keyId: Long, message: MimeMessage): String? {
+    private val parser = E3KeyEmailParser()
 
-        val headersToSign = buildConcatenatedE3Headers(message)
-        val dataSource = createOpenPgpDataSourceFromString(headersToSign)
+    fun signE3Headers(keyId: Long, message: MimeMessage): String? {
+        val parsedE3KeyEmail = parser.parseKeyEmail(message)
+
+        val dataSource = createOpenPgpDataSourceFromString(parsedE3KeyEmail.headersToSign)
 
         val intent = Intent(OpenPgpApi.ACTION_DETACHED_SIGN)
         intent.putExtra(OpenPgpApi.EXTRA_SIGN_KEY_ID, keyId)
@@ -39,12 +41,13 @@ class E3HeaderSigner(private val openPgpApi: OpenPgpApi) {
     }
 
     fun verifyE3Headers(message: MimeMessage): Boolean {
+        val parsedE3KeyEmail = parser.parseKeyEmail(message)
+
         // Rebuild the original signed data from headers
-        val headersToVerify = buildConcatenatedE3Headers(message)
-        val dataSource = createOpenPgpDataSourceFromString(headersToVerify)
+        val dataSource = createOpenPgpDataSourceFromString(parsedE3KeyEmail.headersToSign)
 
         // Get the actual signature
-        val signatureData = getE3SignatureHeader(message)
+        val signatureData = parsedE3KeyEmail.headersSignature
 
         val intent = Intent(OpenPgpApi.ACTION_DECRYPT_VERIFY)
         intent.putExtra(OpenPgpApi.EXTRA_DETACHED_SIGNATURE, signatureData)
@@ -78,36 +81,6 @@ class E3HeaderSigner(private val openPgpApi: OpenPgpApi) {
                 false
             }
         }
-    }
-
-    private fun getE3SignatureHeader(message: MimeMessage): ByteArray? {
-        return when (message.headerNames.contains(E3Constants.MIME_E3_SIGNATURE)) {
-            true -> {
-                message.getHeader(E3Constants.MIME_E3_SIGNATURE)[0].toByteArray(Charsets.UTF_8)
-            }
-            false -> {
-                null
-            }
-        }
-    }
-
-    private fun buildConcatenatedE3Headers(message: MimeMessage): String {
-        val sortedE3HeaderNames = message.headerNames.filter { name ->
-            val upperCaseName = name.toUpperCase()
-            upperCaseName.startsWith(E3Constants.MIME_E3_PREFIX)
-                    .and(upperCaseName != E3Constants.MIME_E3_SIGNATURE)
-        }.toSortedSet()
-        val concatHeadersBuilder = StringBuilder()
-
-        for (header in sortedE3HeaderNames) {
-            val values = message.getHeader(header)
-
-            for (value in values) {
-                concatHeadersBuilder.append(value)
-            }
-        }
-
-        return concatHeadersBuilder.toString()
     }
 
     private fun createOpenPgpDataSourceFromString(str: String): OpenPgpApi.OpenPgpDataSource {

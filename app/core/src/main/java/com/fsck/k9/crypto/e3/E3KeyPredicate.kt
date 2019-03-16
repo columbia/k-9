@@ -2,15 +2,13 @@ package com.fsck.k9.crypto.e3
 
 import com.fsck.k9.Account
 import com.fsck.k9.mailstore.LocalMessage
-import org.openintents.openpgp.util.OpenPgpApi
 
-class E3KeyPredicate(private val openPgpApi: OpenPgpApi, private val account: Account) {
+class E3KeyPredicate(private val account: Account) {
 
     fun apply(localMessage: LocalMessage): Boolean {
         return localMessage.headerNames.containsAll(requiredHeaders)
                 && isFresh(localMessage)
                 && !isOwnKey(localMessage)
-                && hasTrustedSignature(localMessage)
     }
 
     private fun isOwnKey(localMessage: LocalMessage): Boolean {
@@ -23,11 +21,6 @@ class E3KeyPredicate(private val openPgpApi: OpenPgpApi, private val account: Ac
         val timestamp = localMessage.getHeader(E3Constants.MIME_E3_TIMESTAMP)[0].toLongOrNull()
 
         return timestamp != null && (timestamp <= System.currentTimeMillis() + SIXTY_SECONDS_MS)
-    }
-
-    private fun hasTrustedSignature(localMessage: LocalMessage): Boolean {
-        val e3Verifier = E3HeaderSigner(openPgpApi)
-        return e3Verifier.verifyE3Headers(localMessage)
     }
 
     companion object {

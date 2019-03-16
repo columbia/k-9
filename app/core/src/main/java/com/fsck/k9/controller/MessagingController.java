@@ -59,6 +59,7 @@ import com.fsck.k9.controller.MessagingControllerCommands.PendingMoveOrCopy;
 import com.fsck.k9.controller.MessagingControllerCommands.PendingSetFlag;
 import com.fsck.k9.controller.ProgressBodyFactory.ProgressListener;
 import com.fsck.k9.crypto.e3.BackendE3PgpService;
+import com.fsck.k9.crypto.e3.E3HeaderSigner;
 import com.fsck.k9.crypto.e3.E3KeyPredicate;
 import com.fsck.k9.helper.Contacts;
 import com.fsck.k9.mail.Address;
@@ -3151,12 +3152,14 @@ public class MessagingController {
         private final LocalStore localStore;
         private final int previousUnreadMessageCount;
         boolean syncFailed = false;
+        private final E3KeyPredicate e3KeyPredicate;
 
 
         ControllerSyncListener(Account account, MessagingListener listener) {
             this.account = account;
             this.listener = listener;
             this.localStore = getLocalStoreOrThrow(account);
+            this.e3KeyPredicate = new E3KeyPredicate(account);
 
             previousUnreadMessageCount = getUnreadMessageCount();
         }
@@ -3222,26 +3225,11 @@ public class MessagingController {
             LocalFolder localFolder = message.getFolder();
 
             if (account.isE3ProviderConfigured() && E3KeyPredicate.applyNonStrict(message)) {
-                final OpenPgpServiceConnection openPgpServiceConnection = new OpenPgpServiceConnection(context, account.getE3Provider(), new OnBound() {
-                    @Override
-                    public void onBound(IOpenPgpService2 service) {
-                        final OpenPgpApi openPgpApi = new OpenPgpApi(context, service);
-                        final E3KeyPredicate e3KeyPredicate = new E3KeyPredicate(openPgpApi, account);
-
-                        if (e3KeyPredicate.apply(message)) {
-                            Timber.d("syncNewMessage() got E3 key message, adding notification");
-                            notificationController.addNewE3KeyNotification(account, message);
-                        } else {
-                            Timber.d("syncNewMessage() got either non-fresh or inapplicable E3 key message, skipping notifications");
-                        }
-                    }
-
-                    @Override
-                    public void onError(Exception e) {
-                        Timber.e("Got error while binding to OpenPGP service", e);
-                    }
-                });
-                openPgpServiceConnection.bindToService();
+                if (e3KeyPredicate.apply(message)) {
+                    handleE3KeyUploadEmail(message);
+                } else {
+                    Timber.d("syncNewMessage() got either non-fresh or inapplicable E3 key message, skipping notifications");
+                }
             } else if (shouldNotifyForMessage(account, localFolder, message, isOldMessage)) {
                 // Notify with the localMessage so that we don't have to recalculate the content preview.
                 notificationController.addNewMailNotification(account, message, previousUnreadMessageCount);
@@ -3252,8 +3240,6 @@ public class MessagingController {
                     messagingListener.synchronizeMailboxNewMessage(account, folderServerId, message);
                 }
             }
-
-
         }
 
         @Override
@@ -3311,6 +3297,34 @@ public class MessagingController {
             for (MessagingListener messagingListener : getListeners(listener)) {
                 messagingListener.folderStatusChanged(account, folderServerId, unreadMessageCount);
             }
+        }
+
+        private void handleE3KeyUploadEmail(final LocalMessage message) {
+            final OpenPgpServiceConnection openPgpServiceConnection = new OpenPgpServiceConnection(context, account.getE3Provider(), new OnBound() {
+                @Override
+                public void onBound(IOpenPgpService2 service) {
+                    final OpenPgpApi openPgpApi = new OpenPgpApi(context, service);
+                    final E3HeaderSigner signatureVerifier = new E3HeaderSigner(openPgpApi);
+
+                    if (signatureVerifier.verifyE3Headers(message)) {
+                        // The key upload email is from a device we trust, so update our state with
+                        // what it says
+                        // TODO: E3 add a different notification that explains something was done?
+
+                    } else {
+                        // E3 key upload email was from a device we don't recognize, so the user
+                        // needs to manually verify it.
+                        Timber.d("syncNewMessage() got E3 key message, adding notification");
+                        notificationController.addNewE3KeyNotification(account, message);
+                    }
+                }
+
+                @Override
+                public void onError(Exception e) {
+                    Timber.e("Got error while binding to OpenPGP service", e);
+                }
+            });
+            openPgpServiceConnection.bindToService();
         }
 
         private LocalMessage loadMessage(String folderServerId, String messageServerId) {
