@@ -65,7 +65,8 @@ class E3KeyEmailParser {
                 val keySet = mutableSetOf<ByteArray>()
 
                 for (header in message.getHeader(headerName)) {
-                    keySet.add(header.toByteArray(Charsets.UTF_8))
+                    val unfoldedDecodedKeydata = KeyFormattingUtils.unfoldBase64KeyData(header.toByteArray(Charsets.UTF_8))
+                    keySet.add(unfoldedDecodedKeydata)
                 }
 
                 keySet

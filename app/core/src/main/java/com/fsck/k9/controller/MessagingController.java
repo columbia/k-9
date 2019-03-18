@@ -3229,8 +3229,10 @@ public class MessagingController {
             final LocalMessage message = loadMessage(folderServerId, messageServerId);
             LocalFolder localFolder = message.getFolder();
 
-            if (account.isE3ProviderConfigured() && E3KeyPredicate.applyNonStrict(message)) {
-                if (e3KeyPredicate.apply(message)) {
+            if (E3KeyPredicate.applyNonStrict(message)) {
+                // Stifle normal notifications about E3 keys
+                // TODO: E3 make this configurable?
+                if (account.isE3ProviderConfigured() && e3KeyPredicate.apply(message)) {
                     handleE3KeyUploadEmail(message);
                 } else {
                     Timber.d("syncNewMessage() got either non-fresh or inapplicable E3 key message, skipping notifications");

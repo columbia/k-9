@@ -76,23 +76,6 @@ class AccountSetupE3 : K9Activity(), View.OnClickListener,
         return
     }
 
-    override fun onResume() {
-        super.onResume()
-        /*
-        // Resume key generation after user allows access to openkeychain?
-        if (mAccount!!.e3Key == Account.NO_OPENPGP_KEY && pendingIntent != null) {
-            // Didn't generate key yet, so restart it
-            Timber.d("Resumed AccountSetupE3 without an E3 key generated yet, and potentially resolved a pending intent")
-            generateE3Key(openPgpCreateKeyCallback)
-        } else if (selectKeyPendingIntent != null) {
-            // Key id was set so key was generated, but probably needs to be selected?
-            Timber.d("Resumed AccountSetupE3 without an E3 key selected yet, and potentially resolved a pending intent")
-            selectKeyPendingIntent = null
-            selectE3Key(openPgpSelectKeyCallback)
-        }
-        */
-    }
-
     private fun generateE3Key(callback: OpenPgpApi.IOpenPgpCallback) {
         val data = Intent(OpenPgpApi.ACTION_CREATE_ENCRYPT_ON_RECEIPT_KEY)
         data.putExtra(OpenPgpApi.EXTRA_NAME, String.format(resources.getString(R.string.account_setup_e3_generated_key_name), Build.BRAND, Build.MODEL))
