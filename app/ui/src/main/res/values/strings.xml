@@ -610,12 +610,14 @@ Please submit bug reports, contribute new features and ask questions at
     <string name="account_settings_e3_crypto_key">Configure E3 key</string>
     <string name="account_settings_e3_crypto_summary_off">No E3 or OpenPGP app configured</string>
     <string name="account_settings_e3_crypto_summary_on">Connected to %s</string>
-    <string name="account_settings_e3_crypto_key_upload">Upload public key</string>
-    <string name="account_settings_e3_crypto_key_upload_summary">Store your E3 public key on the IMAP server</string>
+    <string name="account_settings_e3_crypto_key_upload">Manual device synchronization</string>
+    <string name="account_settings_e3_crypto_key_upload_summary">Synchronize this device with your other ones</string>
     <string name="account_settings_e3_crypto_mode_passive">Passive: Only decrypt messages</string>
-    <string name="account_settings_e3_crypto_mode_standalone">Standalone: Encrypt on receipt</string>
-    <string name="account_settings_e3_crypto_key_scan">Scan for public keys</string>
-    <string name="account_settings_e3_crypto_key_scan_summary">Scan the IMAP server for E3 public keys</string>
+    <string name="account_settings_e3_crypto_mode_active">Active: Encrypt on receipt</string>
+    <string name="account_settings_e3_crypto_key_scan">Scan for E3 devices</string>
+    <string name="account_settings_e3_crypto_key_scan_summary">Scan for your other E3 devices</string>
+    <string name="account_settings_e3_crypto_key_generate">Restart E3 setup</string>
+    <string name="account_settings_e3_crypto_key_generate_summary">Restarts the E3 setup process on this device</string>
     <string name="account_settings_e3_crypto_undo">Undo E3 encryption</string>
     <string name="account_settings_e3_crypto_undo_summary">Restores all E3 emails to plaintext.</string>
 

@@ -181,7 +181,7 @@
 
     <string-array name="e3_mode_entries">
         <item>@string/account_settings_e3_crypto_mode_passive</item>
-        <item>@string/account_settings_e3_crypto_mode_standalone</item>
+        <item>@string/account_settings_e3_crypto_mode_active</item>
     </string-array>
 
     <string-array name="e3_mode_values" translatable="false">

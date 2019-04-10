@@ -11,6 +11,7 @@ import com.fsck.k9.Account
 import com.fsck.k9.ui.R
 import com.fsck.k9.activity.ManageIdentities
 import com.fsck.k9.activity.setup.AccountSetupComposition
+import com.fsck.k9.activity.setup.AccountSetupE3
 import com.fsck.k9.activity.setup.AccountSetupIncoming
 import com.fsck.k9.activity.setup.AccountSetupOutgoing
 import com.fsck.k9.controller.MessagingController
@@ -207,6 +208,7 @@ class AccountSettingsFragment : PreferenceFragmentCompat() {
         configurePgpKey(PREFERENCE_E3_KEY, account, e3Provider)
         configureE3KeyUpload(account)
         configureE3KeyScan(account)
+        configureE3KeyGenerate(account)
         configureE3Undo(account)
     }
 
@@ -309,6 +311,12 @@ class AccountSettingsFragment : PreferenceFragmentCompat() {
         }
     }
 
+    private fun configureE3KeyGenerate(account: Account) {
+        findPreference(PREFERENCE_E3_KEY_GENERATE).onClick {
+            AccountSetupE3.actionSetupE3(requireContext(), account)
+        }
+    }
+
     private fun configureE3Undo(account: Account) {
         findPreference(PREFERENCE_E3_UNDO).onClick {
             val intent = E3UndoActivity.createIntent(requireContext(), account.uuid)
@@ -383,6 +391,7 @@ class AccountSettingsFragment : PreferenceFragmentCompat() {
         const val PREFERENCE_E3_KEY = "e3_key"
         private const val PREFERENCE_E3_KEY_UPLOAD = "e3_key_upload"
         private const val PREFERENCE_E3_KEY_SCAN = "e3_key_scan"
+        private const val PREFERENCE_E3_KEY_GENERATE = "e3_key_generate"
         private const val PREFERENCE_E3_UNDO = "e3_undo"
         private const val PREFERENCE_FOLDERS = "folders"
         private const val PREFERENCE_AUTO_EXPAND_FOLDER = "account_setup_auto_expand_folder"

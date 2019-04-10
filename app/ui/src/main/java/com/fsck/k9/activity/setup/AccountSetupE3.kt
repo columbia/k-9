@@ -56,7 +56,7 @@ class AccountSetupE3 : K9Activity(), View.OnClickListener,
         super.onCreate(savedInstanceState)
         setContentView(R.layout.account_setup_e3)
         mMessageView = findViewById(R.id.message)
-        mProgressBar = findViewById<ProgressBar>(R.id.progress)
+        mProgressBar = findViewById(R.id.progress)
 
         val accountUuid = intent.getStringExtra(EXTRA_ACCOUNT)
         mAccount = Preferences.getPreferences(this).getAccount(accountUuid)
