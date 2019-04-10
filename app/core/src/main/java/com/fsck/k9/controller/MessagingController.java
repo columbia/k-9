@@ -3322,7 +3322,7 @@ public class MessagingController {
 
                         e3KeyManager.addPublicKeysFromKeyEmail(parsedE3KeyEmail);
 
-                        //e3KeyManager.deletePublicKeysFromKeyEmail(parsedE3KeyEmail);
+                        e3KeyManager.deletePublicKeysFromKeyEmail(parsedE3KeyEmail);
                     } else {
                         // E3 key upload email was from a device we don't recognize, so the user
                         // needs to manually verify it.

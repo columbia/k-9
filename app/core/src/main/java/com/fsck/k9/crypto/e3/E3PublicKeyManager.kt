@@ -24,6 +24,11 @@ class E3PublicKeyManager(private val openPgpApi: OpenPgpApi) {
     }
 
     fun deletePublicKeysFromKeyEmail(keyEmail: E3KeyEmail) {
+        if (keyEmail.deletedPublicKeys.isEmpty()) {
+            Timber.d("Found no E3 public keys to delete")
+            return
+        }
+
         throw NotImplementedError("not implemented yet")
     }
 }
