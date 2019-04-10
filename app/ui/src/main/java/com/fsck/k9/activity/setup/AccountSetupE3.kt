@@ -8,7 +8,9 @@ import android.content.IntentSender
 import android.os.Build
 import android.os.Bundle
 import android.preference.PreferenceManager
+import android.support.design.widget.BottomSheetDialog
 import android.view.View
+import android.widget.Button
 import android.widget.ProgressBar
 import android.widget.TextView
 import com.fsck.k9.Account
@@ -33,6 +35,7 @@ class AccountSetupE3 : K9Activity(), View.OnClickListener,
         ConfirmationDialogFragment.ConfirmationDialogFragmentListener {
     private var mMessageView: TextView? = null
     private var mProgressBar: ProgressBar? = null
+    private var mBottomSheetDialog: BottomSheetDialog? = null
     private var pendingIntent: PendingIntent? = null
     private var selectKeyPendingIntent: PendingIntent? = null
     private var mAccount: Account? = null
@@ -71,11 +74,33 @@ class AccountSetupE3 : K9Activity(), View.OnClickListener,
             OpenPgpAppSelectDialog.startOpenPgpChooserActivity(this, mAccount, OpenPgpAppSelectDialog.ProviderType.E3)
         }
 
-        // Generate a key if one doesn't exist already, then the callback will upload it
-        generateE3Key(openPgpCreateKeyCallback)
+        // If this account already has an E3 key configured,
+        // ask the user if he really wants to generate a new one,
+        // otherwise just generate one right away.
+        if (mAccount!!.e3Key != Account.NO_OPENPGP_KEY) {
+            val bottomSheetLayout: View = layoutInflater.inflate(R.layout.account_setup_e3_bottom_sheet, null)
+            bottomSheetLayout.findViewById<Button>(R.id.button_no).setOnClickListener {
+                mBottomSheetDialog!!.dismiss()
+                onCancel()
+            }
+            bottomSheetLayout.findViewById<Button>(R.id.button_ok).setOnClickListener {
+                mBottomSheetDialog!!.dismiss()
+
+                generateE3Key(openPgpCreateKeyCallback)
+            }
+
+            mBottomSheetDialog = BottomSheetDialog(this)
+            mBottomSheetDialog!!.setContentView(bottomSheetLayout)
+
+            mBottomSheetDialog!!.show()
+        } else {
+            generateE3Key(openPgpCreateKeyCallback)
+        }
+
         return
     }
 
+    // Generate key, then the callback will upload it
     private fun generateE3Key(callback: OpenPgpApi.IOpenPgpCallback) {
         val data = Intent(OpenPgpApi.ACTION_CREATE_ENCRYPT_ON_RECEIPT_KEY)
         data.putExtra(OpenPgpApi.EXTRA_NAME, String.format(resources.getString(R.string.account_setup_e3_generated_key_name), Build.BRAND, Build.MODEL))
