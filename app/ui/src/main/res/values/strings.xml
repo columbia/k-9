@@ -1332,21 +1332,21 @@ Please submit bug reports, contribute new features and ask questions at
     <string name="account_settings_crypto_e3_mode">E3 mode</string>
     <string name="dialog_e3_mode_title">E3 mode</string>
     <string name="dialog_e3_mode_learn_more"><a href="">Learn more about E3 modes</a>.</string>
-    <string name="e3_key_upload_title">Upload E3 public key</string>
-    <string name="e3_key_upload_intro">Upload your E3 public key to your mailbox.</string>
-    <string name="e3_key_upload_button">Upload E3 Public Key</string>
+    <string name="e3_key_upload_title">Synchronize this E3 device</string>
+    <string name="e3_key_upload_intro">Synchronize your device with your other E3 devices.</string>
+    <string name="e3_key_upload_button">Start E3 Synchronization</string>
     <string name="e3_key_upload_generating">Generating email message…</string>
-    <string name="e3_key_upload_destined_for">The email with your E3 public key will be sent to:</string>
-    <string name="e3_key_upload_uploading_to">Uploading E3 public key to:</string>
-    <string name="e3_key_upload_finish">E3 public key upload complete.</string>
+    <string name="e3_key_upload_destined_for">Using this email address for synchronization:</string>
+    <string name="e3_key_upload_uploading_to">Uploading to:</string>
+    <string name="e3_key_upload_finish">Upload complete.</string>
     <string name="e3_key_upload_verification">Verification Phrase:</string>
     <string name="e3_key_upload_verification_response_instructions">Confirm this verification phrase on your other devices now:</string>
     <string name="e3_key_upload_advanced">Advanced options</string>
     <string name="e3_key_upload_qr_code_desc">Key fingerprint QR code</string>
-    <string name="e3_key_upload_qr_code_instructions">FOR ADVANCED USERS: Scan this QR code in your E3 standalone client:</string>
-    <string name="e3_key_upload_verification_instructions">Only verify keys on your other E3 clients with this EXACT verification phrase!</string>
+    <string name="e3_key_upload_qr_code_instructions">FOR ADVANCED USERS: Scan this QR code in your other E3 clients:</string>
+    <string name="e3_key_upload_verification_instructions">Only accept this EXACT verification phrase on your other E3 devices!</string>
     <string name="e3_key_scan_completed_instructions">Please open your key chain app and use the QR code scanner to verify your newly added E3 keys!</string>
-    <string name="e3_key_upload_error_upload">An error occurred while uploading the E3 public key. Please check your network connectivity and outgoing server configuration.</string>
+    <string name="e3_key_upload_error_upload">An error occurred while uploading synchronization message. Please check your network connectivity and outgoing server configuration.</string>
 
     <string name="e3_key_upload_msg_subject">E3 Public Key (DO NOT DELETE)</string>
     <string name="e3_key_upload_msg_body">This message contains an E3 public key. Import and verify the attached E3 public key in your standalone E3 client. Your verification phrase is:\n\n%s\n\n\n-----ADVANCED-----\nIdentity: %s\nDevice: %s\nPGP Fingerprint: %s\nE3 Digest: %s</string>
@@ -1379,16 +1379,16 @@ Please submit bug reports, contribute new features and ask questions at
     <string name="e3_key_upload_error_send">An error occurred while sending the message. Please check your network connectivity and outgoing server configuration.</string>
     <string name="e3_key_upload_cancelled">Cancelled the key upload wizard.</string>
 
-    <string name="e3_key_scan_title">Scan for E3 public keys</string>
-    <string name="e3_key_scan_intro">Scanning for your other uploaded E3 public keys allows you to encrypt your email using all of your public keys.</string>
-    <string name="e3_key_scan_button">Scan for E3 Public Keys</string>
+    <string name="e3_key_scan_title">Scan for E3 devices</string>
+    <string name="e3_key_scan_intro">Scanning for your other E3 synchronization messages allows you to encrypt your email using all of your devices.</string>
+    <string name="e3_key_scan_button">Scan for E3 Devices</string>
     <string name="e3_key_scan_location_desc">The following email account will be scanned:</string>
-    <string name="e3_key_scan_checkbox_remote_search">Temporarily enable remote search</string>
+    <string name="e3_key_scan_checkbox_remote_search">Temporarily enable remote search (recommended)</string>
     <string name="e3_key_scan_scanning">Scanning…</string>
-    <string name="e3_key_scan_downloading">Downloading new E3 public keys…</string>
-    <string name="e3_key_scan_finish">E3 public key download complete.</string>
-    <string name="e3_key_scan_finish_no_messages">No E3 public keys were found.</string>
-    <string name="e3_key_scan_error_download">An error occurred while downloading your E3 public keys. Please check your network connectivity and outgoing server configuration.</string>
+    <string name="e3_key_scan_downloading">Downloading new E3 device keys…</string>
+    <string name="e3_key_scan_finish">E3 key download complete.</string>
+    <string name="e3_key_scan_finish_no_messages">No E3 keys were found.</string>
+    <string name="e3_key_scan_error_download">An error occurred while downloading your other E3 keys. Please check your network connectivity and outgoing server configuration.</string>
 
     <string name="e3_key_verify_title">Verify your new E3 device</string>
     <string name="e3_key_verify_intro">Select the verification phrase displayed on your new device:</string>
@@ -1397,7 +1397,7 @@ Please submit bug reports, contribute new features and ask questions at
     <string name="e3_key_next_verify_button">Verify next device</string>
 
     <string name="e3_undo_title">Undo E3 encryption</string>
-    <string name="e3_undo_intro">Decrypts all E3-encrypted emails, restoring them to their original plaintext emails.
+    <string name="e3_undo_intro">Decrypts all E3-encrypted emails, restoring them to their original plaintext emails. E3\'s encrypt on receipt mechanism will be automatically disabled.
     \n\nWarning: This may take a while.</string>
     <string name="e3_undo_button">Undo E3 Encryption</string>
     <string name="e3_undo_location_desc">The following email account will have E3 encryption removed:</string>
@@ -1406,6 +1406,7 @@ Please submit bug reports, contribute new features and ask questions at
     <string name="e3_undo_finish_no_messages">No E3 encrypted messages were found.</string>
 
     <string name="pgp_word_list_even">aardvark absurd accrue acme adrift adult afflict ahead aimless Algol allow alone ammo ancient apple artist assume Athens atlas Aztec baboon backfield backward banjo beaming bedlamp beehive beeswax befriend Belfast berserk billiard bison blackjack blockade blowtorch bluebird bombast bookshelf brackish breadline breakup brickyard briefcase Burbank button buzzard cement chairlift chatter checkup chisel choking chopper Christmas clamshell classic classroom cleanup clockwork cobra commence concert cowbell crackdown cranky crowfoot crucial crumpled crusade cubic dashboard deadbolt deckhand dogsled dragnet drainage dreadful drifter dropper drumbeat drunken Dupont dwelling eating edict egghead eightball endorse endow enlist erase escape exceed eyeglass eyetooth facial fallout flagpole flatfoot flytrap fracture framework freedom frighten gazelle Geiger glitter glucose goggles goldfish gremlin guidance hamlet highchair hockey indoors indulge inverse involve island jawbone keyboard kickoff kiwi klaxon locale lockup merit minnow miser Mohawk mural music necklace Neptune newborn nightbird Oakland obtuse offload optic orca payday peachy pheasant physique playhouse Pluto preclude prefer preshrunk printer prowler pupil puppy python quadrant quiver quota ragtime ratchet rebirth reform regain reindeer rematch repay retouch revenge reward rhythm ribcage ringbolt robust rocker ruffled sailboat sawdust scallion scenic scorecard Scotland seabird select sentence shadow shamrock showgirl skullcap skydive slingshot slowdown snapline snapshot snowcap snowslide solo southward soybean spaniel spearhead spellbind spheroid spigot spindle spyglass stagehand stagnate stairway standard stapler steamship sterling stockman stopwatch stormy sugar surmount suspense sweatband swelter tactics talon tapeworm tempest tiger tissue tonic topmost tracker transit trauma treadmill Trojan trouble tumor tunnel tycoon uncut unearth unwind uproot upset upshot vapor village virus Vulcan waffle wallet watchword wayside willow woodlark Zulu</string>
+    <string name="pgp_word_list_odd">adroitness adviser aftermath aggregate alkali almighty amulet amusement antenna applicant Apollo armistice article asteroid Atlantic atmosphere autopsy Babylon backwater barbecue belowground bifocals bodyguard bookseller borderline bottomless Bradbury bravado Brazilian breakaway Burlington businessman butterfat Camelot candidate cannonball Capricorn caravan caretaker celebrate cellulose certify chambermaid Cherokee Chicago clergyman coherence combustion commando company component concurrent confidence conformist congregate consensus consulting corporate corrosion councilman crossover crucifix cumbersome customer Dakota decadence December decimal designing detector detergent determine dictator dinosaur direction disable disbelief disruptive distortion document embezzle enchanting enrollment enterprise equation equipment escapade Eskimo everyday examine existence exodus fascinate filament finicky forever fortitude frequency gadgetry Galveston getaway glossary gossamer graduate gravity guitarist hamburger Hamilton handiwork hazardous headwaters hemisphere hesitate hideaway holiness hurricane hydraulic impartial impetus inception indigo inertia infancy inferno informant insincere insurgent integrate intention inventive Istanbul Jamaica Jupiter leprosy letterhead liberty maritime matchmaker maverick Medusa megaton microscope microwave midsummer millionaire miracle misnomer molasses molecule Montana monument mosquito narrative nebula newsletter Norwegian October Ohio onlooker opulent Orlando outfielder Pacific pandemic Pandora paperweight paragon paragraph paramount passenger pedigree Pegasus penetrate perceptive performance pharmacy phonetic photograph pioneer pocketful politeness positive potato processor provincial proximate puberty publisher pyramid quantity racketeer rebellion recipe recover repellent replica reproduce resistor responsive retraction retrieval retrospect revenue revival revolver sandalwood sardonic Saturday savagery scavenger sensation sociable souvenir specialist speculate stethoscope stupendous supportive surrender suspicious sympathy tambourine telephone therapist tobacco tolerance tomorrow torpedo tradition travesty trombonist truncated typewriter ultimate undaunted underfoot unicorn unify universe unravel upcoming vacancy vagabond vertigo Virginia visitor vocalist voyager warranty Waterloo whimsical Wichita Wilmington Wyoming yesteryear Yucatán</string>
 
     <string name="general_settings_title">General settings</string>
 
