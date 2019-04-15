@@ -16,7 +16,10 @@ import java.util.UUID;
 import java.util.concurrent.ConcurrentHashMap;
 
 import android.content.Context;
+import android.content.SharedPreferences;
+import android.content.SharedPreferences.Editor;
 import android.net.Uri;
+import android.preference.PreferenceManager;
 import android.support.annotation.Nullable;
 import android.text.TextUtils;
 

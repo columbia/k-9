@@ -75,6 +75,13 @@ class AccountSettingsFragment : PreferenceFragmentCompat() {
         requireActivity().title = title
     }
 
+    override fun onResume() {
+        super.onResume()
+
+        val account = getAccount()
+        configureEnableE3Support(account, account.isE3ProviderConfigured, account.e3Provider)
+    }
+
     private fun initializeIncomingServer() {
         findPreference(PREFERENCE_INCOMING_SERVER)?.onClick {
             AccountSetupIncoming.actionEditIncomingSettings(requireActivity(), accountUuid)

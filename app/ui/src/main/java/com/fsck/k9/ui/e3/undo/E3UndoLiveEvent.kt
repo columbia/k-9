@@ -17,6 +17,7 @@ import com.fsck.k9.mailstore.LocalMessage
 import com.fsck.k9.mailstore.MessageCryptoAnnotations
 import com.fsck.k9.search.LocalSearch
 import com.fsck.k9.search.SearchSpecification
+import com.fsck.k9.ui.e3.E3EnableDisableToggler
 import kotlinx.coroutines.experimental.android.UI
 import kotlinx.coroutines.experimental.launch
 import org.jetbrains.anko.coroutines.experimental.bg
@@ -32,6 +33,7 @@ import java.util.concurrent.SynchronousQueue
 class E3UndoLiveEvent(private val context: Context) : SingleLiveEvent<E3UndoResult>() {
     private val messagingController = MessagingController.getInstance(context)
     private val fetchProfile = FetchProfile()
+    private val e3Toggler = E3EnableDisableToggler(context)
 
     init {
         fetchProfile.add(FetchProfile.Item.ENVELOPE)
@@ -39,6 +41,8 @@ class E3UndoLiveEvent(private val context: Context) : SingleLiveEvent<E3UndoResu
     }
 
     fun undoE3Async(account: Account) {
+        e3Toggler.setE3DisabledState(account)
+
         launch(UI) {
             val scanResult = bg {
                 undoE3(account)

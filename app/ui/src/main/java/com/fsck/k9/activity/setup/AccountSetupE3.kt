@@ -20,6 +20,7 @@ import com.fsck.k9.activity.K9Activity
 import com.fsck.k9.crypto.OpenPgpApiHelper
 import com.fsck.k9.fragment.ConfirmationDialogFragment
 import com.fsck.k9.ui.R
+import com.fsck.k9.ui.e3.E3EnableDisableToggler
 import com.fsck.k9.ui.e3.upload.E3KeyUploadActivity
 import com.fsck.k9.ui.settings.account.AccountSettingsFragment
 import com.fsck.k9.ui.settings.account.OpenPgpAppSelectDialog
@@ -69,7 +70,7 @@ class AccountSetupE3 : K9Activity(), View.OnClickListener,
         val openPgpProviderPackages = OpenPgpProviderUtil.getOpenPgpProviderPackages(this)
         if (openPgpProviderPackages.size == 1) {
             mAccount!!.e3Provider = openPgpProviderPackages[0]
-            enableE3Preference()
+            enableE3Preference(mAccount!!.e3Provider!!)
         } else {
             OpenPgpAppSelectDialog.startOpenPgpChooserActivity(this, mAccount, OpenPgpAppSelectDialog.ProviderType.E3)
         }
@@ -243,11 +244,8 @@ class AccountSetupE3 : K9Activity(), View.OnClickListener,
     }
 
     // Enable E3 in the account settings preference
-    private fun enableE3Preference() {
-        val sharedPrefs = PreferenceManager.getDefaultSharedPreferences(this)
-        val editor = sharedPrefs.edit()
-        editor.putBoolean(AccountSettingsFragment.PREFERENCE_E3_ENABLE, true)
-        editor.apply()
+    private fun enableE3Preference(e3Provider: String) {
+        E3EnableDisableToggler(this).setE3EnabledState(mAccount!!, e3Provider)
     }
 
     private fun setE3KeyPreference(e3KeyId: Long) {
