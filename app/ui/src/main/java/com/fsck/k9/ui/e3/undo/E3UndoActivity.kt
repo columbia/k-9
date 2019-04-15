@@ -1,5 +1,6 @@
 package com.fsck.k9.ui.e3.undo
 
+import android.app.Activity
 import android.content.Context
 import android.content.Intent
 import android.os.Bundle
@@ -9,9 +10,10 @@ import com.fsck.k9.ui.R
 import com.fsck.k9.ui.e3.E3ActionBaseActivity
 import com.fsck.k9.view.StatusIndicator
 import kotlinx.android.synthetic.main.crypto_e3_undo.*
+import kotlinx.android.synthetic.main.wizard_cancel_done.*
 import org.koin.android.ext.android.inject
 
-class E3UndoActivity : E3ActionBaseActivity() {
+class E3UndoActivity : E3ActionBaseActivity(), View.OnClickListener {
     private val presenter: E3UndoPresenter by inject {
         mapOf("lifecycleOwner" to this, "e3UndoView" to this)
     }
@@ -29,6 +31,9 @@ class E3UndoActivity : E3ActionBaseActivity() {
         }
 
         presenter.initFromIntent(accountUuid)
+
+        findViewById<View>(R.id.cancel).setOnClickListener(this)
+        findViewById<View>(R.id.done).setOnClickListener(this)
     }
 
     override fun onOptionsItemSelected(item: MenuItem?): Boolean {
@@ -52,6 +57,9 @@ class E3UndoActivity : E3ActionBaseActivity() {
         e3UndoLayoutFinish.visibility = View.GONE
         e3UndoLayoutFinishNoMessages.visibility = View.GONE
         e3UndoError.visibility = View.GONE
+
+        cancel.visibility = View.VISIBLE
+        done.visibility = View.GONE
     }
 
     fun sceneUndoing() {
@@ -63,6 +71,9 @@ class E3UndoActivity : E3ActionBaseActivity() {
         e3UndoLayoutFinish.visibility = View.GONE
         e3UndoLayoutFinishNoMessages.visibility = View.GONE
         e3UndoError.visibility = View.GONE
+
+        cancel.visibility = View.VISIBLE
+        done.visibility = View.GONE
     }
 
     fun setLoadingStateUndoing() {
@@ -88,6 +99,9 @@ class E3UndoActivity : E3ActionBaseActivity() {
         e3UndoLayoutFinish.visibility = View.VISIBLE
         e3UndoLayoutFinishNoMessages.visibility = View.GONE
         e3UndoError.visibility = View.GONE
+
+        cancel.visibility = View.GONE
+        done.visibility = View.VISIBLE
     }
 
     fun sceneFinishedNoMessages(transition: Boolean = false) {
@@ -101,6 +115,9 @@ class E3UndoActivity : E3ActionBaseActivity() {
         e3UndoLayoutFinish.visibility = View.GONE
         e3UndoLayoutFinishNoMessages.visibility = View.VISIBLE
         e3UndoError.visibility = View.GONE
+
+        cancel.visibility = View.GONE
+        done.visibility = View.VISIBLE
     }
 
     fun setLoadingStateSendingFailed() {
@@ -116,6 +133,23 @@ class E3UndoActivity : E3ActionBaseActivity() {
         e3UndoLayoutFinish.visibility = View.GONE
         e3UndoLayoutFinishNoMessages.visibility = View.GONE
         e3UndoError.visibility = View.VISIBLE
+
+        cancel.visibility = View.GONE
+        done.visibility = View.VISIBLE
+    }
+
+    private fun onCancel() {
+        setResult(Activity.RESULT_CANCELED)
+
+        finish()
+    }
+
+    override fun onClick(v: View) {
+        if (v.id == R.id.cancel) {
+            onCancel()
+        } else if (v.id == R.id.done) {
+            finish()
+        }
     }
 
     companion object {

@@ -3,137 +3,155 @@
     xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
     xmlns:tools="http://schemas.android.com/tools"
-    android:layout_width="wrap_content"
-    android:layout_height="wrap_content"
-    android:layout_gravity="center_horizontal"
+    android:layout_width="fill_parent"
+    android:layout_height="fill_parent"
+    android:layout_gravity="center_vertical"
     android:orientation="vertical"
     android:paddingLeft="12dp"
     android:paddingRight="12dp">
 
-    <TextView
-        style="?android:textAppearanceMedium"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:layout_marginTop="24dp"
-        android:text="@string/e3_undo_intro" />
-
-    <LinearLayout
-        android:id="@+id/e3UndoMsgInfo"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:layout_marginTop="24dp"
-        android:orientation="vertical">
-
-        <TextView
-            style="?android:textAppearanceMedium"
-            android:layout_width="wrap_content"
+    <ScrollView
+        android:layout_width="fill_parent"
+        android:layout_height="0dp"
+        android:layout_weight="1"
+        android:padding="6dip"
+        android:fadingEdge="none"
+        android:scrollbarStyle="outsideInset">
+        <LinearLayout
+            android:orientation="vertical"
+            android:layout_gravity="center_horizontal"
             android:layout_height="wrap_content"
-            android:text="@string/e3_undo_location_desc"
-            />
+            android:padding="6dip"
+            android:layout_width="fill_parent">
 
-        <TextView
-            android:id="@+id/e3UndoAddress"
-            style="?android:textAppearanceMedium"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:layout_gravity="center_vertical"
-            app:fontFamily="monospace"
-            tools:text="look@my.amazin.horse"
-            />
-    </LinearLayout>
+            <TextView
+                style="?android:textAppearanceMedium"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="24dp"
+                android:text="@string/e3_undo_intro" />
 
-    <Button
-        android:id="@+id/e3UndoButton"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:layout_gravity="center_horizontal"
-        android:layout_marginTop="24dp"
-        android:text="@string/e3_undo_button"
-        />
+            <LinearLayout
+                android:id="@+id/e3UndoMsgInfo"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="24dp"
+                android:orientation="vertical">
 
-    <!-- Start progress indicators -->
+                <TextView
+                    style="?android:textAppearanceMedium"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="@string/e3_undo_location_desc"
+                    />
 
-    <LinearLayout
-        android:id="@+id/e3UndoLayoutUndoing"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:layout_marginTop="8dp"
-        android:orientation="horizontal"
-        android:padding="8dp">
+                <TextView
+                    android:id="@+id/e3UndoAddress"
+                    style="?android:textAppearanceMedium"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_gravity="center_vertical"
+                    app:fontFamily="monospace"
+                    tools:text="look@my.amazin.horse"
+                    />
+            </LinearLayout>
 
-        <com.fsck.k9.view.StatusIndicator
-            android:id="@+id/e3UndoProgressUndoing"
-            android:layout_width="24dp"
-            android:layout_height="24dp"
-            android:layout_gravity="center_vertical"
-            android:layout_margin="8dp"
-            />
+            <Button
+                android:id="@+id/e3UndoButton"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_gravity="center_horizontal"
+                android:layout_marginTop="24dp"
+                android:text="@string/e3_undo_button"
+                />
 
-        <TextView
-            style="?android:textAppearanceMedium"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:layout_gravity="center_vertical"
-            android:text="@string/e3_undo_undoing"
-            />
+            <!-- Start progress indicators -->
 
-    </LinearLayout>
+            <LinearLayout
+                android:id="@+id/e3UndoLayoutUndoing"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="8dp"
+                android:orientation="horizontal"
+                android:padding="8dp">
 
-    <LinearLayout
-        android:id="@+id/e3UndoLayoutFinish"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:orientation="horizontal"
-        android:padding="8dp">
+                <com.fsck.k9.view.StatusIndicator
+                    android:id="@+id/e3UndoProgressUndoing"
+                    android:layout_width="24dp"
+                    android:layout_height="24dp"
+                    android:layout_gravity="center_vertical"
+                    android:layout_margin="8dp"
+                    />
 
-        <com.fsck.k9.view.StatusIndicator
-            android:layout_width="24dp"
-            android:layout_height="24dp"
-            android:layout_gravity="center_vertical"
-            android:layout_margin="8dp"
-            />
+                <TextView
+                    style="?android:textAppearanceMedium"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_gravity="center_vertical"
+                    android:text="@string/e3_undo_undoing"
+                    />
 
-        <TextView
-            style="?android:textAppearanceMedium"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:layout_gravity="center_vertical"
-            android:text="@string/e3_undo_finish"
-            />
+            </LinearLayout>
 
-    </LinearLayout>
+            <LinearLayout
+                android:id="@+id/e3UndoLayoutFinish"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:orientation="horizontal"
+                android:padding="8dp">
 
-    <LinearLayout
-        android:id="@+id/e3UndoLayoutFinishNoMessages"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:orientation="horizontal"
-        android:padding="8dp">
+                <com.fsck.k9.view.StatusIndicator
+                    android:layout_width="24dp"
+                    android:layout_height="24dp"
+                    android:layout_gravity="center_vertical"
+                    android:layout_margin="8dp"
+                    />
 
-        <com.fsck.k9.view.StatusIndicator
-            android:layout_width="24dp"
-            android:layout_height="24dp"
-            android:layout_gravity="center_vertical"
-            android:layout_margin="8dp"
-            />
+                <TextView
+                    style="?android:textAppearanceMedium"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_gravity="center_vertical"
+                    android:text="@string/e3_undo_finish"
+                    />
 
-        <TextView
-            style="?android:textAppearanceMedium"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:layout_gravity="center_vertical"
-            android:text="@string/e3_undo_finish_no_messages"
-            />
+            </LinearLayout>
 
-    </LinearLayout>
+            <LinearLayout
+                android:id="@+id/e3UndoLayoutFinishNoMessages"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:orientation="horizontal"
+                android:padding="8dp">
 
-    <TextView
-        android:id="@+id/e3UndoError"
-        style="?android:textAppearanceMedium"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:text="@string/e3_key_scan_error_download"
-        tools:visibility="gone"
-        />
+                <com.fsck.k9.view.StatusIndicator
+                    android:layout_width="24dp"
+                    android:layout_height="24dp"
+                    android:layout_gravity="center_vertical"
+                    android:layout_margin="8dp"
+                    />
 
+                <TextView
+                    style="?android:textAppearanceMedium"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_gravity="center_vertical"
+                    android:text="@string/e3_undo_finish_no_messages"
+                    />
+
+            </LinearLayout>
+
+            <TextView
+                android:id="@+id/e3UndoError"
+                style="?android:textAppearanceMedium"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="@string/e3_key_scan_error_download"
+                tools:visibility="gone"
+                />
+
+        </LinearLayout>
+    </ScrollView>
+
+    <include layout="@layout/wizard_cancel_done" />
 </LinearLayout>
