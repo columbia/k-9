@@ -1,6 +1,6 @@
 package com.fsck.k9.ui.e3.verify
 
-import android.arch.lifecycle.LifecycleOwner
+import androidx.lifecycle.LifecycleOwner
 import android.content.Intent
 import android.widget.AdapterView
 import android.widget.TextView
@@ -15,9 +15,11 @@ import com.fsck.k9.ui.crypto.PgpWordList
 import com.fsck.k9.ui.e3.E3OpenPgpPresenterCallback
 import com.fsck.k9.ui.e3.upload.E3KeyUploadMessage
 import com.fsck.k9.ui.e3.upload.E3KeyUploadMessageCreator
-import kotlinx.coroutines.experimental.android.UI
-import kotlinx.coroutines.experimental.delay
-import kotlinx.coroutines.experimental.launch
+
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.GlobalScope
+import kotlinx.coroutines.delay
+import kotlinx.coroutines.launch
 import org.jetbrains.anko.coroutines.experimental.bg
 import org.openintents.openpgp.OpenPgpApiManager
 import org.openintents.openpgp.util.OpenPgpApi
@@ -88,7 +90,7 @@ class E3KeyVerificationPresenter internal constructor(
             return null
         }
 
-        launch(UI) {
+        GlobalScope.launch(Dispatchers.Main) {
             val setupMessage = bg {
                 messagingController.sendMessageBlocking(account, keyUploadMessage.keyUploadMessage)
             }
@@ -99,7 +101,7 @@ class E3KeyVerificationPresenter internal constructor(
                 setupMessage.await()
                 Timber.d("E3 Successfully uploaded keys")
             } catch (e: Exception) {
-                Timber.e("E3 failed to upload keys", e)
+                Timber.e(e, "E3 failed to upload keys")
             }
         }
 

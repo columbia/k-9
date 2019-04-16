@@ -1,7 +1,7 @@
 package com.fsck.k9.activity;
 
 import android.os.Bundle;
-import android.support.v7.app.AppCompatActivity;
+import androidx.appcompat.app.AppCompatActivity;
 import android.view.MotionEvent;
 
 import com.fsck.k9.activity.K9ActivityCommon.K9ActivityMagic;

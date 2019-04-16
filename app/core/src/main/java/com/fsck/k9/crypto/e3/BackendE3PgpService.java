@@ -1,7 +1,7 @@
 package com.fsck.k9.crypto.e3;
 
 import android.content.Context;
-import android.support.annotation.NonNull;
+import androidx.annotation.NonNull;
 
 import com.fsck.k9.Account;
 import com.fsck.k9.backend.api.EncryptSyncListener;

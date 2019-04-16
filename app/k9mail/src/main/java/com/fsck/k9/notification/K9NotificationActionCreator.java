@@ -8,7 +8,7 @@ import java.util.Map;
 import android.app.PendingIntent;
 import android.content.Context;
 import android.content.Intent;
-import android.support.v4.app.TaskStackBuilder;
+import androidx.core.app.TaskStackBuilder;
 import android.text.TextUtils;
 
 import com.fsck.k9.Account;

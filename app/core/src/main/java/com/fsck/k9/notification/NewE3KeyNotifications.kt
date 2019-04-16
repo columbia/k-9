@@ -1,6 +1,6 @@
 package com.fsck.k9.notification
 
-import android.support.v4.app.NotificationManagerCompat
+import androidx.core.app.NotificationManagerCompat
 import android.util.SparseArray
 import com.fsck.k9.Account
 import com.fsck.k9.crypto.e3.E3Constants

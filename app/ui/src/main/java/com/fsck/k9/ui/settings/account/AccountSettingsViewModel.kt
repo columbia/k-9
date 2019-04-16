@@ -1,14 +1,16 @@
 package com.fsck.k9.ui.settings.account
 
-import android.arch.lifecycle.LiveData
-import android.arch.lifecycle.MutableLiveData
-import android.arch.lifecycle.ViewModel
+import androidx.lifecycle.LiveData
+import androidx.lifecycle.MutableLiveData
+import androidx.lifecycle.ViewModel
 import com.fsck.k9.Account
 import com.fsck.k9.Preferences
 import com.fsck.k9.mailstore.Folder
 import com.fsck.k9.mailstore.FolderRepositoryManager
-import kotlinx.coroutines.experimental.android.UI
-import kotlinx.coroutines.experimental.launch
+
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.GlobalScope
+import kotlinx.coroutines.launch
 import org.jetbrains.anko.coroutines.experimental.bg
 
 class AccountSettingsViewModel(
@@ -20,7 +22,7 @@ class AccountSettingsViewModel(
 
     fun getAccount(accountUuid: String): LiveData<Account> {
         if (accountLiveData.value == null) {
-            launch(UI) {
+            GlobalScope.launch(Dispatchers.Main) {
                 val account = bg {
                     loadAccount(accountUuid)
                 }.await()
@@ -54,7 +56,7 @@ class AccountSettingsViewModel(
 
     private fun loadFolders(account: Account) {
         val folderRepository = folderRepositoryManager.getFolderRepository(account)
-        launch(UI) {
+        GlobalScope.launch(Dispatchers.Main) {
             val folders = bg {
                 folderRepository.getRemoteFolders()
             }.await()

@@ -1,14 +1,15 @@
 package com.fsck.k9.ui.e3.upload
 
 import android.app.PendingIntent
-import android.arch.lifecycle.LifecycleOwner
-import android.arch.lifecycle.Observer
+import androidx.lifecycle.LifecycleOwner
+import androidx.lifecycle.Observer
 import android.content.Context
 import com.fsck.k9.Account
 import com.fsck.k9.Preferences
 import com.fsck.k9.ui.e3.E3OpenPgpPresenterCallback
-import kotlinx.coroutines.experimental.android.UI
-import kotlinx.coroutines.experimental.launch
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.GlobalScope
+import kotlinx.coroutines.launch
 import org.openintents.openpgp.OpenPgpApiManager
 import timber.log.Timber
 
@@ -52,7 +53,7 @@ class E3KeyUploadPresenter internal constructor(
     fun onClickUpload() {
         view.sceneGeneratingAndUploading()
 
-        launch(UI) {
+        GlobalScope.launch(Dispatchers.Main) {
             view.uxDelay()
             view.setLoadingStateGenerating()
 

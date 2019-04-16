@@ -18,8 +18,10 @@ import com.fsck.k9.mailstore.MessageCryptoAnnotations
 import com.fsck.k9.search.LocalSearch
 import com.fsck.k9.search.SearchSpecification
 import com.fsck.k9.ui.e3.E3EnableDisableToggler
-import kotlinx.coroutines.experimental.android.UI
-import kotlinx.coroutines.experimental.launch
+
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.GlobalScope
+import kotlinx.coroutines.launch
 import org.jetbrains.anko.coroutines.experimental.bg
 import org.openintents.openpgp.IOpenPgpService2
 import org.openintents.openpgp.util.OpenPgpApi
@@ -43,7 +45,7 @@ class E3UndoLiveEvent(private val context: Context) : SingleLiveEvent<E3UndoResu
     fun undoE3Async(account: Account) {
         e3Toggler.setE3DisabledState(account)
 
-        launch(UI) {
+        GlobalScope.launch(Dispatchers.Main) {
             val scanResult = bg {
                 undoE3(account)
             }

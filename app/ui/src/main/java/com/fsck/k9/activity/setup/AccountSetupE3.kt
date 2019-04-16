@@ -8,7 +8,7 @@ import android.content.IntentSender
 import android.os.Build
 import android.os.Bundle
 import android.preference.PreferenceManager
-import android.support.design.widget.BottomSheetDialog
+import com.google.android.material.bottomsheet.BottomSheetDialog
 import android.view.View
 import android.widget.Button
 import android.widget.ProgressBar
@@ -114,7 +114,7 @@ class AccountSetupE3 : K9Activity(), View.OnClickListener,
             }
 
             override fun onError(e: Exception) {
-                Timber.e("Got error while binding to OpenPGP service", e)
+                Timber.e(e, "Got error while binding to OpenPGP service")
             }
         })
 
@@ -134,7 +134,7 @@ class AccountSetupE3 : K9Activity(), View.OnClickListener,
             }
 
             override fun onError(e: Exception) {
-                Timber.e("Got error while binding to OpenPGP service", e)
+                Timber.e(e, "Got error while binding to OpenPGP service")
             }
         })
 
@@ -218,7 +218,7 @@ class AccountSetupE3 : K9Activity(), View.OnClickListener,
         }
     }
 
-    override fun onActivityResult(requestCode: Int, resultCode: Int, data: Intent) {
+    override fun onActivityResult(requestCode: Int, resultCode: Int, data: Intent?) {
         when (requestCode) {
             RESULT_CODE_PENDING_INTENT_GENERATE -> {
                 Timber.d("Got result for key generation PendingIntent")

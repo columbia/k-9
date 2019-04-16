@@ -3,8 +3,9 @@ package com.fsck.k9.ui.settings
 import android.app.Activity
 import android.content.Intent
 import android.os.Bundle
-import android.support.v7.widget.LinearLayoutManager
+import androidx.recyclerview.widget.LinearLayoutManager
 import android.view.MenuItem
+import androidx.recyclerview.widget.RecyclerView
 import com.fsck.k9.Account
 import com.fsck.k9.activity.K9Activity
 import com.fsck.k9.ui.R
@@ -43,7 +44,7 @@ class SettingsActivity : K9Activity() {
             handleItemClick(item)
         }
 
-        with(settings_list) {
+        with(settings_list as RecyclerView) {
             adapter = settingsAdapter
             layoutManager = LinearLayoutManager(this@SettingsActivity)
         }

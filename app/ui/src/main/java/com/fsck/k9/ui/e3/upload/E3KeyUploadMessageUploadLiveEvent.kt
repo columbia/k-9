@@ -4,9 +4,11 @@ import android.app.PendingIntent
 import com.fsck.k9.Account
 import com.fsck.k9.controller.MessagingController
 import com.fsck.k9.helper.SingleLiveEvent
-import kotlinx.coroutines.experimental.android.UI
-import kotlinx.coroutines.experimental.delay
-import kotlinx.coroutines.experimental.launch
+
+import kotlinx.coroutines.delay
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.GlobalScope
+import kotlinx.coroutines.launch
 import org.jetbrains.anko.coroutines.experimental.bg
 
 class E3KeyUploadMessageUploadLiveEvent(
@@ -14,7 +16,7 @@ class E3KeyUploadMessageUploadLiveEvent(
 ) : SingleLiveEvent<E3KeyUploadMessageUploadResult>() {
 
     fun sendMessageAsync(account: Account, setupMsg: E3KeyUploadMessage) {
-        launch(UI) {
+        GlobalScope.launch(Dispatchers.Main) {
             val setupMessage = bg {
                 messagingController.sendMessageBlocking(account, setupMsg.keyUploadMessage)
             }

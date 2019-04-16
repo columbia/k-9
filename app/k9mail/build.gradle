@@ -11,32 +11,28 @@ if (rootProject.testCoverage) {
 
 dependencies {
     implementation "org.jetbrains.kotlin:kotlin-stdlib-jdk7:${versions.kotlin}"
-
-    implementation project(":app:ui")
-    implementation project(":app:core")
-    implementation project(":app:storage")
-    implementation project(":app:crypto-openpgp")
-    implementation project(":backend:imap")
-    implementation project(":backend:pop3")
-    implementation project(":backend:webdav")
-
-    implementation "com.android.support:appcompat-v7:${versions.supportLibrary}"
+    implementation project(':app:ui')
+    implementation project(':app:core')
+    implementation project(':app:storage')
+    implementation project(':app:crypto-openpgp')
+    implementation project(':backend:imap')
+    implementation project(':backend:pop3')
+    implementation project(':backend:webdav')
+    implementation "androidx.appcompat:appcompat:${versions.appCompat}"
     implementation "com.jakewharton.timber:timber:${versions.timber}"
-
     testImplementation "org.robolectric:robolectric:${versions.robolectric}"
     testImplementation "junit:junit:${versions.junit}"
     testImplementation "com.google.truth:truth:${versions.truth}"
     testImplementation "org.mockito:mockito-core:${versions.mockito}"
     testImplementation "com.nhaarman:mockito-kotlin:${versions.mockitoKotlin}"
-    testImplementation "org.jdom:jdom2:2.0.6"
+    testImplementation 'org.jdom:jdom2:2.0.6'
     testImplementation "org.koin:koin-test:${versions.koin}"
-
-    androidTestImplementation "com.android.support.test.espresso:espresso-core:3.0.1"
+    androidTestImplementation 'androidx.test.espresso:espresso-core:3.2.0-alpha03'
 }
 
 android {
-    compileSdkVersion buildConfig.compileSdk
-    buildToolsVersion buildConfig.buildTools
+    compileSdkVersion 28
+    buildToolsVersion '28.0.3'
 
     defaultConfig {
         applicationId "com.fsck.k9"
@@ -50,7 +46,7 @@ android {
 
         generatedDensities = ['mdpi', 'hdpi', 'xhdpi']
 
-        testInstrumentationRunner "android.support.test.runner.AndroidJUnitRunner"
+        testInstrumentationRunner "androidx.test.runner.AndroidJUnitRunner"
     }
 
     signingConfigs {
@@ -94,6 +90,9 @@ android {
         exclude 'META-INF/NOTICE.txt'
         exclude 'META-INF/README'
         exclude 'LICENSE.txt'
+
+        doNotStrip '*/mips/*.so'
+        doNotStrip '*/mips64/*.so'
     }
 
     compileOptions {

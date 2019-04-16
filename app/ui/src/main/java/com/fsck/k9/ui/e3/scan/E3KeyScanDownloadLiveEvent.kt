@@ -5,8 +5,10 @@ import com.fsck.k9.crypto.e3.E3KeyScanResult
 import com.fsck.k9.helper.SingleLiveEvent
 import com.fsck.k9.mail.FetchProfile
 import com.fsck.k9.mailstore.LocalMessage
-import kotlinx.coroutines.experimental.android.UI
-import kotlinx.coroutines.experimental.launch
+
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.GlobalScope
+import kotlinx.coroutines.launch
 import org.jetbrains.anko.coroutines.experimental.bg
 import timber.log.Timber
 
@@ -20,7 +22,7 @@ class E3KeyScanDownloadLiveEvent : SingleLiveEvent<E3KeyScanDownloadResult>() {
     }
 
     fun downloadE3KeysAsync(e3KeyScanResult: E3KeyScanResult) {
-        launch(UI) {
+        GlobalScope.launch(Dispatchers.Main) {
             val scanResult = bg {
                 downloadRemote(e3KeyScanResult)
             }

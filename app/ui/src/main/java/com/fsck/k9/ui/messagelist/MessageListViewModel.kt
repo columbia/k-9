@@ -1,13 +1,15 @@
 package com.fsck.k9.ui.messagelist
 
-import android.arch.lifecycle.LiveData
-import android.arch.lifecycle.MutableLiveData
-import android.arch.lifecycle.ViewModel
+import androidx.lifecycle.LiveData
+import androidx.lifecycle.MutableLiveData
+import androidx.lifecycle.ViewModel
 import com.fsck.k9.Account
 import com.fsck.k9.mailstore.Folder
 import com.fsck.k9.mailstore.FolderRepositoryManager
-import kotlinx.coroutines.experimental.android.UI
-import kotlinx.coroutines.experimental.launch
+
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.GlobalScope
+import kotlinx.coroutines.launch
 import org.jetbrains.anko.coroutines.experimental.bg
 
 class MessageListViewModel(private val folderRepositoryManager: FolderRepositoryManager) : ViewModel() {
@@ -23,7 +25,7 @@ class MessageListViewModel(private val folderRepositoryManager: FolderRepository
     }
 
     private fun loadFolders(account: Account) {
-        launch(UI) {
+        GlobalScope.launch(Dispatchers.Main) {
             val folders = bg {
                 val folderRepository = folderRepositoryManager.getFolderRepository(account)
                 folderRepository.getDisplayFolders()

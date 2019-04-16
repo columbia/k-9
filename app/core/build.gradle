@@ -23,6 +23,11 @@ dependencies {
     implementation "com.jakewharton.timber:timber:${versions.timber}"
     implementation "org.apache.james:apache-mime4j-core:${versions.mime4j}"
 
+    // (Java only)
+    implementation "android.arch.work:work-runtime:${versions.work}"
+    // Kotlin + coroutines
+    implementation "android.arch.work:work-runtime-ktx:${versions.work}"
+
     testImplementation project(':mail:testing')
     testImplementation project(":backend:imap")
     testImplementation project(":mail:protocols:smtp")
@@ -43,7 +48,7 @@ android {
     defaultConfig {
         minSdkVersion buildConfig.minSdk
         // For Robolectric tests
-        targetSdkVersion 22
+        targetSdkVersion 26
     }
 
     lintOptions {

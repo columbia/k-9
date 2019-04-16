@@ -1,14 +1,16 @@
 package com.fsck.k9.ui.e3.scan
 
-import android.arch.lifecycle.LifecycleOwner
-import android.arch.lifecycle.Observer
+import androidx.lifecycle.LifecycleOwner
+import androidx.lifecycle.Observer
 import com.fsck.k9.Account
 import com.fsck.k9.Preferences
 import com.fsck.k9.crypto.e3.E3Constants
 import com.fsck.k9.crypto.e3.E3KeyScanResult
 import com.fsck.k9.mailstore.LocalMessage
-import kotlinx.coroutines.experimental.android.UI
-import kotlinx.coroutines.experimental.launch
+
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.GlobalScope
+import kotlinx.coroutines.launch
 import timber.log.Timber
 
 class E3KeyScanPresenter internal constructor(
@@ -44,7 +46,7 @@ class E3KeyScanPresenter internal constructor(
     fun onClickScan(tempEnableRemoteSearch: Boolean) {
         view.sceneScanningAndDownloading()
 
-        launch(UI) {
+        GlobalScope.launch(Dispatchers.Main) {
             view.uxDelay()
             view.setLoadingStateScanning()
 

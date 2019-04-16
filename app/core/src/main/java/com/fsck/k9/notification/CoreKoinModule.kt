@@ -1,6 +1,6 @@
 package com.fsck.k9.notification
 
-import android.support.v4.app.NotificationManagerCompat
+import androidx.core.app.NotificationManagerCompat
 import org.koin.dsl.module.applicationContext
 
 val coreNotificationModule = applicationContext {

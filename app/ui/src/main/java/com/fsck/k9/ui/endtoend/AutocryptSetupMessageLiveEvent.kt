@@ -7,8 +7,10 @@ import com.fsck.k9.autocrypt.AutocryptTransferMessageCreator
 import com.fsck.k9.helper.SingleLiveEvent
 import com.fsck.k9.mail.Address
 import com.fsck.k9.mail.Message
-import kotlinx.coroutines.experimental.android.UI
-import kotlinx.coroutines.experimental.launch
+
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.GlobalScope
+import kotlinx.coroutines.launch
 import org.jetbrains.anko.coroutines.experimental.bg
 import org.openintents.openpgp.util.OpenPgpApi
 import java.io.ByteArrayOutputStream
@@ -16,7 +18,7 @@ import java.io.InputStream
 
 class AutocryptSetupMessageLiveEvent(val messageCreator: AutocryptTransferMessageCreator) : SingleLiveEvent<AutocryptSetupMessage>() {
     fun loadAutocryptSetupMessageAsync(openPgpApi: OpenPgpApi, account: Account) {
-        launch(UI) {
+        GlobalScope.launch(Dispatchers.Main) {
             val setupMessage = bg {
                 loadAutocryptSetupMessage(openPgpApi, account)
             }
