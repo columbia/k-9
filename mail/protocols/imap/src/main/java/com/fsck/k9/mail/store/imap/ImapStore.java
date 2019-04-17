@@ -378,7 +378,7 @@ public class ImapStore extends RemoteStore {
         return true;
     }
 
-    StoreConfig getStoreConfig() {
+    public StoreConfig getStoreConfig() {
         return mStoreConfig;
     }
 

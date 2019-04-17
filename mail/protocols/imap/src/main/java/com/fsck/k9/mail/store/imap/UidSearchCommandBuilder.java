@@ -6,11 +6,12 @@ import java.util.Set;
 import com.fsck.k9.mail.Flag;
 
 
-class UidSearchCommandBuilder {
+public class UidSearchCommandBuilder {
     private String queryString;
     private boolean performFullTextSearch;
     private Set<Flag> requiredFlags;
     private Set<Flag> forbiddenFlags;
+    private boolean performHeaderSearch;
 
 
     public UidSearchCommandBuilder queryString(String queryString) {
@@ -20,6 +21,11 @@ class UidSearchCommandBuilder {
 
     public UidSearchCommandBuilder performFullTextSearch(boolean performFullTextSearch) {
         this.performFullTextSearch = performFullTextSearch;
+        return this;
+    }
+
+    public UidSearchCommandBuilder performHeaderSearch(boolean performHeaderSearch) {
+        this.performHeaderSearch = performHeaderSearch;
         return this;
     }
 
@@ -49,6 +55,8 @@ class UidSearchCommandBuilder {
         String encodedQuery = ImapUtility.encodeString(queryString);
         if (performFullTextSearch) {
             builder.append(" TEXT ").append(encodedQuery);
+        } else if (performHeaderSearch) {
+            builder.append(" HEADER ").append(encodedQuery);
         } else {
             builder.append(" OR SUBJECT ").append(encodedQuery).append(" FROM ").append(encodedQuery);
         }

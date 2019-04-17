@@ -1389,7 +1389,7 @@ public class ImapFolder extends Folder<ImapMessage> {
 
     /**
      * Search the remote ImapFolder.
-     * @param queryString String to query for.
+     * @param queryString String to query for. Use {@link UidSearchCommandBuilder} for Imap.
      * @param requiredFlags Mandatory flags
      * @param forbiddenFlags Flags to exclude
      * @return List of messages found
@@ -1409,15 +1409,8 @@ public class ImapFolder extends Folder<ImapMessage> {
 
             inSearch = true;
 
-            String searchCommand = new UidSearchCommandBuilder()
-                    .queryString(queryString)
-                    .performFullTextSearch(store.getStoreConfig().isRemoteSearchFullText())
-                    .requiredFlags(requiredFlags)
-                    .forbiddenFlags(forbiddenFlags)
-                    .build();
-
             try {
-                List<ImapResponse> imapResponses = executeSimpleCommand(searchCommand);
+                List<ImapResponse> imapResponses = executeSimpleCommand(queryString);
                 SearchResponse searchResponse = SearchResponse.parse(imapResponses);
                 return getMessages(searchResponse, null);
             } catch (IOException ioe) {

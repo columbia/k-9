@@ -128,12 +128,12 @@ class E3UndoLiveEvent(private val context: Context) : SingleLiveEvent<E3UndoResu
                             synchronizeDecrypted(account, message.folder, decryptedMessage, originalUid)
                         }).start()
                     } catch (e: MessagingException) {
-                        Timber.e("Failed to decrypt message: ${message.subject}, likely because E3 encrypted using an unavailable key!", e)
+                        Timber.e(e, "Failed to decrypt message: ${message.subject}, likely because E3 encrypted using an unavailable key!")
                     }
                 }
 
                 override fun onError(e: Exception) {
-                    Timber.e("Got error while binding to OpenPGP service", e)
+                    Timber.e(e, "Got error while binding to OpenPGP service")
                 }
             })
             pgpServiceConnection.bindToService()
