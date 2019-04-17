@@ -23,18 +23,27 @@ import java.util.concurrent.SynchronousQueue
 class E3UndoEncryptionManager(private val context: Context) {
 
     fun startUndoWorker(account: Account) {
-        val e3EncryptedMessageIds = scanForUids(account)
-        val inputData = workDataOf("test" to e3EncryptedMessageIds)
-
         val constraints = Constraints.Builder()
                 .setRequiredNetworkType(NetworkType.UNMETERED)
                 .setRequiresBatteryNotLow(true)
                 .setRequiresStorageNotLow(true)
                 .build()
-        val undoWorkRequest = OneTimeWorkRequestBuilder<UndoWorker>()
-                .setInputData(inputData)
-                .setConstraints(constraints)
-                .build()
+
+        val e3EncryptedMessageIds = scanForUids(account)
+        val messageIdBatches = batchUids(e3EncryptedMessageIds)
+        val workRequests = mutableListOf<OneTimeWorkRequest>()
+
+        for (batch in messageIdBatches) {
+            val inputData = workDataOf(WORKER_INPUT_KEY to batch)
+            val undoWorkRequest = OneTimeWorkRequestBuilder<UndoWorker>()
+                    .setInputData(inputData)
+                    .setConstraints(constraints)
+                    .build()
+
+            workRequests.add(undoWorkRequest)
+        }
+
+        WorkManager.getInstance().beginWith(workRequests).enqueue()
     }
 
     private fun scanForUids(account: Account): List<String> {
@@ -60,6 +69,9 @@ class E3UndoEncryptionManager(private val context: Context) {
         }
     }
 
+    private fun batchUids(allMessageIds: List<String>): List<List<String>> {
+        return listOf(allMessageIds)
+    }
 
     private fun getBackend(account: Account): Backend {
         return DI.get(BackendManager::class.java).getBackend(account)
@@ -68,6 +80,7 @@ class E3UndoEncryptionManager(private val context: Context) {
     companion object {
         private const val SEARCH_STRING = "${E3Constants.MIME_E3_ENCRYPTED_HEADER} \"\""
         const val WORKER_INPUT_KEY = "message_ids"
+        const val WORKER_OUTPUT_KEY = "message_ids"
     }
 }
 
@@ -87,12 +100,11 @@ class UndoWorker(private val appContext: Context,
             val localFolder = localStore.getFolder(folderServerId)
                     ?: throw MessagingException("Folder not found")
 
+            // Download messages locally if they aren't already
             val nonlocalMsgIds = localFolder.extractNewMessages(msgServerIds)
             loadSearchResultsSynchronous(account, nonlocalMsgIds, localFolder)
 
-            // Everything should be downloaded locally now
-
-            val outputData = workDataOf("test" to "test")
+            val outputData = workDataOf(E3UndoEncryptionManager.WORKER_OUTPUT_KEY to msgServerIds)
             return Result.success(outputData)
         } catch (e: Exception) {
             // Never use exceptions for codeflow (do as I say, not as I do)
