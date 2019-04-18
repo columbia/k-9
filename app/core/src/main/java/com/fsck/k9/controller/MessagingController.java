@@ -2828,11 +2828,20 @@ public class MessagingController {
         return id;
     }
 
-    public void replaceWithEncrypted(final Account account,
-                                     final LocalFolder localFolder,
-                                     final Message originalMessage,
-                                     final MimeMessage encryptedMessage,
-                                     final SyncUpdatedListener listener) {
+    /**
+     * This is used for E3 message replacement, not general message replacement.
+     *
+     * @param account Account which will have a message replaced.
+     * @param localFolder The folder where the replacement will be stored.
+     * @param originalMessage The original message to be replaced.
+     * @param replacementMessage The replacement.
+     * @param listener Listener for progress.
+     */
+    public void replaceExistingMessage(final Account account,
+                                       final LocalFolder localFolder,
+                                       final Message originalMessage,
+                                       final MimeMessage replacementMessage,
+                                       final SyncUpdatedListener listener) {
         putBackground("Synchronize encrypted-on-receipt email and update listeners", null, new Runnable() {
             @Override
             public void run() {
@@ -2842,11 +2851,11 @@ public class MessagingController {
 
                 final LocalMessage localMessage;
                 try {
-                    localMessage = synchronizeMessageLocally(encryptedMessage);
+                    localMessage = synchronizeMessageLocally(replacementMessage);
                     localMessage.setFlag(Flag.E3, true);
                     listener.updateWithNewMessage(localMessage);
                 } catch (MessagingException e) {
-                    throw new RuntimeException("Failed to store encrypted version locally", e);
+                    throw new RuntimeException("Failed to store replacement message locally", e);
                 }
 
                 try {
@@ -2857,7 +2866,7 @@ public class MessagingController {
                     localFolder.fetch(localMessageList, fp, null);
                     backend.uploadMessage(srcFolder, localMessage);
                 }  catch (final MessagingException e) {
-                    throw new RuntimeException("Failed to append encrypted version", e);
+                    throw new RuntimeException("Failed to append replacement message", e);
                 }
 
                 try {
@@ -2870,13 +2879,13 @@ public class MessagingController {
                             backend.setFlag(trashFolder, Collections.singletonList(newUid), Flag.DELETED, true);
                         }
                     }
-                    Timber.i("replaceWithEncrypted expunging folder %s:%s", account.getDescription(), account.getTrashFolder());
+                    Timber.i("replaceExistingMessage expunging folder %s:%s", account.getDescription(), account.getTrashFolder());
                     backend.expungeMessages(account.getTrashFolder(), uid);
                 } catch (MessagingException e) {
                     throw new RuntimeException("Failed to delete remote plaintext email", e);
                 }
 
-                Timber.i("replaceWithEncrypted syncing folder %s:%s", account.getDescription(), srcFolder);
+                Timber.i("replaceExistingMessage syncing folder %s:%s", account.getDescription(), srcFolder);
                 syncFolder(account, srcFolder, null, null, backend);
             }
 

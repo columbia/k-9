@@ -6,23 +6,25 @@ import com.fsck.k9.Account
 import com.fsck.k9.DI
 import com.fsck.k9.backend.BackendManager
 import com.fsck.k9.backend.api.Backend
-import com.fsck.k9.backend.api.BackendFolder
+import com.fsck.k9.backend.api.SyncUpdatedListener
 import com.fsck.k9.controller.MessagingController
-import com.fsck.k9.mail.Address
 import com.fsck.k9.mail.FetchProfile
 import com.fsck.k9.mail.Message
 import com.fsck.k9.mail.MessagingException
+import com.fsck.k9.mail.internet.MimeMessage
 import com.fsck.k9.mailstore.LocalFolder
 import com.fsck.k9.mailstore.LocalMessage
-import com.fsck.k9.search.LocalSearch
-import com.fsck.k9.search.SearchSpecification
+import org.openintents.openpgp.IOpenPgpService2
+import org.openintents.openpgp.util.OpenPgpApi
+import org.openintents.openpgp.util.OpenPgpServiceConnection
 import timber.log.Timber
 import java.lang.Exception
-import java.util.concurrent.SynchronousQueue
+import java.util.concurrent.ArrayBlockingQueue
+import java.util.concurrent.BlockingQueue
 
-class E3UndoEncryptionManager(private val context: Context) {
+class E3UndoEncryptionManager private constructor() {
 
-    fun startUndoWorker(account: Account) {
+    fun startUndo(account: Account) {
         val constraints = Constraints.Builder()
                 .setRequiredNetworkType(NetworkType.UNMETERED)
                 .setRequiresBatteryNotLow(true)
@@ -38,12 +40,17 @@ class E3UndoEncryptionManager(private val context: Context) {
             val undoWorkRequest = OneTimeWorkRequestBuilder<UndoWorker>()
                     .setInputData(inputData)
                     .setConstraints(constraints)
+                    .addTag(getTag(account))
                     .build()
 
             workRequests.add(undoWorkRequest)
         }
 
-        WorkManager.getInstance().beginWith(workRequests).enqueue()
+        WorkManager.getInstance().enqueueUniqueWork(getTag(account), ExistingWorkPolicy.REPLACE, workRequests)
+    }
+
+    fun cancelUndo(account: Account) {
+        WorkManager.getInstance().cancelUniqueWork(getTag(account))
     }
 
     private fun scanForUids(account: Account): List<String> {
@@ -77,14 +84,22 @@ class E3UndoEncryptionManager(private val context: Context) {
         return DI.get(BackendManager::class.java).getBackend(account)
     }
 
+    private fun getTag(account: Account): String {
+        return "$WORKER_TAG_SUFFIX_UNDO.${account.uuid}"
+    }
+
     companion object {
+        @JvmStatic
+        val INSTANCE = E3UndoEncryptionManager()
+
         private const val SEARCH_STRING = "${E3Constants.MIME_E3_ENCRYPTED_HEADER} \"\""
         const val WORKER_INPUT_KEY = "message_ids"
         const val WORKER_OUTPUT_KEY = "message_ids"
+        const val WORKER_TAG_SUFFIX_UNDO = "undo_e3"
     }
 }
 
-class UndoWorker(private val appContext: Context,
+class UndoWorker(appContext: Context,
                  private val account: Account,
                  workerParams: WorkerParameters) : Worker(appContext, workerParams) {
 
@@ -92,24 +107,66 @@ class UndoWorker(private val appContext: Context,
         try {
             val msgServerIds = inputData.getStringArray(E3UndoEncryptionManager.WORKER_INPUT_KEY)!!.asList()
 
-            val address = Address.parse(account.getIdentity(0).email)[0]
-            val controller = MessagingController.getInstance(appContext)
-
             val folderServerId = account.inboxFolder
             val localStore = account.localStore
             val localFolder = localStore.getFolder(folderServerId)
                     ?: throw MessagingException("Folder not found")
 
             // Download messages locally if they aren't already
-            val nonlocalMsgIds = localFolder.extractNewMessages(msgServerIds)
-            loadSearchResultsSynchronous(account, nonlocalMsgIds, localFolder)
+            val nonLocalMsgIds = localFolder.extractNewMessages(msgServerIds)
+            loadSearchResultsSynchronous(account, nonLocalMsgIds, localFolder)
 
+            // Only decrypt messages which have E3 encryption
+            val allMessagesWithE3 = localFolder.getMessagesByUids(msgServerIds).filter { it.headerNames.contains(E3Constants.MIME_E3_ENCRYPTED_HEADER) }
+            val decryptedStoredLocally = decryptBatch(allMessagesWithE3)
+
+            // Remove any messages which we didn't have locally before to save space?
+            //localFolder.destroyMessages(nonLocalMsgs)
             val outputData = workDataOf(E3UndoEncryptionManager.WORKER_OUTPUT_KEY to msgServerIds)
             return Result.success(outputData)
         } catch (e: Exception) {
             // Never use exceptions for codeflow (do as I say, not as I do)
             return Result.failure()
         }
+    }
+
+    private fun decryptBatch(messageBatch: List<LocalMessage>): BlockingQueue<Message> {
+        val messagingController = MessagingController.getInstance(applicationContext)
+        val e3Provider = account.e3Provider!!
+        val decryptedStoredLocally = ArrayBlockingQueue<Message>(messageBatch.size)
+
+        val syncUpdatedListener = object : SyncUpdatedListener {
+            override fun updateWithNewMessage(message: Message) {
+                decryptedStoredLocally.add(message)
+            }
+        }
+
+        for (message in messageBatch) {
+            val pgpServiceConnection = OpenPgpServiceConnection(applicationContext, e3Provider, object : OpenPgpServiceConnection.OnBound {
+                override fun onBound(service: IOpenPgpService2) {
+                    val openPgpApi = OpenPgpApi(applicationContext, service)
+                    val decryptor = SimpleE3PgpDecryptor(openPgpApi, account.e3Key)
+
+                    try {
+                        val decryptedMessage = decryptor.decrypt(message as MimeMessage, account.email)
+
+                        Thread {
+                            Timber.d("Synchronizing decrypted E3 message: ${message.subject} (originalUid=${message.uid}, decryptedMessageUid=${decryptedMessage.uid}")
+                            messagingController.replaceExistingMessage(account, message.folder, message, decryptedMessage, syncUpdatedListener)
+                        }.start()
+                    } catch (e: MessagingException) {
+                        Timber.e(e, "Failed to decrypt message: ${message.subject}, likely because E3 encrypted using an unavailable key!")
+                    }
+                }
+
+                override fun onError(e: Exception) {
+                    Timber.e(e, "Got error while binding to OpenPGP service")
+                }
+            })
+            pgpServiceConnection.bindToService()
+        }
+
+        return decryptedStoredLocally
     }
 
     @Throws(MessagingException::class)

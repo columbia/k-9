@@ -64,7 +64,7 @@ public class BackendE3PgpService implements EncryptSyncListener<Message> {
                             final MimeMessage encryptedMimeMessage = encryptor.encrypt((MimeMessage) message, accountEmail);
                             encryptedMimeMessage.setHeader(E3Constants.MIME_E3_ENCRYPTED_HEADER, accountEmail[0]);
 
-                            MessagingController.getInstance(context).replaceWithEncrypted(account, localFolder, message, encryptedMimeMessage, listener);
+                            MessagingController.getInstance(context).replaceExistingMessage(account, localFolder, message, encryptedMimeMessage, listener);
                         } catch (MessagingException e) {
                             throw new RuntimeException("Failed to encrypt on receipt!", e);
                         }
@@ -76,7 +76,7 @@ public class BackendE3PgpService implements EncryptSyncListener<Message> {
 
             @Override
             public void onError(Exception e) {
-                Timber.e("Got error while binding to OpenPGP service", e);
+                Timber.e(e, "Got error while binding to OpenPGP service");
             }
         });
 

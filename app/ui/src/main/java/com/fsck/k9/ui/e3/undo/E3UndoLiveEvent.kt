@@ -123,10 +123,10 @@ class E3UndoLiveEvent(private val context: Context) : SingleLiveEvent<E3UndoResu
                         val originalUid = message.uid
                         val decryptedMessage = decryptor.decrypt(message as MimeMessage, account.email)
 
-                        Thread({
+                        Thread {
                             Timber.d("Synchronizing decrypted E3 message: ${message.subject} (originalUid=$originalUid, decryptedMessageUid=${decryptedMessage.uid}")
                             synchronizeDecrypted(account, message.folder, decryptedMessage, originalUid)
-                        }).start()
+                        }.start()
                     } catch (e: MessagingException) {
                         Timber.e(e, "Failed to decrypt message: ${message.subject}, likely because E3 encrypted using an unavailable key!")
                     }
