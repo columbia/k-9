@@ -77,9 +77,11 @@ class E3UndoPresenter internal constructor(
 
     private fun onEventExistingWorkInfo(workInfoList: List<WorkInfo>?) {
         if (workInfoList == null || workInfoList.isEmpty()) {
+            Timber.d("Found no existing E3 undo workers")
             return
         }
 
+        Timber.d("Found existing E3 undo workers: $workInfoList")
         view.sceneUndoing()
     }
 }

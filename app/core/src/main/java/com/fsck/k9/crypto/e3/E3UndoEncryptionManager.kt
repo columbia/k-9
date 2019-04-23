@@ -5,6 +5,7 @@ import androidx.lifecycle.LiveData
 import androidx.work.*
 import com.fsck.k9.Account
 import com.fsck.k9.DI
+import com.fsck.k9.Preferences
 import com.fsck.k9.backend.BackendManager
 import com.fsck.k9.backend.api.Backend
 import com.fsck.k9.backend.api.SyncUpdatedListener
@@ -44,7 +45,10 @@ class E3UndoEncryptionManager private constructor() {
         val workRequests = mutableListOf<OneTimeWorkRequest>()
 
         for (batch: List<String> in messageIdBatches) {
-            val inputData = Data.Builder().putStringArray(WORKER_INPUT_KEY, batch.toTypedArray()).build()
+            val inputData = Data.Builder()
+                    .putStringArray(WORKER_INPUT_KEY_MESSAGE_IDS, batch.toTypedArray())
+                    .putString(WORKER_INPUT_KEY_ACCOUNT_UUID, account.uuid)
+                    .build()
             val undoWorkRequest = OneTimeWorkRequestBuilder<UndoWorker>()
                     .setInputData(inputData)
                     .setConstraints(constraints)
@@ -105,19 +109,22 @@ class E3UndoEncryptionManager private constructor() {
         val INSTANCE = E3UndoEncryptionManager()
 
         private const val SEARCH_STRING = "${E3Constants.MIME_E3_ENCRYPTED_HEADER} \"\""
-        const val WORKER_INPUT_KEY = "message_ids"
+        const val WORKER_INPUT_KEY_MESSAGE_IDS = "message_ids"
+        const val WORKER_INPUT_KEY_ACCOUNT_UUID = "account_uuid"
         const val WORKER_OUTPUT_KEY = "message_ids"
         const val WORKER_TAG_SUFFIX_UNDO = "undo_e3"
     }
 }
 
 class UndoWorker(appContext: Context,
-                 private val account: Account,
                  workerParams: WorkerParameters) : Worker(appContext, workerParams) {
 
     override fun doWork(): Result {
         try {
-            val msgServerIds = inputData.getStringArray(E3UndoEncryptionManager.WORKER_INPUT_KEY)!!.asList()
+            val msgServerIds = inputData.getStringArray(E3UndoEncryptionManager.WORKER_INPUT_KEY_MESSAGE_IDS)!!.asList()
+            val accountUuid = inputData.getString(E3UndoEncryptionManager.WORKER_INPUT_KEY_ACCOUNT_UUID)!!
+
+            val account = Preferences.getPreferences(applicationContext).getAccount(accountUuid)
 
             val folderServerId = account.inboxFolder
             val localStore = account.localStore
@@ -132,7 +139,7 @@ class UndoWorker(appContext: Context,
 
             // Only decrypt messages which have E3 encryption
             val allMessagesWithE3 = localFolder.getMessagesByUids(msgServerIds).filter { it.headerNames.contains(E3Constants.MIME_E3_ENCRYPTED_HEADER) }
-            val decryptedStoredLocally = decryptBatch(allMessagesWithE3)
+            val decryptedStoredLocally = decryptBatch(account, allMessagesWithE3)
 
             // Remove any messages which we didn't have locally before to save space?
             //localFolder.destroyMessages(nonLocalMsgs)
@@ -144,7 +151,7 @@ class UndoWorker(appContext: Context,
         }
     }
 
-    private fun decryptBatch(messageBatch: List<LocalMessage>): BlockingQueue<Message> {
+    private fun decryptBatch(account: Account, messageBatch: List<LocalMessage>): BlockingQueue<Message> {
         val messagingController = MessagingController.getInstance(applicationContext)
         val e3Provider = account.e3Provider!!
         val decryptedStoredLocally = ArrayBlockingQueue<Message>(messageBatch.size)
