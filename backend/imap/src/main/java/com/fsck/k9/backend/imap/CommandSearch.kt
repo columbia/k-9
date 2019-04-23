@@ -12,7 +12,8 @@ internal class CommandSearch(private val imapStore: ImapStore) {
             folderServerId: String,
             query: String?,
             requiredFlags: Set<Flag>?,
-            forbiddenFlags: Set<Flag>?
+            forbiddenFlags: Set<Flag>?,
+            searchHeaders: Boolean
     ): List<String> {
         val folder = imapStore.getFolder(folderServerId)
         try {
@@ -20,7 +21,7 @@ internal class CommandSearch(private val imapStore: ImapStore) {
             val searchCommand = UidSearchCommandBuilder()
                     .queryString(query)
                     .performFullTextSearch(imapStore.storeConfig.isRemoteSearchFullText)
-                    .performHeaderSearch(false)
+                    .performHeaderSearch(searchHeaders)
                     .requiredFlags(requiredFlags)
                     .forbiddenFlags(forbiddenFlags)
                     .build()

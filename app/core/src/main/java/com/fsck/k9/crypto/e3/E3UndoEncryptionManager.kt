@@ -34,6 +34,8 @@ class E3UndoEncryptionManager private constructor() {
 
         val e3EncryptedMessageIds = scanForUids(account)
 
+        Timber.d("Found ${e3EncryptedMessageIds.size} E3 encrypted emails to undo")
+
         if (e3EncryptedMessageIds.isEmpty()) {
             return null
         }
@@ -77,7 +79,7 @@ class E3UndoEncryptionManager private constructor() {
             val backend = getBackend(account)
 
             // Find remote messages with E3 encryption
-            return backend.search(folderServerId, SEARCH_STRING, null, null)
+            return backend.searchHeaders(folderServerId, SEARCH_STRING, null, null)
         } finally {
             if (flippedRemoteSearch) {
                 Timber.d("Resetting remote search to false")

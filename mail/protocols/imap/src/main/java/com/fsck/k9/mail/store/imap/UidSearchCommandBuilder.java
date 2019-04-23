@@ -53,10 +53,11 @@ public class UidSearchCommandBuilder {
         }
 
         String encodedQuery = ImapUtility.encodeString(queryString);
-        if (performFullTextSearch) {
+        if (performHeaderSearch) {
+            // Don't encode header query strings
+            builder.append(" HEADER ").append(queryString);
+        } else if (performFullTextSearch) {
             builder.append(" TEXT ").append(encodedQuery);
-        } else if (performHeaderSearch) {
-            builder.append(" HEADER ").append(encodedQuery);
         } else {
             builder.append(" OR SUBJECT ").append(encodedQuery).append(" FROM ").append(encodedQuery);
         }

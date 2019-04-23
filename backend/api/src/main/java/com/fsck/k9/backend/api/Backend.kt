@@ -69,6 +69,10 @@ interface Backend {
     ): List<String>
 
     @Throws(MessagingException::class)
+    fun searchHeaders(folderServerId: String, query: String?,
+                        requiredFlags: Set<Flag>?, forbiddenFlags: Set<Flag>?): List<String>
+
+    @Throws(MessagingException::class)
     fun fetchMessage(folderServerId: String, messageServerId: String, fetchProfile: FetchProfile): Message
 
     @Throws(MessagingException::class)

@@ -98,6 +98,15 @@ class WebDavBackend(
         throw UnsupportedOperationException("not supported")
     }
 
+    override fun searchHeaders(
+            folderServerId: String,
+            query: String?,
+            requiredFlags: Set<Flag>?,
+            forbiddenFlags: Set<Flag>?
+    ): List<String> {
+        throw UnsupportedOperationException("not supported")
+    }
+
     override fun fetchMessage(folderServerId: String, messageServerId: String, fetchProfile: FetchProfile): Message {
         return commandFetchMessage.fetchMessage(folderServerId, messageServerId, fetchProfile)
     }
