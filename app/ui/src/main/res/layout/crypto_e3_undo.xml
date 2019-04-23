@@ -11,6 +11,7 @@
     android:paddingRight="12dp">
 
     <ScrollView
+        android:id="@+id/e3UndoScrollView"
         android:layout_width="fill_parent"
         android:layout_height="0dp"
         android:layout_weight="1"
@@ -18,6 +19,7 @@
         android:fadingEdge="none"
         android:scrollbarStyle="outsideInset">
         <LinearLayout
+            android:id="@+id/e3NewUndoLinearLayout"
             android:orientation="vertical"
             android:layout_gravity="center_horizontal"
             android:layout_height="wrap_content"
@@ -146,7 +148,79 @@
                 style="?android:textAppearanceMedium"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:text="@string/e3_key_scan_error_download"
+                android:text="@string/e3_undo_error"
+                tools:visibility="gone"
+                />
+
+        </LinearLayout>
+
+
+    </ScrollView>
+
+    <ScrollView
+        android:id="@+id/e3ExistingUndoScrollView"
+        android:visibility="gone"
+        android:layout_width="fill_parent"
+        android:layout_height="0dp"
+        android:layout_weight="1"
+        android:padding="6dip"
+        android:fadingEdge="none"
+        android:scrollbarStyle="outsideInset">
+        <LinearLayout
+            android:id="@+id/e3ExistingUndoLinearLayout"
+            android:orientation="vertical"
+            android:layout_gravity="center_horizontal"
+            android:layout_height="wrap_content"
+            android:padding="6dip"
+            android:layout_width="fill_parent">
+
+            <TextView
+                style="?android:textAppearanceMedium"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="24dp"
+                android:text="@string/e3_existing_undo_intro" />
+
+            <LinearLayout
+                android:id="@+id/e3ExistingUndoMsgInfo"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="24dp"
+                android:orientation="vertical">
+
+                <TextView
+                    style="?android:textAppearanceMedium"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="@string/e3_existing_undo_location_desc"
+                    />
+
+                <TextView
+                    android:id="@+id/e3ExistingUndoAddress"
+                    style="?android:textAppearanceMedium"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_gravity="center_vertical"
+                    app:fontFamily="monospace"
+                    tools:text="look@my.amazin.horse"
+                    />
+            </LinearLayout>
+
+            <Button
+                android:id="@+id/e3CancelUndoButton"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_gravity="center_horizontal"
+                android:layout_marginTop="24dp"
+                android:text="@string/e3_existing_undo_cancel_button"
+                />
+
+            <TextView
+                android:id="@+id/e3ExistingUndoError"
+                style="?android:textAppearanceMedium"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="@string/e3_existing_undo_error"
                 tools:visibility="gone"
                 />
 

@@ -1,6 +1,7 @@
 package com.fsck.k9.crypto.e3
 
 import android.content.Context
+import androidx.lifecycle.LiveData
 import androidx.work.*
 import com.fsck.k9.Account
 import com.fsck.k9.DI
@@ -24,7 +25,7 @@ import java.util.concurrent.BlockingQueue
 
 class E3UndoEncryptionManager private constructor() {
 
-    fun startUndo(account: Account) {
+    fun startUndo(account: Account): Operation? {
         val constraints = Constraints.Builder()
                 .setRequiredNetworkType(NetworkType.UNMETERED)
                 .setRequiresBatteryNotLow(true)
@@ -32,11 +33,16 @@ class E3UndoEncryptionManager private constructor() {
                 .build()
 
         val e3EncryptedMessageIds = scanForUids(account)
+
+        if (e3EncryptedMessageIds.isEmpty()) {
+            return null
+        }
+
         val messageIdBatches = batchUids(e3EncryptedMessageIds)
         val workRequests = mutableListOf<OneTimeWorkRequest>()
 
-        for (batch in messageIdBatches) {
-            val inputData = workDataOf(WORKER_INPUT_KEY to batch)
+        for (batch: List<String> in messageIdBatches) {
+            val inputData = Data.Builder().putStringArray(WORKER_INPUT_KEY, batch.toTypedArray()).build()
             val undoWorkRequest = OneTimeWorkRequestBuilder<UndoWorker>()
                     .setInputData(inputData)
                     .setConstraints(constraints)
@@ -46,11 +52,15 @@ class E3UndoEncryptionManager private constructor() {
             workRequests.add(undoWorkRequest)
         }
 
-        WorkManager.getInstance().enqueueUniqueWork(getTag(account), ExistingWorkPolicy.REPLACE, workRequests)
+        return WorkManager.getInstance().enqueueUniqueWork(getTag(account), ExistingWorkPolicy.REPLACE, workRequests)
     }
 
     fun cancelUndo(account: Account) {
         WorkManager.getInstance().cancelUniqueWork(getTag(account))
+    }
+
+    fun getCurrentLiveData(account: Account): LiveData<List<WorkInfo>> {
+        return WorkManager.getInstance().getWorkInfosForUniqueWorkLiveData(getTag(account))
     }
 
     private fun scanForUids(account: Account): List<String> {
@@ -115,6 +125,8 @@ class UndoWorker(appContext: Context,
             // Download messages locally if they aren't already
             val nonLocalMsgIds = localFolder.extractNewMessages(msgServerIds)
             loadSearchResultsSynchronous(account, nonLocalMsgIds, localFolder)
+
+            Timber.d("Got nonLocalMsgIds: ${nonLocalMsgIds.joinToString(",")}")
 
             // Only decrypt messages which have E3 encryption
             val allMessagesWithE3 = localFolder.getMessagesByUids(msgServerIds).filter { it.headerNames.contains(E3Constants.MIME_E3_ENCRYPTED_HEADER) }

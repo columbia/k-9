@@ -50,13 +50,38 @@ class E3UndoActivity : E3ActionBaseActivity(), View.OnClickListener {
     }
 
     fun sceneBegin() {
+        e3UndoScrollView.visibility = View.VISIBLE
+        e3ExistingUndoScrollView.visibility = View.GONE
+
         e3UndoButton.visibility = View.VISIBLE
         e3UndoMsgInfo.visibility = View.VISIBLE
 
         e3UndoLayoutUndoing.visibility = View.GONE
         e3UndoLayoutFinish.visibility = View.GONE
         e3UndoLayoutFinishNoMessages.visibility = View.GONE
+
         e3UndoError.visibility = View.GONE
+        e3ExistingUndoError.visibility = View.GONE
+
+        cancel.visibility = View.VISIBLE
+        done.visibility = View.GONE
+    }
+
+    fun sceneLaunchingUndo() {
+        setupSceneTransition()
+
+        e3UndoScrollView.visibility = View.VISIBLE
+        e3ExistingUndoScrollView.visibility = View.GONE
+
+        e3UndoButton.visibility = View.GONE
+        e3UndoMsgInfo.visibility = View.VISIBLE
+
+        e3UndoLayoutUndoing.visibility = View.GONE
+        e3UndoLayoutFinish.visibility = View.GONE
+        e3UndoLayoutFinishNoMessages.visibility = View.GONE
+
+        e3UndoError.visibility = View.GONE
+        e3ExistingUndoError.visibility = View.GONE
 
         cancel.visibility = View.VISIBLE
         done.visibility = View.GONE
@@ -65,12 +90,13 @@ class E3UndoActivity : E3ActionBaseActivity(), View.OnClickListener {
     fun sceneUndoing() {
         setupSceneTransition()
 
-        e3UndoButton.visibility = View.GONE
-        e3UndoMsgInfo.visibility = View.GONE
-        e3UndoLayoutUndoing.visibility = View.VISIBLE
-        e3UndoLayoutFinish.visibility = View.GONE
-        e3UndoLayoutFinishNoMessages.visibility = View.GONE
-        e3UndoError.visibility = View.GONE
+        e3UndoScrollView.visibility = View.GONE
+        e3ExistingUndoScrollView.visibility = View.VISIBLE
+
+        e3CancelUndoButton.visibility = View.VISIBLE
+        e3ExistingUndoMsgInfo.visibility = View.VISIBLE
+
+        e3ExistingUndoError.visibility = View.GONE
 
         cancel.visibility = View.VISIBLE
         done.visibility = View.GONE
@@ -78,10 +104,6 @@ class E3UndoActivity : E3ActionBaseActivity(), View.OnClickListener {
 
     fun setLoadingStateUndoing() {
         e3UndoProgressUndoing.setDisplayedChild(StatusIndicator.Status.PROGRESS)
-    }
-
-    fun setLoadingStateDownloading() {
-        e3UndoProgressUndoing.setDisplayedChild(StatusIndicator.Status.OK)
     }
 
     fun setLoadingStateFinished() {
@@ -105,19 +127,8 @@ class E3UndoActivity : E3ActionBaseActivity(), View.OnClickListener {
     }
 
     fun sceneFinishedNoMessages(transition: Boolean = false) {
-        if (transition) {
-            setupSceneTransition()
-        }
-
-        e3UndoButton.visibility = View.GONE
-        e3UndoMsgInfo.visibility = View.GONE
-        e3UndoLayoutUndoing.visibility = View.VISIBLE
-        e3UndoLayoutFinish.visibility = View.GONE
+        sceneFinished(transition)
         e3UndoLayoutFinishNoMessages.visibility = View.VISIBLE
-        e3UndoError.visibility = View.GONE
-
-        cancel.visibility = View.GONE
-        done.visibility = View.VISIBLE
     }
 
     fun setLoadingStateSendingFailed() {

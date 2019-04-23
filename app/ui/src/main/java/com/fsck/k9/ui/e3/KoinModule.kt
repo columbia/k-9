@@ -1,5 +1,6 @@
 package com.fsck.k9.ui.e3
 
+import com.fsck.k9.crypto.e3.E3UndoEncryptionManager
 import com.fsck.k9.ui.crypto.PgpWordList
 import com.fsck.k9.ui.e3.scan.E3KeyScanDownloadLiveEvent
 import com.fsck.k9.ui.e3.scan.E3KeyScanPresenter
@@ -63,7 +64,6 @@ val e3UndoUiModule = applicationContext {
     factory { params ->
         E3UndoPresenter(
                 params["lifecycleOwner"],
-                get(parameters = { params.values }),
                 get(),
                 get(),
                 params["e3UndoView"])

@@ -1,30 +1,27 @@
 package com.fsck.k9.ui.e3.undo
 
-import android.app.PendingIntent
 import androidx.lifecycle.LifecycleOwner
 import androidx.lifecycle.Observer
+import androidx.work.WorkInfo
 import com.fsck.k9.Account
 import com.fsck.k9.Preferences
-import com.fsck.k9.ui.e3.E3OpenPgpPresenterCallback
 
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.GlobalScope
 import kotlinx.coroutines.launch
-import org.openintents.openpgp.OpenPgpApiManager
 import timber.log.Timber
 
 class E3UndoPresenter internal constructor(
-        lifecycleOwner: LifecycleOwner,
-        private val openPgpApiManager: OpenPgpApiManager,
+        private val lifecycleOwner: LifecycleOwner,
         private val preferences: Preferences,
         private val viewModel: E3UndoViewModel,
         private val view: E3UndoActivity
 ) {
     private lateinit var account: Account
-    private lateinit var pendingIntentForGetKey: PendingIntent
 
     init {
-        viewModel.e3UndoLiveEvent.observe(lifecycleOwner, Observer { msg -> msg?.let { onEventE3Undo(it) } })
+        viewModel.e3UndoLiveEvent.observe(lifecycleOwner,
+                Observer { msg -> msg?.let { onEventE3Undo(it) } })
     }
 
     fun initFromIntent(accountUuid: String?) {
@@ -35,10 +32,11 @@ class E3UndoPresenter internal constructor(
 
         account = preferences.getAccount(accountUuid)
 
-        openPgpApiManager.setOpenPgpProvider(account.e3Provider, E3OpenPgpPresenterCallback(openPgpApiManager, view))
-
         view.setAddress(account.identities[0].email)
         view.sceneBegin()
+
+        viewModel.getExistingWorkInfo(account).observe(lifecycleOwner,
+                Observer { listOfWorkInfo -> listOfWorkInfo?.let { onEventExistingWorkInfo(it) } })
     }
 
     fun onClickHome() {
@@ -46,7 +44,7 @@ class E3UndoPresenter internal constructor(
     }
 
     fun onClickUndo() {
-        view.sceneUndoing()
+        view.sceneLaunchingUndo()
 
         GlobalScope.launch(Dispatchers.Main) {
             view.uxDelay()
@@ -62,17 +60,26 @@ class E3UndoPresenter internal constructor(
             is E3UndoResult.Success -> {
                 view.setLoadingStateFinished()
                 view.sceneFinished()
-                Timber.d("Removed E3 encryption from ${result.decryptedUids.size} messages")
-            }
-            is E3UndoResult.NoneFound -> {
-                view.setLoadingStateFinished()
-                view.sceneFinishedNoMessages()
+                Timber.d("WorkManager undo Operation successfully launched")
             }
             is E3UndoResult.Failure -> {
                 Timber.e(result.exception, "Error while undoing E3 encryption")
                 view.setLoadingStateSendingFailed()
                 view.sceneSendError()
             }
+            is E3UndoResult.NoneFound -> {
+                view.setLoadingStateFinished()
+                view.sceneFinishedNoMessages()
+                Timber.d("No E3 encrypted emails were found, so no undo work was launched")
+            }
         }
+    }
+
+    private fun onEventExistingWorkInfo(workInfoList: List<WorkInfo>?) {
+        if (workInfoList == null || workInfoList.isEmpty()) {
+            return
+        }
+
+        view.sceneUndoing()
     }
 }
