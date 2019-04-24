@@ -81,6 +81,14 @@ class E3UndoPresenter internal constructor(
             return
         }
 
+        for (workInfo in workInfoList) {
+            if (workInfo.state == WorkInfo.State.FAILED) {
+                Timber.d("Found failed undo work, cancelling it")
+                viewModel.cancelExistingWork(account)
+                return
+            }
+        }
+
         Timber.d("Found existing E3 undo workers: $workInfoList")
         view.sceneUndoing()
     }

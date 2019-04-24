@@ -11,4 +11,8 @@ internal class E3UndoViewModel(
     fun getExistingWorkInfo(account: Account): LiveData<List<WorkInfo>> {
         return E3UndoEncryptionManager.INSTANCE.getCurrentLiveData(account)
     }
+
+    fun cancelExistingWork(account: Account) {
+        return E3UndoEncryptionManager.INSTANCE.cancelUndo(account)
+    }
 }

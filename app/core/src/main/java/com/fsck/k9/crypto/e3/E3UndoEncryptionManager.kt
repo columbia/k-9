@@ -63,6 +63,7 @@ class E3UndoEncryptionManager private constructor() {
 
     fun cancelUndo(account: Account) {
         WorkManager.getInstance().cancelUniqueWork(getTag(account))
+        WorkManager.getInstance().pruneWork()
     }
 
     fun getCurrentLiveData(account: Account): LiveData<List<WorkInfo>> {
@@ -147,6 +148,7 @@ class UndoWorker(appContext: Context,
             return Result.success(outputData)
         } catch (e: Exception) {
             // Never use exceptions for codeflow (do as I say, not as I do)
+            Timber.e(e, "UndoWorker failed with exception")
             return Result.failure()
         }
     }
