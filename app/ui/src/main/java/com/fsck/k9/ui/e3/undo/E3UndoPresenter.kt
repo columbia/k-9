@@ -54,6 +54,12 @@ class E3UndoPresenter internal constructor(
         }
     }
 
+    fun onClickCancelUndo() {
+        Timber.d("User requested cancelling all E3 Undo work")
+        viewModel.cancelExistingWork(account)
+        view.sceneBegin()
+    }
+
     private fun onEventE3Undo(result: E3UndoResult?) {
         when (result) {
             null -> view.sceneBegin()

@@ -34,6 +34,10 @@ class E3UndoActivity : E3ActionBaseActivity(), View.OnClickListener {
 
         findViewById<View>(R.id.cancel).setOnClickListener(this)
         findViewById<View>(R.id.done).setOnClickListener(this)
+
+        e3CancelUndoButton.setOnClickListener {
+            presenter.onClickCancelUndo()
+        }
     }
 
     override fun onOptionsItemSelected(item: MenuItem?): Boolean {

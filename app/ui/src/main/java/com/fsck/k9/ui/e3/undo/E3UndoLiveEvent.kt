@@ -35,20 +35,15 @@ import java.util.concurrent.BlockingQueue
 import java.util.concurrent.SynchronousQueue
 
 class E3UndoLiveEvent(context: Context) : SingleLiveEvent<E3UndoResult>() {
-    private val fetchProfile = FetchProfile()
     private val e3Toggler = E3EnableDisableToggler(context)
 
-    init {
-        fetchProfile.add(FetchProfile.Item.ENVELOPE)
-        fetchProfile.add(FetchProfile.Item.BODY)
-    }
-
     fun undoE3Async(account: Account) {
+        val e3Provider = account.e3Provider!!
         e3Toggler.setE3DisabledState(account)
 
         GlobalScope.launch(Dispatchers.Main) {
             val launchUndoResult = bg {
-                undoE3(account)
+                undoE3(account, e3Provider)
             }
 
             value = try {
@@ -65,8 +60,8 @@ class E3UndoLiveEvent(context: Context) : SingleLiveEvent<E3UndoResult>() {
         }
     }
 
-    private fun undoE3(account: Account): Operation? {
-        return E3UndoEncryptionManager.INSTANCE.startUndo(account)
+    private fun undoE3(account: Account, cryptoProvider: String): Operation? {
+        return E3UndoEncryptionManager.INSTANCE.startUndo(account, cryptoProvider)
     }
 }
 

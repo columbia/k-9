@@ -26,7 +26,7 @@ import java.util.concurrent.BlockingQueue
 
 class E3UndoEncryptionManager private constructor() {
 
-    fun startUndo(account: Account): Operation? {
+    fun startUndo(account: Account, cryptoProvider: String): Operation? {
         val constraints = Constraints.Builder()
                 .setRequiredNetworkType(NetworkType.UNMETERED)
                 .setRequiresBatteryNotLow(true)
@@ -48,6 +48,7 @@ class E3UndoEncryptionManager private constructor() {
             val inputData = Data.Builder()
                     .putStringArray(WORKER_INPUT_KEY_MESSAGE_IDS, batch.toTypedArray())
                     .putString(WORKER_INPUT_KEY_ACCOUNT_UUID, account.uuid)
+                    .putString(WORKER_INPUT_KEY_CRYPTO_PROVIDER, cryptoProvider)
                     .build()
             val undoWorkRequest = OneTimeWorkRequestBuilder<UndoWorker>()
                     .setInputData(inputData)
@@ -112,6 +113,7 @@ class E3UndoEncryptionManager private constructor() {
         private const val SEARCH_STRING = "${E3Constants.MIME_E3_ENCRYPTED_HEADER} \"\""
         const val WORKER_INPUT_KEY_MESSAGE_IDS = "message_ids"
         const val WORKER_INPUT_KEY_ACCOUNT_UUID = "account_uuid"
+        const val WORKER_INPUT_KEY_CRYPTO_PROVIDER = "crypto_provider"
         const val WORKER_OUTPUT_KEY = "message_ids"
         const val WORKER_TAG_SUFFIX_UNDO = "undo_e3"
     }
@@ -124,6 +126,7 @@ class UndoWorker(appContext: Context,
         try {
             val msgServerIds = inputData.getStringArray(E3UndoEncryptionManager.WORKER_INPUT_KEY_MESSAGE_IDS)!!.asList()
             val accountUuid = inputData.getString(E3UndoEncryptionManager.WORKER_INPUT_KEY_ACCOUNT_UUID)!!
+            val cryptoProvider = inputData.getString(E3UndoEncryptionManager.WORKER_INPUT_KEY_CRYPTO_PROVIDER)!!
 
             val account = Preferences.getPreferences(applicationContext).getAccount(accountUuid)
 
@@ -140,12 +143,17 @@ class UndoWorker(appContext: Context,
 
             // Only decrypt messages which have E3 encryption
             val allMessagesWithE3 = localFolder.getMessagesByUids(msgServerIds).filter { it.headerNames.contains(E3Constants.MIME_E3_ENCRYPTED_HEADER) }
-            val decryptedStoredLocally = decryptBatch(account, allMessagesWithE3)
+            val fetchProfile = FetchProfile()
+            fetchProfile.add(FetchProfile.Item.ENVELOPE)
+            fetchProfile.add(FetchProfile.Item.BODY)
+            localFolder.fetch(allMessagesWithE3, fetchProfile, null)
+
+            val decryptedStoredLocally = decryptBatch(account, allMessagesWithE3, cryptoProvider)
 
             // Remove any messages which we didn't have locally before to save space?
             //localFolder.destroyMessages(nonLocalMsgs)
-            val outputData = workDataOf(E3UndoEncryptionManager.WORKER_OUTPUT_KEY to msgServerIds)
-            return Result.success(outputData)
+
+            return Result.success(inputData)
         } catch (e: Exception) {
             // Never use exceptions for codeflow (do as I say, not as I do)
             Timber.e(e, "UndoWorker failed with exception")
@@ -153,9 +161,8 @@ class UndoWorker(appContext: Context,
         }
     }
 
-    private fun decryptBatch(account: Account, messageBatch: List<LocalMessage>): BlockingQueue<Message> {
+    private fun decryptBatch(account: Account, messageBatch: List<LocalMessage>, cryptoProvider: String): BlockingQueue<Message> {
         val messagingController = MessagingController.getInstance(applicationContext)
-        val e3Provider = account.e3Provider!!
         val decryptedStoredLocally = ArrayBlockingQueue<Message>(messageBatch.size)
 
         val syncUpdatedListener = object : SyncUpdatedListener {
@@ -165,7 +172,7 @@ class UndoWorker(appContext: Context,
         }
 
         for (message in messageBatch) {
-            val pgpServiceConnection = OpenPgpServiceConnection(applicationContext, e3Provider, object : OpenPgpServiceConnection.OnBound {
+            val pgpServiceConnection = OpenPgpServiceConnection(applicationContext, cryptoProvider, object : OpenPgpServiceConnection.OnBound {
                 override fun onBound(service: IOpenPgpService2) {
                     val openPgpApi = OpenPgpApi(applicationContext, service)
                     val decryptor = SimpleE3PgpDecryptor(openPgpApi, account.e3Key)
