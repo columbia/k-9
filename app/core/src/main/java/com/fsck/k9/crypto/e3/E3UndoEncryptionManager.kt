@@ -16,6 +16,7 @@ import com.fsck.k9.mail.MessagingException
 import com.fsck.k9.mail.internet.MimeMessage
 import com.fsck.k9.mailstore.LocalFolder
 import com.fsck.k9.mailstore.LocalMessage
+import kotlinx.coroutines.*
 import org.openintents.openpgp.IOpenPgpService2
 import org.openintents.openpgp.util.OpenPgpApi
 import org.openintents.openpgp.util.OpenPgpServiceConnection
@@ -23,6 +24,7 @@ import timber.log.Timber
 import java.lang.Exception
 import java.util.concurrent.ArrayBlockingQueue
 import java.util.concurrent.BlockingQueue
+import java.util.concurrent.CountDownLatch
 
 class E3UndoEncryptionManager private constructor() {
 
@@ -159,6 +161,7 @@ class UndoWorker(appContext: Context,
             // Remove any messages which we didn't have locally before to save space?
             //localFolder.destroyMessages(nonLocalMsgs)
 
+            Timber.d("E3 Undo batch completed, returning success")
             return Result.success(inputData)
         } catch (e: Exception) {
             // Never use exceptions for codeflow (do as I say, not as I do)
@@ -168,7 +171,6 @@ class UndoWorker(appContext: Context,
     }
 
     private fun decryptBatch(account: Account, messageBatch: List<LocalMessage>, cryptoProvider: String): BlockingQueue<Message> {
-        val messagingController = MessagingController.getInstance(applicationContext)
         val decryptedStoredLocally = ArrayBlockingQueue<Message>(messageBatch.size)
 
         val syncUpdatedListener = object : SyncUpdatedListener {
@@ -178,29 +180,18 @@ class UndoWorker(appContext: Context,
         }
 
         for (message in messageBatch) {
-            val pgpServiceConnection = OpenPgpServiceConnection(applicationContext, cryptoProvider, object : OpenPgpServiceConnection.OnBound {
-                override fun onBound(service: IOpenPgpService2) {
-                    val openPgpApi = OpenPgpApi(applicationContext, service)
-                    val decryptor = SimpleE3PgpDecryptor(openPgpApi, account.e3Key)
-
-                    try {
-                        val decryptedMessage = decryptor.decrypt(message as MimeMessage, account.email)
-
-                        Thread {
-                            Timber.d("Synchronizing decrypted E3 message: ${message.subject} (originalUid=${message.uid}, decryptedMessageUid=${decryptedMessage.uid}")
-                            messagingController.replaceExistingMessageSynchronous(account, message.folder, message, decryptedMessage, syncUpdatedListener)
-                        }.start()
-                    } catch (e: MessagingException) {
-                        Timber.e(e, "Failed to decrypt message: ${message.subject}, likely because E3 encrypted using an unavailable key!")
-                    }
-                }
-
-                override fun onError(e: Exception) {
-                    Timber.e(e, "Got error while binding to OpenPGP service")
-                }
-            })
+            val latch = CountDownLatch(1)
+            val onBoundListener = PgpOnBoundListener(applicationContext, account, message, syncUpdatedListener, latch)
+            val pgpServiceConnection = OpenPgpServiceConnection(applicationContext, cryptoProvider, onBoundListener)
             pgpServiceConnection.bindToService()
+
+            runBlocking {
+                latch.await()
+            }
+            Timber.d("Synchronize finished in for-loop")
         }
+
+        Timber.d("Reached end of decryptBatch")
 
         return decryptedStoredLocally
     }
@@ -227,5 +218,41 @@ class UndoWorker(appContext: Context,
 
     private fun getBackend(account: Account): Backend {
         return DI.get(BackendManager::class.java).getBackend(account)
+    }
+}
+
+private class PgpOnBoundListener(private val appContext: Context,
+                                 private val account: Account,
+                                 private val message: LocalMessage,
+                                 private val listener: SyncUpdatedListener,
+                                 private val countDownLatch: CountDownLatch) : OpenPgpServiceConnection.OnBound {
+    override fun onBound(service: IOpenPgpService2) {
+        runBlocking {
+            decryptReplaceAsync(service).await()
+            Timber.d("Synchronize finished in onBound")
+            countDownLatch.countDown()
+        }
+    }
+
+    private fun decryptReplaceAsync(service: IOpenPgpService2): Deferred<Unit> {
+        val messagingController = MessagingController.getInstance(appContext)
+        val openPgpApi = OpenPgpApi(appContext, service)
+        val decryptor = SimpleE3PgpDecryptor(openPgpApi, account.e3Key)
+
+        try {
+            val decryptedMessage = decryptor.decrypt(message as MimeMessage, account.email)
+
+            return GlobalScope.async {
+                Timber.d("Synchronizing decrypted E3 message: ${message.subject} (originalUid=${message.uid}, decryptedMessageUid=${decryptedMessage.uid}")
+                messagingController.replaceExistingMessageSynchronous(account, message.folder, message, decryptedMessage, listener)
+            }
+        } catch (e: MessagingException) {
+            Timber.e(e, "Failed to decrypt message: ${message.subject}, likely because E3 encrypted using an unavailable key!")
+            throw e
+        }
+    }
+
+    override fun onError(e: Exception) {
+        Timber.e(e, "Got error while binding to OpenPGP service")
     }
 }

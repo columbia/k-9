@@ -1405,6 +1405,7 @@ Please submit bug reports, contribute new features and ask questions at
     <string name="e3_undo_undoing">Removing encryption…</string>
     <string name="e3_undo_finish">E3 undo complete.</string>
     <string name="e3_undo_finish_no_messages">No E3 encrypted messages were found.</string>
+    <string name="e3_undo_in_progress">E3 undo is now in progress.</string>
     <string name="e3_undo_error">An error occurred.</string>
 
     <string name="e3_existing_undo_intro">You are already undoing E3 encryption. You can choose to cancel the undo process and re-enable E3.</string>

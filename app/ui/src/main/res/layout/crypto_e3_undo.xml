@@ -129,7 +129,7 @@
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
                     android:layout_gravity="center_vertical"
-                    android:text="@string/e3_undo_finish"
+                    android:text="@string/e3_undo_in_progress"
                     />
 
             </LinearLayout>
