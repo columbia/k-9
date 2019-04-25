@@ -143,6 +143,12 @@ class UndoWorker(appContext: Context,
 
             // Only decrypt messages which have E3 encryption
             val allMessagesWithE3 = localFolder.getMessagesByUids(msgServerIds).filter { it.headerNames.contains(E3Constants.MIME_E3_ENCRYPTED_HEADER) }
+
+            if (allMessagesWithE3.isEmpty()) {
+                Timber.d("E3 Undo batch found no E3 encrypted messages, so returning success")
+                return Result.success(inputData)
+            }
+
             val fetchProfile = FetchProfile()
             fetchProfile.add(FetchProfile.Item.ENVELOPE)
             fetchProfile.add(FetchProfile.Item.BODY)
@@ -182,7 +188,7 @@ class UndoWorker(appContext: Context,
 
                         Thread {
                             Timber.d("Synchronizing decrypted E3 message: ${message.subject} (originalUid=${message.uid}, decryptedMessageUid=${decryptedMessage.uid}")
-                            messagingController.replaceExistingMessage(account, message.folder, message, decryptedMessage, syncUpdatedListener)
+                            messagingController.replaceExistingMessageSynchronous(account, message.folder, message, decryptedMessage, syncUpdatedListener)
                         }.start()
                     } catch (e: MessagingException) {
                         Timber.e(e, "Failed to decrypt message: ${message.subject}, likely because E3 encrypted using an unavailable key!")

@@ -6,10 +6,13 @@ import android.content.Intent
 import android.os.Bundle
 import android.view.MenuItem
 import android.view.View
+import android.widget.TextView
+import androidx.core.view.children
 import com.fsck.k9.ui.R
 import com.fsck.k9.ui.e3.E3ActionBaseActivity
 import com.fsck.k9.view.StatusIndicator
 import kotlinx.android.synthetic.main.crypto_e3_undo.*
+import kotlinx.android.synthetic.main.text_list_item.view.*
 import kotlinx.android.synthetic.main.wizard_cancel_done.*
 import org.koin.android.ext.android.inject
 
@@ -59,6 +62,7 @@ class E3UndoActivity : E3ActionBaseActivity(), View.OnClickListener {
 
         e3UndoButton.visibility = View.VISIBLE
         e3UndoMsgInfo.visibility = View.VISIBLE
+        e3UndoCancelledMsgInfo.visibility = View.GONE
 
         e3UndoLayoutUndoing.visibility = View.GONE
         e3UndoLayoutFinish.visibility = View.GONE
@@ -79,6 +83,7 @@ class E3UndoActivity : E3ActionBaseActivity(), View.OnClickListener {
 
         e3UndoButton.visibility = View.GONE
         e3UndoMsgInfo.visibility = View.VISIBLE
+        e3UndoCancelledMsgInfo.visibility = View.GONE
 
         e3UndoLayoutUndoing.visibility = View.GONE
         e3UndoLayoutFinish.visibility = View.GONE
@@ -96,6 +101,7 @@ class E3UndoActivity : E3ActionBaseActivity(), View.OnClickListener {
 
         e3UndoScrollView.visibility = View.GONE
         e3ExistingUndoScrollView.visibility = View.VISIBLE
+        e3UndoCancelledMsgInfo.visibility = View.GONE
 
         e3CancelUndoButton.visibility = View.VISIBLE
         e3ExistingUndoMsgInfo.visibility = View.VISIBLE
@@ -121,6 +127,8 @@ class E3UndoActivity : E3ActionBaseActivity(), View.OnClickListener {
 
         e3UndoButton.visibility = View.GONE
         e3UndoMsgInfo.visibility = View.GONE
+        e3UndoCancelledMsgInfo.visibility = View.GONE
+
         e3UndoLayoutUndoing.visibility = View.VISIBLE
         e3UndoLayoutFinish.visibility = View.VISIBLE
         e3UndoLayoutFinishNoMessages.visibility = View.GONE
@@ -130,9 +138,52 @@ class E3UndoActivity : E3ActionBaseActivity(), View.OnClickListener {
         done.visibility = View.VISIBLE
     }
 
+    fun sceneFinishedSucceeded() {
+        e3UndoScrollView.visibility = View.VISIBLE
+        e3ExistingUndoScrollView.visibility = View.GONE
+
+        e3UndoButton.visibility = View.VISIBLE
+        e3UndoMsgInfo.visibility = View.VISIBLE
+        e3UndoCancelledMsgInfo.visibility = View.GONE
+
+        e3UndoLayoutUndoing.visibility = View.GONE
+        e3UndoLayoutFinish.visibility = View.VISIBLE
+        e3UndoLayoutFinishNoMessages.visibility = View.GONE
+
+        e3UndoError.visibility = View.GONE
+        e3ExistingUndoError.visibility = View.GONE
+
+        cancel.visibility = View.GONE
+        done.visibility = View.VISIBLE
+    }
+
     fun sceneFinishedNoMessages(transition: Boolean = false) {
         sceneFinished(transition)
         e3UndoLayoutFinishNoMessages.visibility = View.VISIBLE
+    }
+
+    fun sceneCancelledUndo() {
+        e3UndoScrollView.visibility = View.VISIBLE
+        e3ExistingUndoScrollView.visibility = View.GONE
+
+        e3UndoButton.visibility = View.GONE
+        e3UndoMsgInfo.visibility = View.GONE
+        e3UndoCancelledMsgInfo.visibility = View.VISIBLE
+
+        e3UndoLayoutUndoing.visibility = View.GONE
+        e3UndoLayoutFinish.visibility = View.GONE
+        e3UndoLayoutFinishNoMessages.visibility = View.GONE
+
+        e3UndoError.visibility = View.GONE
+        e3ExistingUndoError.visibility = View.GONE
+
+        cancel.visibility = View.GONE
+        done.visibility = View.VISIBLE
+    }
+
+    fun sceneCancelledUndoWithFailure() {
+        sceneCancelledUndo()
+        (e3UndoCancelledMsgInfo.children.elementAt(0) as TextView).text = resources.getString(R.string.e3_undo_work_cancelled_due_to_error)
     }
 
     fun setLoadingStateSendingFailed() {
@@ -144,6 +195,8 @@ class E3UndoActivity : E3ActionBaseActivity(), View.OnClickListener {
 
         e3UndoButton.visibility = View.GONE
         e3UndoMsgInfo.visibility = View.GONE
+        e3UndoCancelledMsgInfo.visibility = View.GONE
+
         e3UndoLayoutUndoing.visibility = View.VISIBLE
         e3UndoLayoutFinish.visibility = View.GONE
         e3UndoLayoutFinishNoMessages.visibility = View.GONE

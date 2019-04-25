@@ -216,6 +216,7 @@ public class Account implements BaseAccount, StoreConfig {
     private boolean openPgpEncryptSubject;
     private E3Mode e3Mode;
     private String e3Provider;
+    private String savedE3Provider;
     private long e3Key;
     private String e3KeyVerificationPhrase;
     private boolean markMessageAsReadOnView;
@@ -462,6 +463,7 @@ public class Account implements BaseAccount, StoreConfig {
 
         e3Mode = getEnumStringPref(storage, accountUuid + ".e3ModeEnum", E3Mode.PASSIVE);
         e3Provider = storage.getString(accountUuid + ".e3Provider", "");
+        savedE3Provider = e3Provider;
         e3Key = storage.getLong(accountUuid + ".e3Key", NO_OPENPGP_KEY);
         e3KeyVerificationPhrase = storage.getString(accountUuid + ".e3KeyVerificationPhrase", "");
 
@@ -558,6 +560,10 @@ public class Account implements BaseAccount, StoreConfig {
         editor.remove(accountUuid + ".cryptoApp");
         editor.remove(accountUuid + ".cryptoKey");
         editor.remove(accountUuid + ".cryptoSupportSignOnly");
+        editor.remove(accountUuid + ".e3ModeEnum");
+        editor.remove(accountUuid + ".e3Provider");
+        editor.remove(accountUuid + ".e3Key");
+        editor.remove(accountUuid + ".e3KeyVerificationPhrase");
         editor.remove(accountUuid + ".enabled");
         editor.remove(accountUuid + ".markMessageAsReadOnView");
         editor.remove(accountUuid + ".alwaysShowCcBcc");
@@ -1587,11 +1593,24 @@ public class Account implements BaseAccount, StoreConfig {
         if (TextUtils.isEmpty(e3Provider)) {
             return null;
         }
+        savedE3Provider = e3Provider;
         return e3Provider;
     }
 
     public void setE3Provider(String e3Provider) {
         this.e3Provider = e3Provider;
+
+        if (!TextUtils.isEmpty(e3Provider)) {
+            savedE3Provider = e3Provider;
+        }
+    }
+
+    @Nullable
+    public String getSavedE3Provider() {
+        if (TextUtils.isEmpty(savedE3Provider)) {
+            return null;
+        }
+        return savedE3Provider;
     }
 
     public boolean isE3ProviderConfigured() {

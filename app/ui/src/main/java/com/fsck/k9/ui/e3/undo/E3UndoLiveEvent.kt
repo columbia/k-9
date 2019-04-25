@@ -38,7 +38,7 @@ class E3UndoLiveEvent(context: Context) : SingleLiveEvent<E3UndoResult>() {
     private val e3Toggler = E3EnableDisableToggler(context)
 
     fun undoE3Async(account: Account) {
-        val e3Provider = account.e3Provider!!
+        val e3Provider = account.savedE3Provider!!
         e3Toggler.setE3DisabledState(account)
 
         GlobalScope.launch(Dispatchers.Main) {

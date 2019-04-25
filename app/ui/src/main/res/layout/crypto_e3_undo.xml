@@ -58,6 +58,21 @@
                     />
             </LinearLayout>
 
+            <LinearLayout
+                android:id="@+id/e3UndoCancelledMsgInfo"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="24dp"
+                android:orientation="vertical">
+
+                <TextView
+                    style="?android:textAppearanceMedium"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="@string/e3_undo_cancelled_desc"
+                    />
+            </LinearLayout>
+
             <Button
                 android:id="@+id/e3UndoButton"
                 android:layout_width="wrap_content"

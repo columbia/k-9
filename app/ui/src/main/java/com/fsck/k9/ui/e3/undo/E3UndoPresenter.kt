@@ -57,7 +57,7 @@ class E3UndoPresenter internal constructor(
     fun onClickCancelUndo() {
         Timber.d("User requested cancelling all E3 Undo work")
         viewModel.cancelExistingWork(account)
-        view.sceneBegin()
+        view.sceneCancelledUndo()
     }
 
     private fun onEventE3Undo(result: E3UndoResult?) {
@@ -84,18 +84,39 @@ class E3UndoPresenter internal constructor(
     private fun onEventExistingWorkInfo(workInfoList: List<WorkInfo>?) {
         if (workInfoList == null || workInfoList.isEmpty()) {
             Timber.d("Found no existing E3 undo workers")
+            view.sceneBegin()
             return
         }
 
+        var failed = 0
+        var succeeded = 0
         for (workInfo in workInfoList) {
-            if (workInfo.state == WorkInfo.State.FAILED) {
-                Timber.d("Found failed undo work, cancelling it")
-                viewModel.cancelExistingWork(account)
-                return
+            when (workInfo.state) {
+                WorkInfo.State.SUCCEEDED -> {
+                    Timber.d("Found succeeded undo work")
+                    succeeded += 1
+                }
+                WorkInfo.State.FAILED -> {
+                    Timber.d("Found failed undo work")
+                    failed += 1
+                }
+                else -> {
+                    Timber.d("Found existing and queued or running job")
+                }
             }
         }
 
-        Timber.d("Found existing E3 undo workers: $workInfoList")
+        if (failed > 0) {
+            viewModel.cancelExistingWork(account)
+            view.sceneCancelledUndoWithFailure()
+            return
+        } else if (succeeded > 0) {
+            viewModel.cancelExistingWork(account)
+            view.sceneFinished()
+            return
+        }
+
+        Timber.d("Existing E3 undo workers: $workInfoList")
         view.sceneUndoing()
     }
 }

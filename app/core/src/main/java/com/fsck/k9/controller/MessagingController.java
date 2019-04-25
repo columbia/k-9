@@ -2845,59 +2845,69 @@ public class MessagingController {
         putBackground("Synchronize encrypted-on-receipt email and update listeners", null, new Runnable() {
             @Override
             public void run() {
-                final String srcFolder = originalMessage.getFolder().getName();
-                final String trashFolder = account.getTrashFolder();
-                Backend backend = getBackend(account);
-
-                final LocalMessage localMessage;
-                try {
-                    localMessage = synchronizeMessageLocally(replacementMessage);
-                    localMessage.setFlag(Flag.E3, true);
-                    listener.updateWithNewMessage(localMessage);
-                } catch (MessagingException e) {
-                    throw new RuntimeException("Failed to store replacement message locally", e);
-                }
-
-                try {
-                    final List<LocalMessage> localMessageList = Collections.singletonList(localMessage);
-                    final FetchProfile fp = new FetchProfile();
-                    fp.add(FetchProfile.Item.ENVELOPE);
-                    fp.add(FetchProfile.Item.BODY);
-                    localFolder.fetch(localMessageList, fp, null);
-                    backend.uploadMessage(srcFolder, localMessage);
-                }  catch (final MessagingException e) {
-                    throw new RuntimeException("Failed to append replacement message", e);
-                }
-
-                try {
-                    final List<String> uid = Collections.singletonList(originalMessage.getUid());
-                    final Map<String, String> newUids = backend.moveMessages(srcFolder, trashFolder, uid);
-
-                    if (newUids != null) {
-                        for (String k : newUids.keySet()) {
-                            final String newUid = newUids.get(k);
-                            backend.setFlag(trashFolder, Collections.singletonList(newUid), Flag.DELETED, true);
-                        }
-                    }
-                    Timber.i("replaceExistingMessage expunging folder %s:%s", account.getDescription(), account.getTrashFolder());
-                    backend.expungeMessages(account.getTrashFolder(), uid);
-                } catch (MessagingException e) {
-                    throw new RuntimeException("Failed to delete remote plaintext email", e);
-                }
-
-                Timber.i("replaceExistingMessage syncing folder %s:%s", account.getDescription(), srcFolder);
-                syncFolder(account, srcFolder, null, null, backend);
-            }
-
-            private LocalMessage synchronizeMessageLocally(final MimeMessage encryptedMessage) throws MessagingException {
-                localFolder.appendMessages(Collections.singletonList(encryptedMessage));
-
-                final LocalMessage localMessage = localFolder.getMessage(encryptedMessage.getUid());
-                localMessage.setFlag(Flag.X_DOWNLOADED_FULL, true);
-
-                return localMessage;
+                replaceExistingMessageSynchronous(account, localFolder, originalMessage, replacementMessage, listener);
             }
         });
+    }
+
+    public void replaceExistingMessageSynchronous(final Account account,
+                                       final LocalFolder localFolder,
+                                       final Message originalMessage,
+                                       final MimeMessage replacementMessage,
+                                       final SyncUpdatedListener listener) {
+
+        final String srcFolder = originalMessage.getFolder().getName();
+        final String trashFolder = account.getTrashFolder();
+        Backend backend = getBackend(account);
+
+        final LocalMessage localMessage;
+        try {
+            localMessage = synchronizeReplacementMessageLocally(localFolder, replacementMessage);
+            localMessage.setFlag(Flag.E3, true);
+            listener.updateWithNewMessage(localMessage);
+        } catch (MessagingException e) {
+            throw new RuntimeException("Failed to store replacement message locally", e);
+        }
+
+        try {
+            final List<LocalMessage> localMessageList = Collections.singletonList(localMessage);
+            final FetchProfile fp = new FetchProfile();
+            fp.add(FetchProfile.Item.ENVELOPE);
+            fp.add(FetchProfile.Item.BODY);
+            localFolder.fetch(localMessageList, fp, null);
+            backend.uploadMessage(srcFolder, localMessage);
+        }  catch (final MessagingException e) {
+            throw new RuntimeException("Failed to append replacement message", e);
+        }
+
+        try {
+            final List<String> uid = Collections.singletonList(originalMessage.getUid());
+            final Map<String, String> newUids = backend.moveMessages(srcFolder, trashFolder, uid);
+
+            if (newUids != null) {
+                for (String k : newUids.keySet()) {
+                    final String newUid = newUids.get(k);
+                    backend.setFlag(trashFolder, Collections.singletonList(newUid), Flag.DELETED, true);
+                }
+            }
+            Timber.i("replaceExistingMessage expunging folder %s:%s", account.getDescription(), account.getTrashFolder());
+            backend.expungeMessages(account.getTrashFolder(), uid);
+        } catch (MessagingException e) {
+            throw new RuntimeException("Failed to delete remote plaintext email", e);
+        }
+
+        Timber.i("replaceExistingMessage syncing folder %s:%s", account.getDescription(), srcFolder);
+        syncFolder(account, srcFolder, null, null, backend);
+    }
+
+    private LocalMessage synchronizeReplacementMessageLocally(final LocalFolder localFolder,
+                                                              final MimeMessage encryptedMessage) throws MessagingException {
+        localFolder.appendMessages(Collections.singletonList(encryptedMessage));
+
+        final LocalMessage localMessage = localFolder.getMessage(encryptedMessage.getUid());
+        localMessage.setFlag(Flag.X_DOWNLOADED_FULL, true);
+
+        return localMessage;
     }
 
     private boolean modeMismatch(Account.FolderMode aMode, Folder.FolderClass fMode) {
