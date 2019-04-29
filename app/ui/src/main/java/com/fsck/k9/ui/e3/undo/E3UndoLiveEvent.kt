@@ -3,36 +3,19 @@ package com.fsck.k9.ui.e3.undo
 import android.content.Context
 import androidx.work.Operation
 import com.fsck.k9.Account
-import com.fsck.k9.AccountStats
-import com.fsck.k9.controller.MessagingController
-import com.fsck.k9.controller.MessagingControllerCommands.*
-import com.fsck.k9.controller.SimpleMessagingListener
+import com.fsck.k9.DI
+import com.fsck.k9.backend.BackendManager
+import com.fsck.k9.backend.api.Backend
 import com.fsck.k9.crypto.e3.E3Constants
 import com.fsck.k9.crypto.e3.E3UndoEncryptionManager
-import com.fsck.k9.crypto.e3.SimpleE3PgpDecryptor
-import com.fsck.k9.helper.MessageHelper
 import com.fsck.k9.helper.SingleLiveEvent
-import com.fsck.k9.mail.*
-import com.fsck.k9.mail.internet.*
-import com.fsck.k9.mailstore.LocalFolder
-import com.fsck.k9.mailstore.LocalMessage
-import com.fsck.k9.mailstore.MessageCryptoAnnotations
-import com.fsck.k9.search.LocalSearch
-import com.fsck.k9.search.SearchSpecification
 import com.fsck.k9.ui.e3.E3EnableDisableToggler
 
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.GlobalScope
+import kotlinx.coroutines.async
 import kotlinx.coroutines.launch
-import org.jetbrains.anko.coroutines.experimental.bg
-import org.openintents.openpgp.IOpenPgpService2
-import org.openintents.openpgp.util.OpenPgpApi
-import org.openintents.openpgp.util.OpenPgpServiceConnection
 import timber.log.Timber
-import java.util.*
-import java.util.concurrent.ArrayBlockingQueue
-import java.util.concurrent.BlockingQueue
-import java.util.concurrent.SynchronousQueue
 
 class E3UndoLiveEvent(context: Context) : SingleLiveEvent<E3UndoResult>() {
     private val e3Toggler = E3EnableDisableToggler(context)
@@ -41,27 +24,61 @@ class E3UndoLiveEvent(context: Context) : SingleLiveEvent<E3UndoResult>() {
         val e3Provider = account.savedE3Provider!!
         e3Toggler.setE3DisabledState(account)
 
-        GlobalScope.launch(Dispatchers.Main) {
-            val launchUndoResult = bg {
-                undoE3(account, e3Provider)
+        GlobalScope.launch(Dispatchers.IO) {
+            val launchUndoResult = async {
+                val e3EncryptedMessageIds = scanForUids(account)
+                undoE3(account, e3Provider, e3EncryptedMessageIds)
             }
 
-            value = try {
+            try {
                 val undoOperation = launchUndoResult.await()
 
                 if (undoOperation != null) {
-                    E3UndoResult.Success(undoOperation)
+                    postValue(E3UndoResult.Success(undoOperation))
                 } else {
-                    E3UndoResult.NoneFound("no E3 encrypted emails found")
+                    postValue(E3UndoResult.NoneFound("no E3 encrypted emails found"))
                 }
             } catch (e: Exception) {
-                E3UndoResult.Failure(e)
+                postValue(E3UndoResult.Failure(e))
             }
         }
     }
 
-    private fun undoE3(account: Account, cryptoProvider: String): Operation? {
-        return E3UndoEncryptionManager.INSTANCE.startUndo(account, cryptoProvider)
+    private fun scanForUids(account: Account): List<String> {
+        Timber.d("Starting scanning for E3 encrypted messages")
+        var flippedRemoteSearch = false
+        try {
+            if (!account.allowRemoteSearch()) {
+                Timber.d("Temporarily enabling remote search")
+                account.setAllowRemoteSearch(true)
+                flippedRemoteSearch = true
+            }
+
+            // Let's try bypassing the dumb SearchField thing
+            val folderServerId = account.inboxFolder
+            val backend = getBackend(account)
+
+            // Find remote messages with E3 encryption
+            return backend.searchHeaders(folderServerId, SEARCH_STRING, null, null)
+        } finally {
+            if (flippedRemoteSearch) {
+                Timber.d("Resetting remote search to false")
+                account.setAllowRemoteSearch(false)
+            }
+            Timber.d("Finished scanning for E3 encrypted messages")
+        }
+    }
+
+    private fun getBackend(account: Account): Backend {
+        return DI.get(BackendManager::class.java).getBackend(account)
+    }
+
+    private fun undoE3(account: Account, cryptoProvider: String, messageIds: List<String>): Operation? {
+        return E3UndoEncryptionManager.INSTANCE.startUndo(account, cryptoProvider, messageIds)
+    }
+
+    companion object {
+        private const val SEARCH_STRING = "${E3Constants.MIME_E3_ENCRYPTED_HEADER} \"\""
     }
 }
 

@@ -24,9 +24,10 @@ dependencies {
     implementation "org.apache.james:apache-mime4j-core:${versions.mime4j}"
 
     // (Java only)
-    implementation "android.arch.work:work-runtime:${versions.work}"
+    implementation "androidx.work:work-runtime:${versions.work}"
     // Kotlin + coroutines
-    implementation "android.arch.work:work-runtime-ktx:${versions.work}"
+    implementation "androidx.work:work-runtime-ktx:${versions.work}"
+    implementation "androidx.concurrent:concurrent-futures:${versions.futures}"
 
     testImplementation project(':mail:testing')
     testImplementation project(":backend:imap")

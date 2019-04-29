@@ -1,6 +1,7 @@
 package com.fsck.k9.crypto.e3
 
 import android.content.Context
+import androidx.concurrent.futures.CallbackToFutureAdapter
 import androidx.lifecycle.LiveData
 import androidx.work.*
 import com.fsck.k9.Account
@@ -16,6 +17,7 @@ import com.fsck.k9.mail.MessagingException
 import com.fsck.k9.mail.internet.MimeMessage
 import com.fsck.k9.mailstore.LocalFolder
 import com.fsck.k9.mailstore.LocalMessage
+import com.google.common.util.concurrent.ListenableFuture
 import kotlinx.coroutines.*
 import org.openintents.openpgp.IOpenPgpService2
 import org.openintents.openpgp.util.OpenPgpApi
@@ -25,19 +27,18 @@ import java.lang.Exception
 import java.util.concurrent.ArrayBlockingQueue
 import java.util.concurrent.BlockingQueue
 import java.util.concurrent.CountDownLatch
+import java.util.concurrent.Executors
 
 class E3UndoEncryptionManager private constructor() {
 
-    fun startUndo(account: Account, cryptoProvider: String): Operation? {
+    fun startUndo(account: Account, cryptoProvider: String, e3EncryptedMessageIds: List<String>): Operation? {
         val constraints = Constraints.Builder()
                 .setRequiredNetworkType(NetworkType.UNMETERED)
                 .setRequiresBatteryNotLow(true)
                 .setRequiresStorageNotLow(true)
                 .build()
 
-        val e3EncryptedMessageIds = scanForUids(account)
-
-        Timber.d("Found ${e3EncryptedMessageIds.size} E3 encrypted emails to undo")
+        Timber.d("Got ${e3EncryptedMessageIds.size} E3 encrypted emails to undo")
 
         if (e3EncryptedMessageIds.isEmpty()) {
             return null
@@ -73,35 +74,8 @@ class E3UndoEncryptionManager private constructor() {
         return WorkManager.getInstance().getWorkInfosForUniqueWorkLiveData(getTag(account))
     }
 
-    private fun scanForUids(account: Account): List<String> {
-        var flippedRemoteSearch = false
-        try {
-            if (!account.allowRemoteSearch()) {
-                Timber.d("Temporarily enabling remote search")
-                account.setAllowRemoteSearch(true)
-                flippedRemoteSearch = true
-            }
-
-            // Let's try bypassing the dumb SearchField thing
-            val folderServerId = account.inboxFolder
-            val backend = getBackend(account)
-
-            // Find remote messages with E3 encryption
-            return backend.searchHeaders(folderServerId, SEARCH_STRING, null, null)
-        } finally {
-            if (flippedRemoteSearch) {
-                Timber.d("Resetting remote search to false")
-                account.setAllowRemoteSearch(false)
-            }
-        }
-    }
-
     private fun batchUids(allMessageIds: List<String>): List<List<String>> {
         return listOf(allMessageIds)
-    }
-
-    private fun getBackend(account: Account): Backend {
-        return DI.get(BackendManager::class.java).getBackend(account)
     }
 
     private fun getTag(account: Account): String {
@@ -112,7 +86,6 @@ class E3UndoEncryptionManager private constructor() {
         @JvmStatic
         val INSTANCE = E3UndoEncryptionManager()
 
-        private const val SEARCH_STRING = "${E3Constants.MIME_E3_ENCRYPTED_HEADER} \"\""
         const val WORKER_INPUT_KEY_MESSAGE_IDS = "message_ids"
         const val WORKER_INPUT_KEY_ACCOUNT_UUID = "account_uuid"
         const val WORKER_INPUT_KEY_CRYPTO_PROVIDER = "crypto_provider"
@@ -122,52 +95,83 @@ class E3UndoEncryptionManager private constructor() {
 }
 
 class UndoWorker(appContext: Context,
-                 workerParams: WorkerParameters) : Worker(appContext, workerParams) {
+                           workerParams: WorkerParameters) : Worker(appContext, workerParams) {
+
+    /*
+    override fun startWork(): ListenableFuture<Result> {
+
+        return CallbackToFutureAdapter.getFuture { completer ->
+            try {
+                val executor = Executors.newSingleThreadExecutor()
+                executor.execute {
+                    completer.set(doWorkSynchronous())
+                }
+            } catch (e: Exception) {
+                // Never use exceptions for codeflow (do as I say, not as I do)
+                Timber.e(e, "UndoListenableWorker failed with exception")
+                completer.setException(e)
+            }
+        }
+    }
+    */
 
     override fun doWork(): Result {
-        try {
-            val msgServerIds = inputData.getStringArray(E3UndoEncryptionManager.WORKER_INPUT_KEY_MESSAGE_IDS)!!.asList()
-            val accountUuid = inputData.getString(E3UndoEncryptionManager.WORKER_INPUT_KEY_ACCOUNT_UUID)!!
-            val cryptoProvider = inputData.getString(E3UndoEncryptionManager.WORKER_INPUT_KEY_CRYPTO_PROVIDER)!!
+        return try {
+            Timber.d("E3 UndoWorker doWork() started")
+            doWorkSynchronous()
+        } catch (e: Exception) {
+            Timber.e(e, "Failed E3 UndoWorker")
+            Result.failure(inputData)
+        } finally {
+            Timber.d("E3 UndoWorker doWork() finished")
+        }
+    }
 
-            val account = Preferences.getPreferences(applicationContext).getAccount(accountUuid)
+    @Throws(Exception::class)
+    private fun doWorkSynchronous(): Result {
+        val msgServerIds = inputData.getStringArray(E3UndoEncryptionManager.WORKER_INPUT_KEY_MESSAGE_IDS)!!.asList()
+        val accountUuid = inputData.getString(E3UndoEncryptionManager.WORKER_INPUT_KEY_ACCOUNT_UUID)!!
+        val cryptoProvider = inputData.getString(E3UndoEncryptionManager.WORKER_INPUT_KEY_CRYPTO_PROVIDER)!!
 
-            val folderServerId = account.inboxFolder
-            val localStore = account.localStore
-            val localFolder = localStore.getFolder(folderServerId)
-                    ?: throw MessagingException("Folder not found")
+        val account = Preferences.getPreferences(applicationContext).getAccount(accountUuid)
 
-            // Download messages locally if they aren't already
-            val nonLocalMsgIds = localFolder.extractNewMessages(msgServerIds)
-            loadSearchResultsSynchronous(account, nonLocalMsgIds, localFolder)
+        val allMessagesWithE3 = retrieveMessagesWithE3(account, msgServerIds)
 
-            Timber.d("Got nonLocalMsgIds: ${nonLocalMsgIds.joinToString(",")}")
-
-            // Only decrypt messages which have E3 encryption
-            val allMessagesWithE3 = localFolder.getMessagesByUids(msgServerIds).filter { it.headerNames.contains(E3Constants.MIME_E3_ENCRYPTED_HEADER) }
-
-            if (allMessagesWithE3.isEmpty()) {
-                Timber.d("E3 Undo batch found no E3 encrypted messages, so returning success")
-                return Result.success(inputData)
-            }
-
-            val fetchProfile = FetchProfile()
-            fetchProfile.add(FetchProfile.Item.ENVELOPE)
-            fetchProfile.add(FetchProfile.Item.BODY)
-            localFolder.fetch(allMessagesWithE3, fetchProfile, null)
-
+        if (allMessagesWithE3.isEmpty()) {
+            Timber.d("E3 Undo batch found no E3 encrypted messages, so returning success")
+        } else {
             val decryptedStoredLocally = decryptBatch(account, allMessagesWithE3, cryptoProvider)
 
             // Remove any messages which we didn't have locally before to save space?
             //localFolder.destroyMessages(nonLocalMsgs)
 
             Timber.d("E3 Undo batch completed, returning success")
-            return Result.success(inputData)
-        } catch (e: Exception) {
-            // Never use exceptions for codeflow (do as I say, not as I do)
-            Timber.e(e, "UndoWorker failed with exception")
-            return Result.failure()
         }
+
+        return Result.success(inputData)
+    }
+
+    private fun retrieveMessagesWithE3(account: Account, msgServerIds: List<String>): List<LocalMessage> {
+        val folderServerId = account.inboxFolder
+        val localStore = account.localStore
+        val localFolder = localStore.getFolder(folderServerId)
+                ?: throw MessagingException("Folder not found")
+
+        // Download messages locally if they aren't already
+        val nonLocalMsgIds = localFolder.extractNewMessages(msgServerIds)
+        loadSearchResultsSynchronous(account, nonLocalMsgIds, localFolder)
+
+        Timber.d("Got nonLocalMsgIds: ${nonLocalMsgIds.joinToString(",")}")
+
+        // Only decrypt messages which have E3 encryption
+        val messagesWithE3 = localFolder.getMessagesByUids(msgServerIds).filter { it.headerNames.contains(E3Constants.MIME_E3_ENCRYPTED_HEADER) }
+
+        val fetchProfile = FetchProfile()
+        fetchProfile.add(FetchProfile.Item.ENVELOPE)
+        fetchProfile.add(FetchProfile.Item.BODY)
+        localFolder.fetch(messagesWithE3, fetchProfile, null)
+
+        return messagesWithE3
     }
 
     private fun decryptBatch(account: Account, messageBatch: List<LocalMessage>, cryptoProvider: String): BlockingQueue<Message> {
@@ -180,14 +184,13 @@ class UndoWorker(appContext: Context,
         }
 
         for (message in messageBatch) {
+            Timber.d("Synchronize starting in for-loop")
             val latch = CountDownLatch(1)
             val onBoundListener = PgpOnBoundListener(applicationContext, account, message, syncUpdatedListener, latch)
             val pgpServiceConnection = OpenPgpServiceConnection(applicationContext, cryptoProvider, onBoundListener)
             pgpServiceConnection.bindToService()
 
-            runBlocking {
-                latch.await()
-            }
+            latch.await()
             Timber.d("Synchronize finished in for-loop")
         }
 
@@ -227,14 +230,15 @@ private class PgpOnBoundListener(private val appContext: Context,
                                  private val listener: SyncUpdatedListener,
                                  private val countDownLatch: CountDownLatch) : OpenPgpServiceConnection.OnBound {
     override fun onBound(service: IOpenPgpService2) {
-        runBlocking {
-            decryptReplaceAsync(service).await()
+        val executor = Executors.newSingleThreadExecutor()
+        executor.execute {
+            decryptReplaceSync(service)
             Timber.d("Synchronize finished in onBound")
             countDownLatch.countDown()
         }
     }
 
-    private fun decryptReplaceAsync(service: IOpenPgpService2): Deferred<Unit> {
+    private fun decryptReplaceSync(service: IOpenPgpService2) {
         val messagingController = MessagingController.getInstance(appContext)
         val openPgpApi = OpenPgpApi(appContext, service)
         val decryptor = SimpleE3PgpDecryptor(openPgpApi, account.e3Key)
@@ -242,10 +246,8 @@ private class PgpOnBoundListener(private val appContext: Context,
         try {
             val decryptedMessage = decryptor.decrypt(message as MimeMessage, account.email)
 
-            return GlobalScope.async {
-                Timber.d("Synchronizing decrypted E3 message: ${message.subject} (originalUid=${message.uid}, decryptedMessageUid=${decryptedMessage.uid}")
-                messagingController.replaceExistingMessageSynchronous(account, message.folder, message, decryptedMessage, listener)
-            }
+            Timber.d("Synchronizing decrypted E3 message: ${message.subject} (originalUid=${message.uid}, decryptedMessageUid=${decryptedMessage.uid}")
+            messagingController.replaceExistingMessageSynchronous(account, message.folder, message, decryptedMessage, listener)
         } catch (e: MessagingException) {
             Timber.e(e, "Failed to decrypt message: ${message.subject}, likely because E3 encrypted using an unavailable key!")
             throw e

@@ -18,7 +18,8 @@ buildscript {
                 'commonsIo': '2.4',
                 'coreKtx': '1.0.1',
                 'mime4j': '0.8.1',
-                'work': '1.0.1',
+                'work': '2.0.1',
+                'futures': '1.0.0-alpha03',
 
                 'junit': '4.12',
                 'robolectric': '3.7.1',
