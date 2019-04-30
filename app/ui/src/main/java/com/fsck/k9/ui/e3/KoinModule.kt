@@ -80,7 +80,7 @@ val e3DeviceDeleteUiModule = applicationContext {
                 lifecycleOwner = params["lifecycleOwner"],
                 preferences = get(),
                 openPgpApiManager = get(parameters = { params.values }),
-                view = params["e3VerifyView"],
+                view = params["e3DeleteDeviceView"],
                 messagingController = get()
         )
     }

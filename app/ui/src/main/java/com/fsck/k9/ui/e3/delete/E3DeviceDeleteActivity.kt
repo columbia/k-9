@@ -6,6 +6,9 @@ import android.content.Intent
 import android.os.Bundle
 import android.view.MenuItem
 import android.view.View
+import android.widget.AdapterView
+import android.widget.ArrayAdapter
+import android.widget.ListView
 import com.fsck.k9.ui.R
 import com.fsck.k9.ui.e3.E3ActionBaseActivity
 import kotlinx.android.synthetic.main.crypto_e3_device_delete.*
@@ -15,7 +18,7 @@ import timber.log.Timber
 
 class E3DeviceDeleteActivity : E3ActionBaseActivity(), View.OnClickListener {
     private val presenter: E3DeviceDeletePresenter by inject {
-        mapOf("lifecycleOwner" to this, "e3ScanView" to this)
+        mapOf("lifecycleOwner" to this, "e3DeleteDeviceView" to this)
     }
 
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -39,6 +42,13 @@ class E3DeviceDeleteActivity : E3ActionBaseActivity(), View.OnClickListener {
         }
 
         return super.onOptionsItemSelected(item)
+    }
+
+    fun addDevicesToListView(devices: List<String>, listener: AdapterView.OnItemClickListener) {
+        val phrasesAdapter = ArrayAdapter<String>(this, R.layout.crypto_e3_key_verify_phrase_row, devices)
+
+        e3DeviceDeleteLayoutDevices.adapter = phrasesAdapter
+        e3DeviceDeleteLayoutDevices.onItemClickListener = listener
     }
 
     fun sceneBegin() {
