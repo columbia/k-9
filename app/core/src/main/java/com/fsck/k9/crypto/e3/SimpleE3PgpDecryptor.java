@@ -2,6 +2,7 @@ package com.fsck.k9.crypto.e3;
 
 import android.app.PendingIntent;
 import android.content.Intent;
+
 import androidx.annotation.NonNull;
 
 import com.fsck.k9.mail.Address;
@@ -17,14 +18,21 @@ import com.fsck.k9.mail.internet.MimeHeader;
 import com.fsck.k9.mail.internet.MimeMessage;
 import com.fsck.k9.mail.internet.MimeMessageHelper;
 
+import org.apache.commons.io.IOUtils;
 import org.apache.james.mime4j.util.MimeUtil;
 import org.openintents.openpgp.OpenPgpError;
 import org.openintents.openpgp.util.OpenPgpApi;
+import org.openintents.openpgp.util.OpenPgpApi.CancelableBackgroundOperation;
+import org.openintents.openpgp.util.OpenPgpApi.IOpenPgpSinkResultCallback;
+import org.openintents.openpgp.util.OpenPgpApi.OpenPgpDataSink;
 import org.openintents.openpgp.util.OpenPgpApi.OpenPgpDataSource;
 
 import java.io.IOException;
+import java.io.InputStream;
 import java.io.OutputStream;
+import java.util.concurrent.CountDownLatch;
 
+import androidx.annotation.WorkerThread;
 import timber.log.Timber;
 
 public class SimpleE3PgpDecryptor {
@@ -52,16 +60,88 @@ public class SimpleE3PgpDecryptor {
 
         final Intent result = openPgpApi.executeApi(pgpApiIntent, dataSource, outputStream);
 
-        final int resultCode = result.getIntExtra(OpenPgpApi.RESULT_CODE, OpenPgpApi.RESULT_CODE_ERROR);
+        MimeMessage decryptedMessage = MimeMessage.parseMimeMessage(pgpResultTempBody.getInputStream(), true);
+        Body decryptedBody = decryptedMessage.getBody();
+
+        return handleDecryptResult(encryptedMessage, result, decryptedBody, decryptedMessage.getContentType());
+    }
+
+    /**
+     * TODO: E3 fix this
+     * @param encryptedMessage
+     * @param accountEmail
+     * @return
+     * @throws MessagingException
+     */
+    private MimeMessage decryptWithProgress(final MimeMessage encryptedMessage, final String accountEmail)
+            throws MessagingException {
+        Intent pgpApiIntent = buildDecryptIntent(encryptedMessage, accountEmail);
+
+        // Input to be decrypted
+        MimeBodyPart bodyPart = encryptedMessage.toBodyPart();
+        OpenPgpDataSource dataSource = createOpenPgpDataSourceFromBodyPart(bodyPart);
+
+        // Output after decryption
+        final BinaryTempFileBody pgpResultTempBody;
+        OutputStream outputStream = null;
+        try {
+            pgpResultTempBody = new BinaryTempFileBody(MimeUtil.ENC_7BIT); // MimeUtil.ENC_8BIT
+            outputStream = new EOLConvertingOutputStream(pgpResultTempBody.getOutputStream());
+        } catch (IOException e) {
+            throw new MessagingException("could not allocate temp file for storage!", e);
+        }
+
+        final CountDownLatch latch = new CountDownLatch(1);
+        Timber.d("SimpleE3PgpDecryptor invoking executeApiAsync");
+        final CancelableBackgroundOperation cancelableBgOp = openPgpApi.executeApiAsync(
+                pgpApiIntent,
+                dataSource,
+                getDataSinkForDecryptedData(outputStream),
+                new IOpenPgpSinkResultCallback<MimeBodyPart>() {
+                    @Override
+                    public void onProgress(int current, int max) {
+                        Timber.d("E3 UndoWorker decrypt received progress status: %d / %d", current, max);
+                    }
+
+                    @Override
+                    public void onReturn(Intent result, MimeBodyPart dummy) {
+                        try {
+                            Timber.d("SimpleE3PgpDecryptor Sink result onReturn");
+                            MimeMessage decryptedMessage = MimeMessage.parseMimeMessage(pgpResultTempBody.getInputStream(), true);
+                            Body decryptedBody = decryptedMessage.getBody();
+                            handleDecryptResult(encryptedMessage, result, decryptedBody, decryptedMessage.getContentType());
+                        } catch (MessagingException | IOException e) {
+                            throw new RuntimeException(e);
+                        } finally {
+                            Timber.d("SimpleE3PgpDecryptor latch.countDown()");
+                            latch.countDown();
+                        }
+                    }
+                }
+        );
+
+        try {
+            Timber.d("SimpleE3PgpDecryptor awaiting CountDownLatch");
+            latch.await();
+        } catch (InterruptedException e) {
+            throw new RuntimeException("Interrupted while waiting for E3 decrypt async", e);
+        }
+
+        return encryptedMessage;
+    }
+
+    private MimeMessage handleDecryptResult(MimeMessage encryptedMessage,
+                                            Intent resultIntent,
+                                            Body decryptedBody,
+                                            String contentType) throws MessagingException {
+
+        final int resultCode = resultIntent.getIntExtra(OpenPgpApi.RESULT_CODE, OpenPgpApi.RESULT_CODE_ERROR);
 
         switch (resultCode) {
             case OpenPgpApi.RESULT_CODE_SUCCESS:
-                MimeMessage decryptedMessage = MimeMessage.parseMimeMessage(pgpResultTempBody.getInputStream(), true);
-                Body decryptedBody = decryptedMessage.getBody();
-
                 MimeMessageHelper.setBody(encryptedMessage, decryptedBody);
 
-                encryptedMessage.setHeader(MimeHeader.HEADER_CONTENT_TYPE, decryptedMessage.getContentType());
+                encryptedMessage.setHeader(MimeHeader.HEADER_CONTENT_TYPE, contentType);
                 encryptedMessage.removeHeader(E3Constants.MIME_E3_ENCRYPTED_HEADER);
                 encryptedMessage.setFlag(Flag.E3, false);
 
@@ -70,7 +150,7 @@ public class SimpleE3PgpDecryptor {
                 return encryptedMessage;
 
             case OpenPgpApi.RESULT_CODE_USER_INTERACTION_REQUIRED:
-                PendingIntent returnedPendingIntent = result.getParcelableExtra(OpenPgpApi.RESULT_INTENT);
+                PendingIntent returnedPendingIntent = resultIntent.getParcelableExtra(OpenPgpApi.RESULT_INTENT);
                 if (returnedPendingIntent == null) {
                     throw new MessagingException("openpgp api needs user interaction, but returned no pendingintent!");
                 }
@@ -78,15 +158,15 @@ public class SimpleE3PgpDecryptor {
                 throw new MessagingException("openpgp api needs user interaction!");
 
             case OpenPgpApi.RESULT_CODE_ERROR:
-                OpenPgpError error = result.getParcelableExtra(OpenPgpApi.RESULT_ERROR);
+                OpenPgpError error = resultIntent.getParcelableExtra(OpenPgpApi.RESULT_ERROR);
                 if (error == null) {
                     throw new MessagingException("internal openpgp api error");
                 }
 
                 throw new MessagingException(error.getMessage());
+            default:
+                throw new IllegalStateException("Decryption resulted in unrecognized OpenPgpApi result code: " + resultCode);
         }
-
-        throw new IllegalStateException("unreachable code segment reached");
     }
 
     private Intent buildDecryptIntent(MimeMessage encryptedMessage, String accountEmail) {
@@ -120,6 +200,17 @@ public class SimpleE3PgpDecryptor {
                 } catch (MessagingException e) {
                     Timber.e(e, "MessagingException while writing message to crypto provider");
                 }
+            }
+        };
+    }
+
+    private OpenPgpDataSink<MimeBodyPart> getDataSinkForDecryptedData(final OutputStream os) {
+        return new OpenPgpDataSink<MimeBodyPart>() {
+            @Override
+            @WorkerThread
+            public MimeBodyPart processData(InputStream is) throws IOException {
+                IOUtils.copy(is, os);
+                return null;
             }
         };
     }

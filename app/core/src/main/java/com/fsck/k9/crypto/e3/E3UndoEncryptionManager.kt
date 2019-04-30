@@ -1,7 +1,7 @@
 package com.fsck.k9.crypto.e3
 
 import android.content.Context
-import androidx.concurrent.futures.CallbackToFutureAdapter
+import android.content.Intent
 import androidx.lifecycle.LiveData
 import androidx.work.*
 import com.fsck.k9.Account
@@ -14,11 +14,10 @@ import com.fsck.k9.controller.MessagingController
 import com.fsck.k9.mail.FetchProfile
 import com.fsck.k9.mail.Message
 import com.fsck.k9.mail.MessagingException
+import com.fsck.k9.mail.internet.MimeBodyPart
 import com.fsck.k9.mail.internet.MimeMessage
 import com.fsck.k9.mailstore.LocalFolder
 import com.fsck.k9.mailstore.LocalMessage
-import com.google.common.util.concurrent.ListenableFuture
-import kotlinx.coroutines.*
 import org.openintents.openpgp.IOpenPgpService2
 import org.openintents.openpgp.util.OpenPgpApi
 import org.openintents.openpgp.util.OpenPgpServiceConnection
@@ -95,25 +94,7 @@ class E3UndoEncryptionManager private constructor() {
 }
 
 class UndoWorker(appContext: Context,
-                           workerParams: WorkerParameters) : Worker(appContext, workerParams) {
-
-    /*
-    override fun startWork(): ListenableFuture<Result> {
-
-        return CallbackToFutureAdapter.getFuture { completer ->
-            try {
-                val executor = Executors.newSingleThreadExecutor()
-                executor.execute {
-                    completer.set(doWorkSynchronous())
-                }
-            } catch (e: Exception) {
-                // Never use exceptions for codeflow (do as I say, not as I do)
-                Timber.e(e, "UndoListenableWorker failed with exception")
-                completer.setException(e)
-            }
-        }
-    }
-    */
+                 workerParams: WorkerParameters) : Worker(appContext, workerParams) {
 
     override fun doWork(): Result {
         return try {
@@ -140,7 +121,7 @@ class UndoWorker(appContext: Context,
         if (allMessagesWithE3.isEmpty()) {
             Timber.d("E3 Undo batch found no E3 encrypted messages, so returning success")
         } else {
-            val decryptedStoredLocally = decryptBatch(account, allMessagesWithE3, cryptoProvider)
+            val decryptedStoredLocally = decryptBatchSynchronous(account, allMessagesWithE3, cryptoProvider)
 
             // Remove any messages which we didn't have locally before to save space?
             //localFolder.destroyMessages(nonLocalMsgs)
@@ -174,7 +155,10 @@ class UndoWorker(appContext: Context,
         return messagesWithE3
     }
 
-    private fun decryptBatch(account: Account, messageBatch: List<LocalMessage>, cryptoProvider: String): BlockingQueue<Message> {
+    /**
+     * This uses a [CountDownLatch]
+     */
+    private fun decryptBatchSynchronous(account: Account, messageBatch: List<LocalMessage>, cryptoProvider: String): BlockingQueue<Message> {
         val decryptedStoredLocally = ArrayBlockingQueue<Message>(messageBatch.size)
 
         val syncUpdatedListener = object : SyncUpdatedListener {
@@ -194,7 +178,7 @@ class UndoWorker(appContext: Context,
             Timber.d("Synchronize finished in for-loop")
         }
 
-        Timber.d("Reached end of decryptBatch")
+        Timber.d("Reached end of decryptBatchSynchronous")
 
         return decryptedStoredLocally
     }
@@ -232,19 +216,25 @@ private class PgpOnBoundListener(private val appContext: Context,
     override fun onBound(service: IOpenPgpService2) {
         val executor = Executors.newSingleThreadExecutor()
         executor.execute {
-            decryptReplaceSync(service)
-            Timber.d("Synchronize finished in onBound")
-            countDownLatch.countDown()
+            try {
+                decryptReplaceSync(service)
+                Timber.d("Synchronize finished in onBound")
+            } finally {
+                countDownLatch.countDown()
+            }
         }
     }
 
+    @Throws(MessagingException::class)
     private fun decryptReplaceSync(service: IOpenPgpService2) {
         val messagingController = MessagingController.getInstance(appContext)
         val openPgpApi = OpenPgpApi(appContext, service)
         val decryptor = SimpleE3PgpDecryptor(openPgpApi, account.e3Key)
 
         try {
+            Timber.d("Decrypting E3 message: ${message.subject} (originalUid=${message.uid}")
             val decryptedMessage = decryptor.decrypt(message as MimeMessage, account.email)
+            //val decryptedMessage = decryptor.decryptWithProgress(message as MimeMessage, account.email)
 
             Timber.d("Synchronizing decrypted E3 message: ${message.subject} (originalUid=${message.uid}, decryptedMessageUid=${decryptedMessage.uid}")
             messagingController.replaceExistingMessageSynchronous(account, message.folder, message, decryptedMessage, listener)
