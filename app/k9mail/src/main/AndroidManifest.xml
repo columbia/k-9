@@ -228,6 +228,12 @@
             />
 
         <activity
+            android:name=".ui.e3.delete.E3DeviceDeleteActivity"
+            android:configChanges="locale"
+            android:label="@string/e3_device_delete_title"
+            />
+
+        <activity
             android:name=".ui.e3.undo.E3UndoActivity"
             android:configChanges="locale"
             android:label="@string/e3_undo_title"

@@ -2,6 +2,7 @@ package com.fsck.k9.ui.e3
 
 import com.fsck.k9.crypto.e3.E3UndoEncryptionManager
 import com.fsck.k9.ui.crypto.PgpWordList
+import com.fsck.k9.ui.e3.delete.E3DeviceDeletePresenter
 import com.fsck.k9.ui.e3.scan.E3KeyScanDownloadLiveEvent
 import com.fsck.k9.ui.e3.scan.E3KeyScanPresenter
 import com.fsck.k9.ui.e3.scan.E3KeyScanScanLiveEvent
@@ -69,4 +70,18 @@ val e3UndoUiModule = applicationContext {
                 params["e3UndoView"])
     }
     viewModel { E3UndoViewModel(get()) }
+}
+
+val e3DeviceDeleteUiModule = applicationContext {
+    factory { E3KeyScanScanLiveEvent(get()) }
+    factory { E3KeyScanDownloadLiveEvent() }
+    factory { params ->
+        E3DeviceDeletePresenter(
+                lifecycleOwner = params["lifecycleOwner"],
+                preferences = get(),
+                openPgpApiManager = get(parameters = { params.values }),
+                view = params["e3VerifyView"],
+                messagingController = get()
+        )
+    }
 }

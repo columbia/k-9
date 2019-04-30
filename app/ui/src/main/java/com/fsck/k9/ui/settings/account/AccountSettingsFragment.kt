@@ -17,6 +17,7 @@ import com.fsck.k9.activity.setup.AccountSetupOutgoing
 import com.fsck.k9.controller.MessagingController
 import com.fsck.k9.crypto.OpenPgpApiHelper
 import com.fsck.k9.mailstore.StorageManager
+import com.fsck.k9.ui.e3.delete.E3DeviceDeleteActivity
 import com.fsck.k9.ui.e3.scan.E3KeyScanActivity
 import com.fsck.k9.ui.e3.upload.E3KeyUploadActivity
 import com.fsck.k9.ui.e3.undo.E3UndoActivity
@@ -216,6 +217,7 @@ class AccountSettingsFragment : PreferenceFragmentCompat() {
         configureE3KeyUpload(account)
         configureE3KeyScan(account)
         configureE3KeyGenerate(account)
+        configureE3DeviceDelete(account)
         configureE3Undo(account)
     }
 
@@ -324,6 +326,13 @@ class AccountSettingsFragment : PreferenceFragmentCompat() {
         }
     }
 
+    private fun configureE3DeviceDelete(account: Account) {
+        findPreference(PREFERENCE_E3_DEVICE_DELETE).onClick {
+            val intent = E3DeviceDeleteActivity.createIntent(requireContext(), account.uuid)
+            startActivity(intent)
+        }
+    }
+
     private fun configureE3Undo(account: Account) {
         findPreference(PREFERENCE_E3_UNDO).onClick {
             val intent = E3UndoActivity.createIntent(requireContext(), account.uuid)
@@ -399,6 +408,7 @@ class AccountSettingsFragment : PreferenceFragmentCompat() {
         private const val PREFERENCE_E3_KEY_UPLOAD = "e3_key_upload"
         private const val PREFERENCE_E3_KEY_SCAN = "e3_key_scan"
         private const val PREFERENCE_E3_KEY_GENERATE = "e3_key_generate"
+        private const val PREFERENCE_E3_DEVICE_DELETE = "e3_device_delete"
         private const val PREFERENCE_E3_UNDO = "e3_undo"
         private const val PREFERENCE_FOLDERS = "folders"
         private const val PREFERENCE_AUTO_EXPAND_FOLDER = "account_setup_auto_expand_folder"

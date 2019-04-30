@@ -49,8 +49,8 @@ class E3KeyVerificationActivity : E3ActionBaseActivity(), View.OnClickListener {
             requestNextVerification()
         }
 
-        findViewById<View>(R.id.cancel).setOnClickListener(this)
-        findViewById<View>(R.id.done).setOnClickListener(this)
+        cancel.setOnClickListener(this)
+        done.setOnClickListener(this)
 
         supportActionBar!!.setDisplayHomeAsUpEnabled(true)
 

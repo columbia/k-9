@@ -1,0 +1,41 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:layout_width="wrap_content"
+    android:layout_height="fill_parent"
+    android:layout_gravity="center_horizontal"
+    android:orientation="vertical"
+    android:paddingLeft="12dp"
+    android:paddingRight="12dp">
+
+    <LinearLayout
+        android:orientation="vertical"
+        android:layout_gravity="center_horizontal"
+        android:layout_height="wrap_content"
+        android:padding="6dip"
+        android:layout_width="fill_parent">
+
+        <TextView
+            style="?android:textAppearanceMedium"
+            android:id="@+id/e3DeviceDeleteLayoutInstructions"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="24dp"
+            android:text="@string/e3_device_delete_intro" />
+
+        <ListView
+            android:id="@+id/e3DeviceDeleteLayoutDevices"
+            android:layout_width="fill_parent"
+            android:layout_height="wrap_content"
+            android:orientation="horizontal"
+            android:padding="8dp"
+            android:dividerHeight="1dp"
+            android:divider="#ccc"
+            android:choiceMode="singleChoice">
+        </ListView>
+    </LinearLayout>
+
+    <include layout="@layout/wizard_cancel_done" />
+</LinearLayout>
