@@ -59,7 +59,7 @@ class E3DeviceDeleteActivity : E3ActionBaseActivity(), View.OnClickListener {
         done.visibility = View.GONE
     }
 
-    fun sceneFinished(newVerificationPhrase: String?, nextKey: Boolean, transition: Boolean = false) {
+    fun sceneFinished(nextKey: Boolean, transition: Boolean = false) {
         if (transition) {
             setupSceneTransition()
         }

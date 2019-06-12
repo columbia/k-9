@@ -8,6 +8,8 @@ import com.fsck.k9.Account
 import com.fsck.k9.Preferences
 import com.fsck.k9.controller.MessagingController
 import com.fsck.k9.crypto.e3.E3Constants
+import com.fsck.k9.crypto.e3.E3KeyEmailParser
+import com.fsck.k9.crypto.e3.E3PublicKeyManager
 import com.fsck.k9.mail.FetchProfile
 import com.fsck.k9.mail.internet.MimeUtility
 import com.fsck.k9.mailstore.LocalMessage
@@ -157,6 +159,9 @@ class E3KeyVerificationPresenter internal constructor(
 
     // TODO: E3 use E3PublicKeyManager
     private fun addKeysFromMessagesToKeychain(keyMessages: List<LocalMessage>) {
+        val e3KeyManager = E3PublicKeyManager(openPgpApiManager.openPgpApi)
+        val e3KeyEmailParser = E3KeyEmailParser()
+
         for (keyMsg: LocalMessage in keyMessages) {
             if (!keyMsg.hasAttachments()) {
                 Timber.e("Got a keyMsg without any attachments")
@@ -181,6 +186,9 @@ class E3KeyVerificationPresenter internal constructor(
 
             if (resultCode == OpenPgpApi.RESULT_CODE_SUCCESS) {
                 Timber.d("Successfully added E3 public key to OpenKeychain")
+                val parsedE3KeyEmail = e3KeyEmailParser.parseKeyEmail(keyMsg)
+                e3KeyManager.addPublicKeysToKeychain(parsedE3KeyEmail)
+                e3KeyManager.deletePublicKeysFromKeychain(parsedE3KeyEmail)
             } else {
                 Timber.d("Failed to add E3 public key to OpeKeychain: $resultCode")
             }

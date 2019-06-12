@@ -330,6 +330,7 @@ public class OpenPgpApi {
     // ENCRYPT-ON-RECEIPT
     public static final String EXTRA_ASCII_ARMORED_KEY = "ascii_armored_key";
     public static final String EXTRA_NAME = "key_name";
+    public static final String EXTRA_NAMES = "key_names";
     public static final String EXTRA_EMAIL = "key_email";
 
     /* Service Intent returns */

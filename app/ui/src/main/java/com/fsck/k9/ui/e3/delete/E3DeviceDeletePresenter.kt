@@ -1,5 +1,6 @@
 package com.fsck.k9.ui.e3.delete
 
+import android.content.Intent
 import android.widget.AdapterView
 import android.widget.TextView
 import androidx.lifecycle.LifecycleOwner
@@ -8,7 +9,9 @@ import com.fsck.k9.Preferences
 import com.fsck.k9.controller.MessagingController
 import com.fsck.k9.ui.e3.E3OpenPgpPresenterCallback
 import org.openintents.openpgp.OpenPgpApiManager
+import org.openintents.openpgp.util.OpenPgpApi
 import timber.log.Timber
+import java.io.InputStream
 
 class E3DeviceDeletePresenter internal constructor(
         lifecycleOwner: LifecycleOwner,
@@ -26,11 +29,44 @@ class E3DeviceDeletePresenter internal constructor(
         }
 
         account = preferences.getAccount(accountUuid)
-        openPgpApiManager.setOpenPgpProvider(account.e3Provider, E3OpenPgpPresenterCallback(openPgpApiManager, view))
+        openPgpApiManager.setOpenPgpProvider(account.e3Provider, object : OpenPgpApiManager.OpenPgpApiManagerCallback {
+            override fun onOpenPgpProviderStatusChanged() {
+                Timber.d("Got openPgpProviderState=${openPgpApiManager.openPgpProviderState}")
+                when (openPgpApiManager.openPgpProviderState) {
+                    OpenPgpApiManager.OpenPgpProviderState.UI_REQUIRED -> {
+                        view.finishWithProviderConnectError(openPgpApiManager.readableOpenPgpProviderName)
+                    }
+                    OpenPgpApiManager.OpenPgpProviderState.OK -> {
+                        val e3KeyIdNames = requestKnownE3PublicKeys()
+                        view.addDevicesToListView(e3KeyIdNames.map { it.e3KeyName }, getDevicesListAdapterListener())
+                    }
+                }
+            }
 
-        view.addDevicesToListView(listOf("device 1", "device 2"), getDevicesListAdapterListener())
+            override fun onOpenPgpProviderError(error: OpenPgpApiManager.OpenPgpProviderError) {
+                view.finishWithProviderConnectError(openPgpApiManager.readableOpenPgpProviderName)
+            }
+        })
 
         view.sceneBegin()
+    }
+
+    private fun requestKnownE3PublicKeys(): List<E3KeyIdName> {
+        val intent = Intent(OpenPgpApi.ACTION_GET_ENCRYPT_ON_RECEIPT_PUBLIC_KEYS)
+        val keyIdsResult = openPgpApiManager.openPgpApi.executeApi(intent, null as InputStream?, null)
+
+        val eorKeyIds = keyIdsResult.getLongArrayExtra(OpenPgpApi.EXTRA_KEY_IDS)
+        val eorKeyNames = keyIdsResult.getStringArrayExtra(OpenPgpApi.EXTRA_NAMES)
+
+        val e3KeyIdNames = mutableListOf<E3KeyIdName>()
+
+        var i = 0
+        while (i < eorKeyIds.size) {
+            e3KeyIdNames.add(E3KeyIdName(eorKeyIds[i], eorKeyNames[i]))
+            i++
+        }
+
+        return e3KeyIdNames
     }
 
     private fun getDevicesListAdapterListener() : AdapterView.OnItemClickListener {
@@ -44,4 +80,7 @@ class E3DeviceDeletePresenter internal constructor(
     fun onClickHome() {
         view.finishAsCancelled()
     }
+
+    data class E3KeyIdName(val e3KeyId: Long,
+                                  val e3KeyName: String)
 }
