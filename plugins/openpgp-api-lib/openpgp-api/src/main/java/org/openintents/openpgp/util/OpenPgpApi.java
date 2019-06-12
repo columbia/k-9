@@ -243,6 +243,14 @@ public class OpenPgpApi {
     public static final String ACTION_ADD_ENCRYPT_ON_RECEIPT_KEY = "org.openintents.openpgp.action.ADD_ENCRYPT_ON_RECEIPT_KEY";
 
     /**
+     * ACTION_DELETE_ENCRYPT_ON_RECEIPT_KEY
+     *
+     * required extras:
+     * byte[]      EXTRA_ASCII_ARMORED_KEY       (ascii armored key to delete)
+     */
+    public static final String ACTION_DELETE_ENCRYPT_ON_RECEIPT_KEY = "org.openintents.openpgp.action.DELETE_ENCRYPT_ON_RECEIPT_KEY";
+
+    /**
      * ACTION_CREATE_ENCRYPT_ON_RECEIPT_KEY
      *
      * required extras:

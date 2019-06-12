@@ -3339,9 +3339,9 @@ public class MessagingController {
                         // TODO: E3 add a different notification that explains something was done?
                         final E3PublicKeyManager e3KeyManager = new E3PublicKeyManager(openPgpApi);
 
-                        e3KeyManager.addPublicKeysFromKeyEmail(parsedE3KeyEmail);
+                        e3KeyManager.addPublicKeysToKeychain(parsedE3KeyEmail);
 
-                        e3KeyManager.deletePublicKeysFromKeyEmail(parsedE3KeyEmail);
+                        e3KeyManager.deletePublicKeysFromKeychain(parsedE3KeyEmail);
                     } else {
                         // E3 key upload email was from a device we don't recognize, so the user
                         // needs to manually verify it.
@@ -3352,7 +3352,7 @@ public class MessagingController {
 
                 @Override
                 public void onError(Exception e) {
-                    Timber.e("Got error while binding to OpenPGP service", e);
+                    Timber.e(e, "Got error while binding to OpenPGP service");
                 }
             });
             openPgpServiceConnection.bindToService();
