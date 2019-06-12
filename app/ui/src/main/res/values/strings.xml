@@ -1400,6 +1400,7 @@ Please submit bug reports, contribute new features and ask questions at
 
     <string name="e3_device_delete_title">Delete an E3 device</string>
     <string name="e3_device_delete_intro">Select your devices you want to remove from E3:</string>
+    <string name="e3_device_delete_missing_device_name">(missing device name)</string>
 
     <string name="e3_undo_title">Undo E3 encryption</string>
     <string name="e3_undo_intro">Decrypts all E3-encrypted emails, restoring them to their original plaintext emails. E3\'s encrypt on receipt mechanism will be automatically disabled.

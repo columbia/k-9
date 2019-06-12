@@ -7,6 +7,7 @@ import androidx.lifecycle.LifecycleOwner
 import com.fsck.k9.Account
 import com.fsck.k9.Preferences
 import com.fsck.k9.controller.MessagingController
+import com.fsck.k9.ui.R
 import com.fsck.k9.ui.e3.E3OpenPgpPresenterCallback
 import org.openintents.openpgp.OpenPgpApiManager
 import org.openintents.openpgp.util.OpenPgpApi
@@ -38,7 +39,9 @@ class E3DeviceDeletePresenter internal constructor(
                     }
                     OpenPgpApiManager.OpenPgpProviderState.OK -> {
                         val e3KeyIdNames = requestKnownE3PublicKeys()
-                        view.addDevicesToListView(e3KeyIdNames.map { it.e3KeyName }, getDevicesListAdapterListener())
+                        view.addDevicesToListView(e3KeyIdNames.map {
+                            it.e3KeyName ?: "(missing device name)"
+                        }, getDevicesListAdapterListener())
                     }
                 }
             }
@@ -58,6 +61,10 @@ class E3DeviceDeletePresenter internal constructor(
         val eorKeyIds = keyIdsResult.getLongArrayExtra(OpenPgpApi.EXTRA_KEY_IDS)
         val eorKeyNames = keyIdsResult.getStringArrayExtra(OpenPgpApi.EXTRA_NAMES)
 
+        if (eorKeyIds.size != eorKeyNames.size) {
+            return emptyList()
+        }
+
         val e3KeyIdNames = mutableListOf<E3KeyIdName>()
 
         var i = 0
@@ -69,7 +76,7 @@ class E3DeviceDeletePresenter internal constructor(
         return e3KeyIdNames
     }
 
-    private fun getDevicesListAdapterListener() : AdapterView.OnItemClickListener {
+    private fun getDevicesListAdapterListener(): AdapterView.OnItemClickListener {
         return AdapterView.OnItemClickListener { _, textView, _, _ ->
             val selectedDevice: String = (textView as TextView).text.toString()
 
@@ -82,5 +89,5 @@ class E3DeviceDeletePresenter internal constructor(
     }
 
     data class E3KeyIdName(val e3KeyId: Long,
-                                  val e3KeyName: String)
+                           val e3KeyName: String?)
 }
