@@ -67,6 +67,13 @@ class E3DeviceDeleteActivity : E3ActionBaseActivity(), View.OnClickListener {
 
     }
 
+    fun populateListViewWithE3Devices(e3KeyIdNames: List<E3DeviceDeletePresenter.E3KeyIdName>, adapterListener: AdapterView.OnItemClickListener) {
+        addDevicesToListView(e3KeyIdNames.map {
+            it.e3KeyName ?: resources.getString(R.string.e3_device_delete_missing_device_name)
+        }, adapterListener)
+
+    }
+
     override fun onClick(v: View) {
         if (v.id == R.id.cancel) {
             setResult(Activity.RESULT_CANCELED)

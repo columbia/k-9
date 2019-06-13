@@ -38,7 +38,8 @@ class E3DeviceDeletePresenter internal constructor(
                         view.finishWithProviderConnectError(openPgpApiManager.readableOpenPgpProviderName)
                     }
                     OpenPgpApiManager.OpenPgpProviderState.OK -> {
-                        populateListViewWithE3Devices()
+                        val knownPubKeys = requestKnownE3PublicKeys()
+                        view.populateListViewWithE3Devices(knownPubKeys, getDevicesListAdapterListener(knownPubKeys))
                     }
                 }
             }
@@ -49,13 +50,6 @@ class E3DeviceDeletePresenter internal constructor(
         })
 
         view.sceneBegin()
-    }
-
-    private fun populateListViewWithE3Devices() {
-        val e3KeyIdNames = requestKnownE3PublicKeys()
-        view.addDevicesToListView(e3KeyIdNames.map {
-            it.e3KeyName ?: "(missing device name)"
-        }, getDevicesListAdapterListener(e3KeyIdNames))
     }
 
     private fun requestKnownE3PublicKeys(): List<E3KeyIdName> {
@@ -90,6 +84,9 @@ class E3DeviceDeletePresenter internal constructor(
             Timber.d("User selected device $selectedDevice (position=$position, id=$id) to delete")
 
             deleteKey(e3KeyIdNames[position])
+
+            val knownPubKeys = requestKnownE3PublicKeys()
+            view.populateListViewWithE3Devices(knownPubKeys, getDevicesListAdapterListener(knownPubKeys))
         }
     }
 
