@@ -38,10 +38,7 @@ class E3DeviceDeletePresenter internal constructor(
                         view.finishWithProviderConnectError(openPgpApiManager.readableOpenPgpProviderName)
                     }
                     OpenPgpApiManager.OpenPgpProviderState.OK -> {
-                        val e3KeyIdNames = requestKnownE3PublicKeys()
-                        view.addDevicesToListView(e3KeyIdNames.map {
-                            it.e3KeyName ?: "(missing device name)"
-                        }, getDevicesListAdapterListener(e3KeyIdNames))
+                        populateListViewWithE3Devices()
                     }
                 }
             }
@@ -52,6 +49,13 @@ class E3DeviceDeletePresenter internal constructor(
         })
 
         view.sceneBegin()
+    }
+
+    private fun populateListViewWithE3Devices() {
+        val e3KeyIdNames = requestKnownE3PublicKeys()
+        view.addDevicesToListView(e3KeyIdNames.map {
+            it.e3KeyName ?: "(missing device name)"
+        }, getDevicesListAdapterListener(e3KeyIdNames))
     }
 
     private fun requestKnownE3PublicKeys(): List<E3KeyIdName> {
@@ -69,7 +73,10 @@ class E3DeviceDeletePresenter internal constructor(
 
         var i = 0
         while (i < eorKeyIds.size) {
-            e3KeyIdNames.add(E3KeyIdName(eorKeyIds[i], eorKeyNames[i]))
+            // Skip this device's own key since it would also delete the private key
+            if (eorKeyIds[i] != account.e3Key) {
+                e3KeyIdNames.add(E3KeyIdName(eorKeyIds[i], eorKeyNames[i]))
+            }
             i++
         }
 
