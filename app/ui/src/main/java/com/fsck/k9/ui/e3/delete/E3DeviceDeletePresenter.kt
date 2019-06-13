@@ -83,10 +83,15 @@ class E3DeviceDeletePresenter internal constructor(
 
             Timber.d("User selected device $selectedDevice (position=$position, id=$id) to delete")
 
-            deleteKey(e3KeyIdNames[position])
-
-            val knownPubKeys = requestKnownE3PublicKeys()
-            view.populateListViewWithE3Devices(knownPubKeys, getDevicesListAdapterListener(knownPubKeys))
+            view.displayConfirmDelete(selectedDevice,
+                    object : E3DeviceDeleteActivity.E3ConfirmDeleteCallback {
+                        override fun deleteConfirmed() {
+                            deleteKey(e3KeyIdNames[position])
+                            val knownPubKeys = requestKnownE3PublicKeys()
+                            view.populateListViewWithE3Devices(knownPubKeys, getDevicesListAdapterListener(knownPubKeys))
+                        }
+                    }
+            )
         }
     }
 
