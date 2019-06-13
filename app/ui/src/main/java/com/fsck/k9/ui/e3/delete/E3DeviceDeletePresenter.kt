@@ -41,7 +41,7 @@ class E3DeviceDeletePresenter internal constructor(
                         val e3KeyIdNames = requestKnownE3PublicKeys()
                         view.addDevicesToListView(e3KeyIdNames.map {
                             it.e3KeyName ?: "(missing device name)"
-                        }, getDevicesListAdapterListener())
+                        }, getDevicesListAdapterListener(e3KeyIdNames))
                     }
                 }
             }
@@ -76,11 +76,28 @@ class E3DeviceDeletePresenter internal constructor(
         return e3KeyIdNames
     }
 
-    private fun getDevicesListAdapterListener(): AdapterView.OnItemClickListener {
-        return AdapterView.OnItemClickListener { _, textView, _, _ ->
+    private fun getDevicesListAdapterListener(e3KeyIdNames: List<E3KeyIdName>): AdapterView.OnItemClickListener {
+        return AdapterView.OnItemClickListener { _, textView, position, id ->
             val selectedDevice: String = (textView as TextView).text.toString()
 
-            Timber.d("User selected device $selectedDevice to delete")
+            Timber.d("User selected device $selectedDevice (position=$position, id=$id) to delete")
+
+            deleteKey(e3KeyIdNames[position])
+        }
+    }
+
+    private fun deleteKey(e3KeyIdName: E3KeyIdName) {
+        val intent = Intent(OpenPgpApi.ACTION_DELETE_ENCRYPT_ON_RECEIPT_KEY)
+        intent.putExtra(OpenPgpApi.EXTRA_KEY_ID, e3KeyIdName.e3KeyId)
+
+        val deleteKeyResult = openPgpApiManager.openPgpApi.executeApi(intent, null as InputStream?, null)
+
+        val resultCode = deleteKeyResult.getIntExtra(OpenPgpApi.RESULT_CODE, OpenPgpApi.RESULT_CODE_ERROR)
+
+        if (resultCode == OpenPgpApi.RESULT_CODE_SUCCESS) {
+            Timber.d("Successfully deleted E3 key from OpenKeychain $e3KeyIdName")
+        } else {
+            Timber.d("Failed to delete E3 key from OpeKeychain: $resultCode")
         }
     }
 

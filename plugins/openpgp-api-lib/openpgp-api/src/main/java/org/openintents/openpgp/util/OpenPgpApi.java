@@ -246,7 +246,7 @@ public class OpenPgpApi {
      * ACTION_DELETE_ENCRYPT_ON_RECEIPT_KEY
      *
      * required extras:
-     * byte[]      EXTRA_ASCII_ARMORED_KEY       (ascii armored key to delete)
+     * long      EXTRA_KEY_ID       (id of key to delete)
      */
     public static final String ACTION_DELETE_ENCRYPT_ON_RECEIPT_KEY = "org.openintents.openpgp.action.DELETE_ENCRYPT_ON_RECEIPT_KEY";
 
