@@ -1,8 +1,11 @@
 package com.fsck.k9.crypto.e3
 
+import android.app.PendingIntent
 import android.content.Intent
+import android.graphics.Bitmap
 import org.openintents.openpgp.util.OpenPgpApi
 import timber.log.Timber
+import java.io.ByteArrayOutputStream
 import java.io.InputStream
 
 class E3PublicKeyManager(private val openPgpApi: OpenPgpApi) {
@@ -43,4 +46,31 @@ class E3PublicKeyManager(private val openPgpApi: OpenPgpApi) {
             }
         }
     }
+
+    fun requestPgpKey(openPgpApi: OpenPgpApi, keyId: Long, armored: Boolean, fingerprint: Boolean): KeyResult {
+        val intent = Intent(OpenPgpApi.ACTION_GET_KEY)
+        intent.putExtra(OpenPgpApi.EXTRA_KEY_ID, keyId)
+        intent.putExtra(OpenPgpApi.EXTRA_REQUEST_ASCII_ARMOR, armored)
+        intent.putExtra(OpenPgpApi.EXTRA_REQUEST_FINGERPRINT, fingerprint)
+        val baos = ByteArrayOutputStream()
+        val result = openPgpApi.executeApi(intent, null as InputStream?, baos)
+
+        val resultIntent = result.getParcelableExtra<PendingIntent>(OpenPgpApi.RESULT_INTENT)
+        val identity = result.getStringExtra(OpenPgpApi.RESULT_USER_ID)
+
+        if (fingerprint) {
+            val fingerprintString = result.getStringExtra(OpenPgpApi.RESULT_FINGERPRINT)
+            val fingerprintBitmap = result.getParcelableExtra<Bitmap>(OpenPgpApi.RESULT_FINGERPRINT_QR)
+
+            return KeyResult(resultIntent, baos, identity, KeyFingerprint(fingerprintString, fingerprintBitmap))
+        } else {
+            return KeyResult(resultIntent, baos, identity, null)
+        }
+    }
 }
+
+
+data class KeyResult(val pendingIntent: PendingIntent, val resultData: ByteArrayOutputStream,
+                     val identity: String, val fingerprint: KeyFingerprint?)
+
+data class KeyFingerprint(val hexString: String?, val qrBitmap: Bitmap?)

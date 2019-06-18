@@ -1405,6 +1405,30 @@ Please submit bug reports, contribute new features and ask questions at
     <string name="e3_device_delete_confirm_info"><![CDATA[You requested to delete your device \n<b>\"%1$s\"</b>. \nE3-encrypted emails will no longer be readable on the selected device.]]></string>
     <string name="e3_device_delete_confirm_no">No, do not delete this device.</string>
     <string name="e3_device_delete_confirm_yes">Yes, delete this device.</string>
+    <string name="e3_device_delete_msg_subject">E3 Device Deletion</string>
+    <string name="e3_device_delete_msg_user_id">%s (Key ID: %s)</string>
+    <string name="e3_device_delete_msg_body">This message was sent because your device \"%s\" requested to delete your E3 device(s):\n\n%s\n\nIf this was done in error, please restart the E3 sync process on the deleted device.</string>
+    <string name="e3_device_delete_msg_body_html"><![CDATA[
+    <html dir="auto">
+        <head>
+            <meta name="viewport" content="width=device-width"/>
+            <style>
+                .largebold {
+                    font-size: 2em;
+                    font-weight: bold;
+                }
+            </style>
+        </head>
+        <body>
+        This message was sent because your device "%s" requested to delete your E3 device(s):
+        <br/><br/>
+        <span class="largebold">%s</span>
+        <br/><br/>
+        If this was done in error, please restart the E3 sync process on the deleted device.
+        </body>
+    </html>
+]]>
+    </string>
 
     <string name="e3_undo_title">Undo E3 encryption</string>
     <string name="e3_undo_intro">Decrypts all E3-encrypted emails, restoring them to their original plaintext emails. E3\'s encrypt on receipt mechanism will be automatically disabled.
