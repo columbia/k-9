@@ -1,7 +1,5 @@
 package com.fsck.k9.ui.e3.delete
 
-import android.app.PendingIntent
-import android.content.Context
 import android.content.res.Resources
 import com.fsck.k9.Account
 import com.fsck.k9.K9
@@ -15,11 +13,12 @@ import com.fsck.k9.mail.MessagingException
 import com.fsck.k9.mail.filter.Hex
 import com.fsck.k9.mail.internet.*
 import com.fsck.k9.ui.R
+import com.fsck.k9.ui.e3.E3UploadMessage
 import org.openintents.openpgp.util.OpenPgpApi
 import java.security.MessageDigest
 import java.util.*
 
-class E3DeleteMessageCreator(context: Context, private val resources: Resources) : SingleLiveEvent<E3DeleteMessage>() {
+class E3DeleteMessageCreator(private val resources: Resources) : SingleLiveEvent<E3DeleteMessage>() {
 
     // Returns null if no upload is performed
     fun createE3DeleteMessage(openPgpApi: OpenPgpApi, account: Account, e3DeleteDeviceRequests: Set<E3DeleteDeviceRequest>): E3DeleteMessage {
@@ -112,6 +111,6 @@ class E3DeleteMessageCreator(context: Context, private val resources: Resources)
     }
 }
 
-data class E3DeleteMessage(val deleteMessage: Message, val deleteRequests: Set<E3DeleteDeviceRequest>)
+data class E3DeleteMessage(val deleteMessage: Message, val deleteRequests: Set<E3DeleteDeviceRequest>): E3UploadMessage(deleteMessage)
 
-data class E3DeleteDeviceRequest(val keyId: Long, val keyName: String)
+data class E3DeleteDeviceRequest(val keyId: Long, val keyName: String?)

@@ -21,6 +21,7 @@ import com.fsck.k9.mail.internet.*
 import com.fsck.k9.mailstore.BinaryMemoryBody
 import com.fsck.k9.ui.R
 import com.fsck.k9.ui.crypto.PgpWordList
+import com.fsck.k9.ui.e3.E3UploadMessage
 import com.fsck.k9.ui.e3.verify.E3DigestsAndResponses
 import org.openintents.openpgp.util.OpenPgpApi
 import java.io.*
@@ -200,6 +201,7 @@ class E3KeyUploadMessageCreator(context: Context, private val resources: Resourc
     }
 }
 
-data class E3KeyUploadMessage(val keyUploadMessage: Message, val pendingIntentForGetKey: PendingIntent,
+data class E3KeyUploadMessage(val keyUploadMessage: Message,
+                              val pendingIntentForGetKey: PendingIntent,
                               val verificationPhrase: String,
-                              val keyResult: KeyResult)
+                              val keyResult: KeyResult): E3UploadMessage(keyUploadMessage)

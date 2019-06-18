@@ -4,11 +4,16 @@ import android.content.Intent
 import android.widget.AdapterView
 import android.widget.TextView
 import androidx.lifecycle.LifecycleOwner
+import androidx.lifecycle.Observer
 import com.fsck.k9.Account
 import com.fsck.k9.Preferences
 import com.fsck.k9.controller.MessagingController
 import com.fsck.k9.ui.R
 import com.fsck.k9.ui.e3.E3OpenPgpPresenterCallback
+import com.fsck.k9.ui.e3.E3UploadMessageResult
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.GlobalScope
+import kotlinx.coroutines.launch
 import org.openintents.openpgp.OpenPgpApiManager
 import org.openintents.openpgp.util.OpenPgpApi
 import timber.log.Timber
@@ -19,9 +24,14 @@ class E3DeviceDeletePresenter internal constructor(
         private val preferences: Preferences,
         private val openPgpApiManager: OpenPgpApiManager,
         private val view: E3DeviceDeleteActivity,
-        private val messagingController: MessagingController
+        private val viewModel: E3DeviceDeleteViewModel
 ) {
     private lateinit var account: Account
+
+    init {
+        viewModel.e3DeviceDeleteCreateEvent.observe(lifecycleOwner, Observer { msg -> msg?.let { onEventE3CreateDeleteMessage(it) } })
+        viewModel.e3UploadMessageLiveEvent.observe(lifecycleOwner, Observer { pi -> onUploadedE3Message(pi) })
+    }
 
     fun initFromIntent(accountUuid: String?) {
         if (accountUuid == null) {
@@ -52,7 +62,7 @@ class E3DeviceDeletePresenter internal constructor(
         view.sceneBegin()
     }
 
-    private fun requestKnownE3PublicKeys(): List<E3KeyIdName> {
+    private fun requestKnownE3PublicKeys(): List<E3DeleteDeviceRequest> {
         val intent = Intent(OpenPgpApi.ACTION_GET_ENCRYPT_ON_RECEIPT_PUBLIC_KEYS)
         val keyIdsResult = openPgpApiManager.openPgpApi.executeApi(intent, null as InputStream?, null)
 
@@ -63,13 +73,13 @@ class E3DeviceDeletePresenter internal constructor(
             return emptyList()
         }
 
-        val e3KeyIdNames = mutableListOf<E3KeyIdName>()
+        val e3KeyIdNames = mutableListOf<E3DeleteDeviceRequest>()
 
         var i = 0
         while (i < eorKeyIds.size) {
             // Skip this device's own key since it would also delete the private key
             if (eorKeyIds[i] != account.e3Key) {
-                e3KeyIdNames.add(E3KeyIdName(eorKeyIds[i], eorKeyNames[i]))
+                e3KeyIdNames.add(E3DeleteDeviceRequest(eorKeyIds[i], eorKeyNames[i]))
             }
             i++
         }
@@ -77,7 +87,7 @@ class E3DeviceDeletePresenter internal constructor(
         return e3KeyIdNames
     }
 
-    private fun getDevicesListAdapterListener(e3KeyIdNames: List<E3KeyIdName>): AdapterView.OnItemClickListener {
+    private fun getDevicesListAdapterListener(e3KeyIdNames: List<E3DeleteDeviceRequest>): AdapterView.OnItemClickListener {
         return AdapterView.OnItemClickListener { _, textView, position, id ->
             val selectedDevice: String = (textView as TextView).text.toString()
 
@@ -95,9 +105,9 @@ class E3DeviceDeletePresenter internal constructor(
         }
     }
 
-    private fun deleteKey(e3KeyIdName: E3KeyIdName) {
+    private fun deleteKey(e3KeyIdName: E3DeleteDeviceRequest) {
         val intent = Intent(OpenPgpApi.ACTION_DELETE_ENCRYPT_ON_RECEIPT_KEY)
-        intent.putExtra(OpenPgpApi.EXTRA_KEY_ID, e3KeyIdName.e3KeyId)
+        intent.putExtra(OpenPgpApi.EXTRA_KEY_ID, e3KeyIdName.keyId)
 
         val deleteKeyResult = openPgpApiManager.openPgpApi.executeApi(intent, null as InputStream?, null)
 
@@ -105,15 +115,49 @@ class E3DeviceDeletePresenter internal constructor(
 
         if (resultCode == OpenPgpApi.RESULT_CODE_SUCCESS) {
             Timber.d("Successfully deleted E3 key from OpenKeychain $e3KeyIdName")
+            createDeleteMessage(setOf(e3KeyIdName))
         } else {
             Timber.d("Failed to delete E3 key from OpeKeychain: $resultCode")
+        }
+    }
+
+    private fun createDeleteMessage(e3DeviceDeleteRequests: Set<E3DeleteDeviceRequest>) {
+        GlobalScope.launch(Dispatchers.Main) {
+            view.uxDelay()
+            view.setStateCreatingDeleteMessage()
+
+            viewModel.e3DeviceDeleteCreateEvent.createE3DeleteMessageAsync(openPgpApiManager.openPgpApi, account, e3DeviceDeleteRequests)
+        }
+    }
+
+    private fun onEventE3CreateDeleteMessage(deleteMsg: E3DeleteMessage) {
+        //view.setLoadingStateSending()
+        //view.sceneGeneratingAndUploading()
+
+        viewModel.e3UploadMessageLiveEvent.sendMessageAsync(account, deleteMsg)
+    }
+
+    private fun onUploadedE3Message(result: E3UploadMessageResult?) {
+        when (result) {
+            null -> view.sceneBegin()
+            is E3UploadMessageResult.Success -> {
+                //pendingIntentForGetKey = result.pendingIntent
+                view.setStateUploadFinished()
+                view.sceneFinished()
+
+                if (result.sentMessage is E3DeleteMessage) {
+                    view.setDeletedDevices(result.sentMessage.deleteRequests)
+                }
+            }
+            is E3UploadMessageResult.Failure -> {
+                Timber.e(result.exception, "Error uploading E3 key")
+                view.setStateUploadFailed()
+                view.sceneUploadError()
+            }
         }
     }
 
     fun onClickHome() {
         view.finishAsCancelled()
     }
-
-    data class E3KeyIdName(val e3KeyId: Long,
-                           val e3KeyName: String?)
 }

@@ -67,9 +67,9 @@ class E3DeviceDeleteActivity : E3ActionBaseActivity(), View.OnClickListener {
         }
     }
 
-    fun populateListViewWithE3Devices(e3KeyIdNames: List<E3DeviceDeletePresenter.E3KeyIdName>, adapterListener: AdapterView.OnItemClickListener) {
+    fun populateListViewWithE3Devices(e3KeyIdNames: List<E3DeleteDeviceRequest>, adapterListener: AdapterView.OnItemClickListener) {
         addDevicesToListView(e3KeyIdNames.map {
-            it.e3KeyName ?: resources.getString(R.string.e3_device_delete_missing_device_name)
+            it.keyName ?: resources.getString(R.string.e3_device_delete_missing_device_name)
         }, adapterListener)
 
     }
@@ -92,6 +92,26 @@ class E3DeviceDeleteActivity : E3ActionBaseActivity(), View.OnClickListener {
         mBottomSheetDialog!!.setContentView(bottomSheetLayout)
 
         mBottomSheetDialog!!.show()
+    }
+
+    fun setStateCreatingDeleteMessage() {
+
+    }
+
+    fun setStateUploadFailed() {
+
+    }
+
+    fun setStateUploadFinished() {
+
+    }
+
+    fun sceneUploadError() {
+
+    }
+
+    fun setDeletedDevices(deletedDevices: Set<E3DeleteDeviceRequest>) {
+
     }
 
     override fun onClick(v: View) {

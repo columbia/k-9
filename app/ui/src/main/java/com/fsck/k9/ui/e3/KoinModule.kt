@@ -1,8 +1,10 @@
 package com.fsck.k9.ui.e3
 
-import com.fsck.k9.crypto.e3.E3UndoEncryptionManager
 import com.fsck.k9.ui.crypto.PgpWordList
+import com.fsck.k9.ui.e3.delete.E3DeleteMessageCreator
+import com.fsck.k9.ui.e3.delete.E3DeviceDeleteCreateLiveEvent
 import com.fsck.k9.ui.e3.delete.E3DeviceDeletePresenter
+import com.fsck.k9.ui.e3.delete.E3DeviceDeleteViewModel
 import com.fsck.k9.ui.e3.scan.E3KeyScanDownloadLiveEvent
 import com.fsck.k9.ui.e3.scan.E3KeyScanPresenter
 import com.fsck.k9.ui.e3.scan.E3KeyScanScanLiveEvent
@@ -17,15 +19,14 @@ import org.koin.dsl.module.applicationContext
 
 val e3KeyUploadUiModule = applicationContext {
     factory { E3KeyUploadSetupMessageLiveEvent(get()) }
-    factory { E3KeyUploadMessageUploadLiveEvent(get()) }
+    factory { E3UploadMessageLiveEvent(get()) }
     factory { params ->
         E3KeyUploadPresenter(
-                params["lifecycleOwner"],
-                get(),
-                get(parameters = { params.values }),
-                get(),
-                get(),
-                params["e3UploadView"])
+                lifecycleOwner = params["lifecycleOwner"],
+                openPgpApiManager = get(parameters = { params.values }),
+                preferences = get(),
+                viewModel = get(),
+                view = params["e3UploadView"])
     }
     viewModel { E3KeyUploadViewModel(get(), get()) }
     bean { E3KeyUploadMessageCreator(get(), get()) }
@@ -45,8 +46,6 @@ val e3KeyScanUiModule = applicationContext {
 }
 
 val e3KeyVerifyUiModule = applicationContext {
-    factory { E3KeyScanScanLiveEvent(get()) }
-    factory { E3KeyScanDownloadLiveEvent() }
     factory { params ->
         E3KeyVerificationPresenter(
                 lifecycleOwner = params["lifecycleOwner"],
@@ -73,15 +72,17 @@ val e3UndoUiModule = applicationContext {
 }
 
 val e3DeviceDeleteUiModule = applicationContext {
-    factory { E3KeyScanScanLiveEvent(get()) }
-    factory { E3KeyScanDownloadLiveEvent() }
+    factory { E3DeviceDeleteCreateLiveEvent(get()) }
+    factory { E3UploadMessageLiveEvent(get()) }
     factory { params ->
         E3DeviceDeletePresenter(
                 lifecycleOwner = params["lifecycleOwner"],
                 preferences = get(),
                 openPgpApiManager = get(parameters = { params.values }),
                 view = params["e3DeleteDeviceView"],
-                messagingController = get()
+                viewModel = get()
         )
     }
+    viewModel { E3DeviceDeleteViewModel(get(), get()) }
+    bean { E3DeleteMessageCreator(get()) }
 }

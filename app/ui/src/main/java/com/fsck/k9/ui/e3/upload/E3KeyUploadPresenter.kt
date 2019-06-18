@@ -6,6 +6,7 @@ import androidx.lifecycle.Observer
 import android.content.Context
 import com.fsck.k9.Account
 import com.fsck.k9.Preferences
+import com.fsck.k9.ui.e3.E3UploadMessageResult
 import com.fsck.k9.ui.e3.E3OpenPgpPresenterCallback
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.GlobalScope
@@ -15,7 +16,6 @@ import timber.log.Timber
 
 class E3KeyUploadPresenter internal constructor(
         lifecycleOwner: LifecycleOwner,
-        private val context: Context,
         private val openPgpApiManager: OpenPgpApiManager,
         private val preferences: Preferences,
         private val viewModel: E3KeyUploadViewModel,
@@ -28,7 +28,7 @@ class E3KeyUploadPresenter internal constructor(
     init {
         viewModel.e3KeyUploadSetupMessageLiveEvent.observe(lifecycleOwner, Observer { msg -> msg?.let { onEventE3KeyUploadSetupMessage(it) } })
 
-        viewModel.e3KeyUploadMessageUploadLiveEvent.observe(lifecycleOwner, Observer { pi -> onLoadedE3KeyUploadMessageUpload(pi) })
+        viewModel.e3UploadMessageLiveEvent.observe(lifecycleOwner, Observer { pi -> onLoadedE3KeyUploadMessageUpload(pi) })
     }
 
     fun initFromIntent(accountUuid: String?) {
@@ -43,7 +43,7 @@ class E3KeyUploadPresenter internal constructor(
 
         view.setAddress(account.identities[0].email)
 
-        viewModel.e3KeyUploadMessageUploadLiveEvent.recall()
+        viewModel.e3UploadMessageLiveEvent.recall()
     }
 
     fun onClickHome() {
@@ -65,26 +65,28 @@ class E3KeyUploadPresenter internal constructor(
         view.setLoadingStateSending()
         view.sceneGeneratingAndUploading()
 
-        viewModel.e3KeyUploadMessageUploadLiveEvent.sendMessageAsync(account, setupMsg)
+        viewModel.e3UploadMessageLiveEvent.sendMessageAsync(account, setupMsg)
     }
 
-    private fun onLoadedE3KeyUploadMessageUpload(result: E3KeyUploadMessageUploadResult?) {
+    private fun onLoadedE3KeyUploadMessageUpload(result: E3UploadMessageResult?) {
         when (result) {
             null -> view.sceneBegin()
-            is E3KeyUploadMessageUploadResult.Success -> {
-                pendingIntentForGetKey = result.pendingIntentForGetKey
+            is E3UploadMessageResult.Success -> {
+                //pendingIntentForGetKey = result.pendingIntent
                 view.setLoadingStateFinished()
                 view.sceneFinished()
 
-                val verificationPhrase = result.sentMessage.verificationPhrase
-                account.e3KeyVerificationPhrase = verificationPhrase
-                view.setVerification(verificationPhrase)
+                if (result.sentMessage is E3KeyUploadMessage) {
+                    val verificationPhrase = result.sentMessage.verificationPhrase
+                    account.e3KeyVerificationPhrase = verificationPhrase
+                    view.setVerification(verificationPhrase)
 
-                val keyFingerprint = result.sentMessage.keyResult.fingerprint
+                    val keyFingerprint = result.sentMessage.keyResult.fingerprint
 
-                view.setQrcode(keyFingerprint.qrBitmap)
+                    view.setQrcode(keyFingerprint!!.qrBitmap)
+                }
             }
-            is E3KeyUploadMessageUploadResult.Failure -> {
+            is E3UploadMessageResult.Failure -> {
                 Timber.e(result.exception, "Error uploading E3 key")
                 view.setLoadingStateSendingFailed()
                 view.sceneSendError()
