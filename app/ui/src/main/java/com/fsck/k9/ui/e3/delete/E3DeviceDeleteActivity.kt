@@ -8,13 +8,13 @@ import android.view.MenuItem
 import android.view.View
 import android.widget.*
 import androidx.core.text.HtmlCompat
+import com.fsck.k9.crypto.e3.E3PublicKeyIdName
 import com.fsck.k9.ui.R
 import com.fsck.k9.ui.e3.E3ActionBaseActivity
 import com.google.android.material.bottomsheet.BottomSheetDialog
 import kotlinx.android.synthetic.main.crypto_e3_device_delete.*
 import kotlinx.android.synthetic.main.wizard_cancel_done.*
 import org.koin.android.ext.android.inject
-import timber.log.Timber
 
 class E3DeviceDeleteActivity : E3ActionBaseActivity(), View.OnClickListener {
     private val presenter: E3DeviceDeletePresenter by inject {
@@ -67,7 +67,7 @@ class E3DeviceDeleteActivity : E3ActionBaseActivity(), View.OnClickListener {
         }
     }
 
-    fun populateListViewWithE3Devices(e3KeyIdNames: List<E3DeleteDeviceRequest>, adapterListener: AdapterView.OnItemClickListener) {
+    fun populateListViewWithE3Devices(e3KeyIdNames: List<E3PublicKeyIdName>, adapterListener: AdapterView.OnItemClickListener) {
         addDevicesToListView(e3KeyIdNames.map {
             it.keyName ?: resources.getString(R.string.e3_device_delete_missing_device_name)
         }, adapterListener)
@@ -110,7 +110,7 @@ class E3DeviceDeleteActivity : E3ActionBaseActivity(), View.OnClickListener {
 
     }
 
-    fun setDeletedDevices(deletedDevices: Set<E3DeleteDeviceRequest>) {
+    fun setDeletedDevices(deletedDevices: Set<E3PublicKeyIdName>) {
 
     }
 

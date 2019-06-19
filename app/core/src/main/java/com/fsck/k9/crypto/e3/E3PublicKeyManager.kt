@@ -27,24 +27,54 @@ class E3PublicKeyManager(private val openPgpApi: OpenPgpApi) {
     }
 
     fun deletePublicKeysFromKeychain(keyEmail: E3KeyEmail) {
-        if (keyEmail.deletedPublicKeys.isEmpty()) {
+        if (keyEmail.deletedPublicKeyIds.isEmpty()) {
             Timber.d("Found no E3 public keys to delete")
             return
         }
 
-        for (keyBytes in keyEmail.deletedPublicKeys) {
-            val pgpApiIntent = Intent(OpenPgpApi.ACTION_DELETE_ENCRYPT_ON_RECEIPT_KEY)
-            pgpApiIntent.putExtra(OpenPgpApi.EXTRA_ASCII_ARMORED_KEY, keyBytes)
-
-            val result = openPgpApi.executeApi(pgpApiIntent, null as InputStream?, null)
-            val resultCode = result.getIntExtra(OpenPgpApi.RESULT_CODE, OpenPgpApi.RESULT_CODE_ERROR)
-
-            if (resultCode == OpenPgpApi.RESULT_CODE_SUCCESS) {
-                Timber.d("deletePublicKeysFromKeychain(): Successfully deleted E3 public key from OpenKeychain")
-            } else {
-                Timber.d("deletePublicKeysFromKeychain(): Failed to delete E3 public key to OpeKeychain: $resultCode")
-            }
+        for (keyId in keyEmail.deletedPublicKeyIds) {
+            deletePublicKeyFromKeychain(E3PublicKeyIdName(keyId, null))
         }
+    }
+
+    fun deletePublicKeyFromKeychain(e3KeyIdName: E3PublicKeyIdName): Boolean {
+        val intent = Intent(OpenPgpApi.ACTION_DELETE_ENCRYPT_ON_RECEIPT_KEY)
+        intent.putExtra(OpenPgpApi.EXTRA_KEY_ID, e3KeyIdName.keyId)
+
+        val deleteKeyResult = openPgpApi.executeApi(intent, null as InputStream?, null)
+
+        val resultCode = deleteKeyResult.getIntExtra(OpenPgpApi.RESULT_CODE, OpenPgpApi.RESULT_CODE_ERROR)
+
+        if (resultCode == OpenPgpApi.RESULT_CODE_SUCCESS) {
+            Timber.d("Successfully deleted E3 key from OpenKeychain $e3KeyIdName")
+            return true
+        } else {
+            Timber.d("Failed to delete E3 key from OpeKeychain: $resultCode")
+            return false
+        }
+    }
+
+    fun requestKnownE3PublicKeys(): List<E3PublicKeyIdName> {
+        val intent = Intent(OpenPgpApi.ACTION_GET_ENCRYPT_ON_RECEIPT_PUBLIC_KEYS)
+        val keyIdsResult = openPgpApi.executeApi(intent, null as InputStream?, null)
+
+        val eorKeyIds = keyIdsResult.getLongArrayExtra(OpenPgpApi.EXTRA_KEY_IDS)
+        val eorKeyNames = keyIdsResult.getStringArrayExtra(OpenPgpApi.EXTRA_NAMES)
+
+        if (eorKeyIds.size != eorKeyNames.size) {
+            return emptyList()
+        }
+
+        val e3KeyIdNames = mutableListOf<E3PublicKeyIdName>()
+
+        var i = 0
+        while (i < eorKeyIds.size) {
+            // Skip this device's own key since it would also delete the private key
+            e3KeyIdNames.add(E3PublicKeyIdName(eorKeyIds[i], eorKeyNames[i]))
+            i++
+        }
+
+        return e3KeyIdNames
     }
 
     fun requestPgpKey(openPgpApi: OpenPgpApi, keyId: Long, armored: Boolean, fingerprint: Boolean): KeyResult {
@@ -74,3 +104,5 @@ data class KeyResult(val pendingIntent: PendingIntent, val resultData: ByteArray
                      val identity: String, val fingerprint: KeyFingerprint?)
 
 data class KeyFingerprint(val hexString: String?, val qrBitmap: Bitmap?)
+
+data class E3PublicKeyIdName(val keyId: Long, val keyName: String?)

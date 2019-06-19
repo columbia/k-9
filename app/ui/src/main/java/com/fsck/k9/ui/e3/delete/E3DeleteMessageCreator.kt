@@ -21,7 +21,7 @@ import java.util.*
 class E3DeleteMessageCreator(private val resources: Resources) : SingleLiveEvent<E3DeleteMessage>() {
 
     // Returns null if no upload is performed
-    fun createE3DeleteMessage(openPgpApi: OpenPgpApi, account: Account, e3DeleteDeviceRequests: Set<E3DeleteDeviceRequest>): E3DeleteMessage {
+    fun createE3DeleteMessage(openPgpApi: OpenPgpApi, account: Account, e3DeviceIdNames: Set<E3PublicKeyIdName>): E3DeleteMessage {
         val beautifulKeyId = KeyFormattingUtils.beautifyKeyId(account.e3Key)
         val e3PublicKeyManager = E3PublicKeyManager(openPgpApi)
 
@@ -36,10 +36,10 @@ class E3DeleteMessageCreator(private val resources: Resources) : SingleLiveEvent
                 armoredKey.identity,
                 beautifulKeyId,
                 e3KeyDigest,
-                e3DeleteDeviceRequests
+                e3DeviceIdNames
         )
 
-        return E3DeleteMessage(deleteMessage, e3DeleteDeviceRequests)
+        return E3DeleteMessage(deleteMessage, e3DeviceIdNames)
     }
 
     private fun createE3DeleteMessage(openPgpApi: OpenPgpApi,
@@ -47,12 +47,12 @@ class E3DeleteMessageCreator(private val resources: Resources) : SingleLiveEvent
                                       keyUserIdentity: String,
                                       keyId: String,
                                       e3KeyDigest: String,
-                                      e3DeleteDeviceRequests: Set<E3DeleteDeviceRequest>): Message {
+                                      e3DeviceIdNames: Set<E3PublicKeyIdName>): Message {
         try {
             val address = Address.parse(account.getIdentity(0).email)[0]
             val subjectText = resources.getString(R.string.e3_device_delete_msg_subject)
             val requestingDevice = String.format(resources.getString(R.string.e3_device_delete_msg_user_id), keyUserIdentity, keyId)
-            val devicesRequestedToDelete = e3DeleteDeviceRequests.map { it.keyName }.joinToString()
+            val devicesRequestedToDelete = e3DeviceIdNames.map { it.keyName }.joinToString()
             val plainText = String.format(resources.getString(R.string.e3_device_delete_msg_body), requestingDevice, devicesRequestedToDelete)
             val htmlText = String.format(resources.getString(R.string.e3_device_delete_msg_body_html), requestingDevice, devicesRequestedToDelete)
 
@@ -79,7 +79,7 @@ class E3DeleteMessageCreator(private val resources: Resources) : SingleLiveEvent
             message.setHeader(E3Constants.MIME_E3_DIGEST, e3KeyDigest)
             message.setHeader(E3Constants.MIME_E3_TIMESTAMP, System.currentTimeMillis().toString())
             message.setHeader(E3Constants.MIME_E3_UID, account.uuid)
-            addDeletedE3PublicKeysToHeader(message, e3DeleteDeviceRequests)
+            addDeletedE3PublicKeysToHeader(message, e3DeviceIdNames)
 
             message.internalDate = nowDate
             message.addSentDate(nowDate, K9.hideTimeZone())
@@ -100,8 +100,8 @@ class E3DeleteMessageCreator(private val resources: Resources) : SingleLiveEvent
         }
     }
 
-    private fun addDeletedE3PublicKeysToHeader(message: MimeMessage, e3DeleteDeviceRequests: Set<E3DeleteDeviceRequest>) {
-        for (deleteRequest in e3DeleteDeviceRequests) {
+    private fun addDeletedE3PublicKeysToHeader(message: MimeMessage, e3DeviceIdNames: Set<E3PublicKeyIdName>) {
+        for (deleteRequest in e3DeviceIdNames) {
             message.addHeader(E3Constants.MIME_E3_DELETE, deleteRequest.keyId.toString())
         }
     }
@@ -111,6 +111,4 @@ class E3DeleteMessageCreator(private val resources: Resources) : SingleLiveEvent
     }
 }
 
-data class E3DeleteMessage(val deleteMessage: Message, val deleteRequests: Set<E3DeleteDeviceRequest>): E3UploadMessage(deleteMessage)
-
-data class E3DeleteDeviceRequest(val keyId: Long, val keyName: String?)
+data class E3DeleteMessage(val deleteMessage: Message, val idNames: Set<E3PublicKeyIdName>): E3UploadMessage(deleteMessage)

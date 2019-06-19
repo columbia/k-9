@@ -2,7 +2,6 @@ package com.fsck.k9.crypto.e3
 
 import com.fsck.k9.crypto.KeyFormattingUtils
 import com.fsck.k9.mail.internet.MimeMessage
-import java.util.*
 
 class E3KeyEmailParser {
 
@@ -13,7 +12,7 @@ class E3KeyEmailParser {
     fun parseKeyEmail(message: MimeMessage): E3KeyEmail {
         return E3KeyEmail(
                 publicKeys = getE3PublicKeys(message),
-                deletedPublicKeys = getDeletedE3PublicKeys(message),
+                deletedPublicKeyIds = getDeletedE3PublicKeyIds(message),
                 headersToSign = buildConcatenatedE3Headers(message),
                 headersSignature = getE3SignatureHeader(message)
         )
@@ -52,14 +51,14 @@ class E3KeyEmailParser {
     }
 
     private fun getE3PublicKeys(message: MimeMessage): Set<ByteArray> {
-        return getAllHeaders(message, E3Constants.MIME_E3_KEYS)
+        return getAllDecodedHeadersUnfolded(message, E3Constants.MIME_E3_KEYS)
     }
 
-    private fun getDeletedE3PublicKeys(message: MimeMessage): Set<ByteArray> {
-        return getAllHeaders(message, E3Constants.MIME_E3_DELETE)
+    private fun getDeletedE3PublicKeyIds(message: MimeMessage): Set<Long> {
+        return getAllHeaders(message, E3Constants.MIME_E3_DELETE).mapNotNull { it.toLongOrNull() }.toSet()
     }
 
-    private fun getAllHeaders(message: MimeMessage, headerName: String): Set<ByteArray> {
+    private fun getAllDecodedHeadersUnfolded(message: MimeMessage, headerName: String): Set<ByteArray> {
         return when (message.headerNames.contains(headerName)) {
             true -> {
                 val keySet = mutableSetOf<ByteArray>()
@@ -72,17 +71,34 @@ class E3KeyEmailParser {
                 keySet
             }
             false -> {
-                setOf()
+                emptySet()
+            }
+        }
+    }
+
+    private fun getAllHeaders(message: MimeMessage, headerName: String): Set<String> {
+        return when (message.headerNames.contains(headerName)) {
+            true -> {
+                val headersSet = mutableSetOf<String>()
+
+                for (header in message.getHeader(headerName)) {
+                    headersSet.add(header)
+                }
+
+                headersSet
+            }
+            false -> {
+                emptySet()
             }
         }
     }
 }
 
 data class E3KeyEmail(
-    val publicKeys: Set<ByteArray>,
-    val deletedPublicKeys: Set<ByteArray>,
-    val headersToSign: String,
-    val headersSignature: ByteArray?) {
+        val publicKeys: Set<ByteArray>,
+        val deletedPublicKeyIds: Set<Long>,
+        val headersToSign: String,
+        val headersSignature: ByteArray?) {
 
     override fun equals(other: Any?): Boolean {
         if (this === other) return true
@@ -91,18 +107,21 @@ data class E3KeyEmail(
         other as E3KeyEmail
 
         if (publicKeys != other.publicKeys) return false
-        if (deletedPublicKeys != other.deletedPublicKeys) return false
+        if (deletedPublicKeyIds != other.deletedPublicKeyIds) return false
         if (headersToSign != other.headersToSign) return false
-        if (!Arrays.equals(headersSignature, other.headersSignature)) return false
+        if (headersSignature != null) {
+            if (other.headersSignature == null) return false
+            if (!headersSignature.contentEquals(other.headersSignature)) return false
+        } else if (other.headersSignature != null) return false
 
         return true
     }
 
     override fun hashCode(): Int {
         var result = publicKeys.hashCode()
-        result = 31 * result + deletedPublicKeys.hashCode()
+        result = 31 * result + deletedPublicKeyIds.hashCode()
         result = 31 * result + headersToSign.hashCode()
-        result = 31 * result + (headersSignature?.let { Arrays.hashCode(it) } ?: 0)
+        result = 31 * result + (headersSignature?.contentHashCode() ?: 0)
         return result
     }
 }

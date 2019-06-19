@@ -1,5 +1,6 @@
 package com.fsck.k9.ui.e3
 
+import com.fsck.k9.crypto.e3.E3PublicKeyManager
 import com.fsck.k9.ui.crypto.PgpWordList
 import com.fsck.k9.ui.e3.delete.E3DeleteMessageCreator
 import com.fsck.k9.ui.e3.delete.E3DeviceDeleteCreateLiveEvent
