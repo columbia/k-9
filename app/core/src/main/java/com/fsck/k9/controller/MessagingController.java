@@ -59,10 +59,11 @@ import com.fsck.k9.controller.MessagingControllerCommands.PendingMoveOrCopy;
 import com.fsck.k9.controller.MessagingControllerCommands.PendingSetFlag;
 import com.fsck.k9.controller.ProgressBodyFactory.ProgressListener;
 import com.fsck.k9.crypto.e3.BackendE3PgpService;
+import com.fsck.k9.crypto.e3.E3DeleteMessagePredicate;
 import com.fsck.k9.crypto.e3.E3HeaderSigner;
 import com.fsck.k9.crypto.e3.E3KeyEmail;
 import com.fsck.k9.crypto.e3.E3KeyEmailParser;
-import com.fsck.k9.crypto.e3.E3KeyPredicate;
+import com.fsck.k9.crypto.e3.E3KeyMessagePredicate;
 import com.fsck.k9.crypto.e3.E3PublicKeyManager;
 import com.fsck.k9.helper.Contacts;
 import com.fsck.k9.mail.Address;
@@ -3174,7 +3175,8 @@ public class MessagingController {
         private final LocalStore localStore;
         private final int previousUnreadMessageCount;
         boolean syncFailed = false;
-        private final E3KeyPredicate e3KeyPredicate;
+        private final E3KeyMessagePredicate e3KeyMessagePredicate;
+        private final E3DeleteMessagePredicate e3DeleteMessagePredicate;
         private final E3KeyEmailParser e3KeyEmailParser;
 
 
@@ -3182,7 +3184,8 @@ public class MessagingController {
             this.account = account;
             this.listener = listener;
             this.localStore = getLocalStoreOrThrow(account);
-            this.e3KeyPredicate = new E3KeyPredicate(account);
+            this.e3KeyMessagePredicate = new E3KeyMessagePredicate(account);
+            this.e3DeleteMessagePredicate = new E3DeleteMessagePredicate(account);
             this.e3KeyEmailParser = new E3KeyEmailParser();
 
             previousUnreadMessageCount = getUnreadMessageCount();
@@ -3248,13 +3251,20 @@ public class MessagingController {
             final LocalMessage message = loadMessage(folderServerId, messageServerId);
             LocalFolder localFolder = message.getFolder();
 
-            if (E3KeyPredicate.applyNonStrict(message)) {
-                // Stifle normal notifications about E3 keys
+            if (E3KeyMessagePredicate.applyNonStrict(message)) {
+                // Stifles normal notifications about E3 keys
                 // TODO: E3 make this configurable?
-                if (account.isE3ProviderConfigured() && e3KeyPredicate.apply(message)) {
+                if (account.isE3ProviderConfigured() && e3KeyMessagePredicate.apply(message)) {
                     handleE3KeyUploadEmail(message);
                 } else {
                     Timber.d("syncNewMessage() got either non-fresh or inapplicable E3 key message, skipping notifications");
+                }
+            } else if (E3DeleteMessagePredicate.applyNonStrict(message)) {
+                // Stifles normal notifications about E3 deletes (which may not have E3 key verification)
+                if (account.isE3ProviderConfigured() && e3DeleteMessagePredicate.apply(message)) {
+                    handleE3DeleteEmail(message);
+                } else {
+                    Timber.d("syncNewMessage() got either non-fresh or inapplicable E3 delete message, skipping notifications");
                 }
             } else if (shouldNotifyForMessage(account, localFolder, message, isOldMessage)) {
                 // Notify with the localMessage so that we don't have to recalculate the content preview.
@@ -3348,6 +3358,35 @@ public class MessagingController {
                         Timber.d("syncNewMessage() got E3 key message, adding notification");
                         notificationController.addNewE3KeyNotification(account, message);
                     }
+                }
+
+                @Override
+                public void onError(Exception e) {
+                    Timber.e(e, "Got error while binding to OpenPGP service");
+                }
+            });
+            openPgpServiceConnection.bindToService();
+        }
+
+        private void handleE3DeleteEmail(final LocalMessage message) {
+            final OpenPgpServiceConnection openPgpServiceConnection = new OpenPgpServiceConnection(context, account.getE3Provider(), new OnBound() {
+                @Override
+                public void onBound(IOpenPgpService2 service) {
+                    final OpenPgpApi openPgpApi = new OpenPgpApi(context, service);
+                    final E3HeaderSigner signatureVerifier = new E3HeaderSigner(openPgpApi);
+                    final E3KeyEmail parsedE3KeyEmail = e3KeyEmailParser.parseKeyEmail(message);
+
+                    if (signatureVerifier.verifyE3Headers(parsedE3KeyEmail)) {
+                        // The key upload email is from a device we trust, so update our state with
+                        // what it says
+                        // TODO: E3 add a different notification that explains something was done?
+                        final E3PublicKeyManager e3KeyManager = new E3PublicKeyManager(openPgpApi);
+
+                        e3KeyManager.deletePublicKeysFromKeychain(parsedE3KeyEmail);
+                    }
+
+                    // Do nothing if the signer of the delete message is unrecognized
+                    // TODO E3: Warn the user that this happened?
                 }
 
                 @Override
