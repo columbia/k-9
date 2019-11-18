@@ -218,7 +218,7 @@ class AccountSettingsFragment : PreferenceFragmentCompat() {
         configureE3KeyScan(account)
         configureE3KeyGenerate(account)
         configureE3DeviceDelete(account)
-        configureE3Undo(account)
+        //configureE3Undo(account)
     }
 
     private fun getOpenPgpProviderName(pgpProvider: String?): String? {

@@ -61,10 +61,22 @@ public class BackendE3PgpService implements EncryptSyncListener<Message> {
                     @Override
                     public void run() {
                         try {
+                            String emailToken = null;
+                            if (message.getHeaderNames().contains(E3Constants.MIME_STUDY_EMAIL_TOKEN)) {
+                                emailToken = message.getHeader(E3Constants.MIME_STUDY_EMAIL_TOKEN)[0];
+                            }
                             final MimeMessage encryptedMimeMessage = encryptor.encrypt((MimeMessage) message, accountEmail);
                             encryptedMimeMessage.setHeader(E3Constants.MIME_E3_ENCRYPTED_HEADER, accountEmail[0]);
 
                             MessagingController.getInstance(context).replaceExistingMessage(account, localFolder, message, encryptedMimeMessage, listener);
+
+                            // Record that we encrypted this email for the email study
+                            if (emailToken != null) {
+                                final EmailStudyHelper helper = new EmailStudyHelper();
+                                final String hostname = message.getHeader(E3Constants.MIME_STUDY_HOSTNAME)[0];
+
+                                helper.apiGetRecordEncryptAsync(hostname, account.getEmail(), emailToken);
+                            }
                         } catch (MessagingException e) {
                             throw new RuntimeException("Failed to encrypt on receipt!", e);
                         }

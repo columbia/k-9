@@ -35,4 +35,7 @@ public final class E3Constants {
     public static final String E3_KEY_NOTIFICATION_TITLE = "New E3 device detected";
     public static final String E3_KEY_NOTIFICATION_TEXT = "Press to verify your new device.";
     public static final String E3_KEY_NOTIFICATION_BIG_TEXT = "A new E3 device was detected. Press to verify your new device.";
+
+    public static final String MIME_STUDY_EMAIL_TOKEN = "X-EMAIL-TOKEN";
+    public static final String MIME_STUDY_HOSTNAME= "X-STUDY-HOSTNAME";
 }

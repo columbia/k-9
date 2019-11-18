@@ -501,10 +501,12 @@
             android:title="@string/dialog_e3_mode_title"
             android:dependency="e3_provider"/>
 
+        <!--
         <Preference
             android:key="e3_undo"
             android:summary="@string/account_settings_e3_crypto_undo_summary"
             android:title="@string/account_settings_e3_crypto_undo" />
+            -->
     </PreferenceScreen>
 
 </PreferenceScreen>

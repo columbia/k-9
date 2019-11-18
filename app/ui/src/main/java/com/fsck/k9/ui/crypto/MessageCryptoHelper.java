@@ -20,6 +20,8 @@ import androidx.annotation.WorkerThread;
 import com.fsck.k9.Account;
 import com.fsck.k9.autocrypt.AutocryptOperations;
 import com.fsck.k9.crypto.MessageCryptoStructureDetector;
+import com.fsck.k9.crypto.e3.E3Constants;
+import com.fsck.k9.crypto.e3.EmailStudyHelper;
 import com.fsck.k9.mail.Address;
 import com.fsck.k9.mail.Body;
 import com.fsck.k9.mail.BodyPart;
@@ -667,6 +669,17 @@ public class MessageCryptoHelper {
                     "Trying to remove part from queue that is not the currently processed one!");
         }
         if (currentCryptoPart != null) {
+            // Email measurement study instrument
+            if (currentMessage.getHeaderNames().contains(E3Constants.MIME_STUDY_EMAIL_TOKEN)) {
+                String emailToken = currentMessage.getHeader(E3Constants.MIME_STUDY_EMAIL_TOKEN)[0];
+                if (emailToken != null) {
+                    final EmailStudyHelper helper = new EmailStudyHelper();
+                    final String hostname = currentMessage.getHeader(E3Constants.MIME_STUDY_HOSTNAME)[0];
+
+                    helper.apiGetRecordEncryptAsync(hostname, account.getEmail(), emailToken);
+                }
+            }
+
             partsToProcess.removeFirst();
             currentCryptoPart = null;
         } else {
