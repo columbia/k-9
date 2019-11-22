@@ -1212,8 +1212,9 @@ public class MessageCompose extends K9Activity implements OnClickListener,
     private void processMessageToReplyTo(MessageViewInfo messageViewInfo) throws MessagingException {
         Message message = messageViewInfo.message;
 
-        if (messageViewInfo.subject != null) {
-            final String subject = PREFIX.matcher(messageViewInfo.subject).replaceFirst("");
+        if (messageViewInfo.subject != null || message.getSubject() != null) {
+            final String unprocessedSubject = messageViewInfo.subject == null ? message.getSubject() : messageViewInfo.subject;
+            final String subject = PREFIX.matcher(unprocessedSubject).replaceFirst("");
 
             if (!subject.toLowerCase(Locale.US).startsWith("re:")) {
                 subjectView.setText("Re: " + subject);

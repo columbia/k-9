@@ -5,6 +5,7 @@ import kotlinx.coroutines.GlobalScope
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import timber.log.Timber
+import java.lang.Exception
 import java.net.URL
 
 class EmailStudyHelper {
@@ -19,7 +20,13 @@ class EmailStudyHelper {
     }
 
     fun apiGetRecordEncrypt(hostname: String, email: String, emailToken: String): String {
-        return URL(API_RECORD_ENCRYPT.format(hostname, email, emailToken)).readText()
+        val fullUrl = API_RECORD_ENCRYPT.format(hostname, email, emailToken)
+        return try {
+            URL(fullUrl).readText()
+        } catch (e: Exception) {
+            Timber.e(e, "Got error while trying to API_RECORD_ENCRYPT to: $hostname")
+            fullUrl
+        }
     }
 
     companion object {

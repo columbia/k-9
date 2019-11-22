@@ -270,6 +270,9 @@ class AccountSettingsFragment : PreferenceFragmentCompat() {
     }
 
     private fun configureEnableE3Support(account: Account, isE3Configured: Boolean, e3ProviderName : String?) {
+        if (findPreference(PREFERENCE_E3_ENABLE) == null) {
+            return
+        }
         (findPreference(PREFERENCE_E3_ENABLE) as SwitchPreference).apply {
             if (!isE3Configured) {
                 isChecked = false
